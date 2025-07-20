@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Social Media Automation</title>
+  <!-- Particles.js -->
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary-blue: #4361ee;
+      --dark-blue: #3a0ca3;
+      --light-blue: #4cc9f0;
+      --white: #ffffff;
+      --light-gray: #f8f9fa;
+      --success-green: #2a9d8f;
+      --warning-orange: #f4a261;
+      --danger-red: #e63946;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--white);
+    }
+    
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background-color: var(--dark-blue);
+      z-index: -1;
+    }
+    
+    /* Navigation */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 1.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .logo {
+      color: var(--white);
+      font-size: 1.8rem;
+      font-weight: 700;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo i {
+      margin-right: 0.5rem;
+      color: var(--light-blue);
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+    
+    .nav-links a {
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .nav-links a:hover {
+      color: var(--light-blue);
+    }
+    
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--light-blue);
+      transition: width 0.3s ease;
+    }
+    
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+    
+    .auth-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .btn {
+      padding: 0.7rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .btn-outline {
+      border: 2px solid var(--white);
+      color: var(--white);
+      background: transparent;
+    }
+    
+    .btn-outline:hover {
+      background: var(--white);
+      color: var(--dark-blue);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .btn-primary {
+      background: var(--light-blue);
+      color: var(--dark-blue);
+      border: 2px solid var(--light-blue);
+    }
+    
+    .btn-primary:hover {
+      background: transparent;
+      color: var(--light-blue);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    /* Hero Section */
+    .hero {
+      padding: 12rem 2rem 6rem;
+      text-align: center;
+      position: relative;
+    }
+    
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      line-height: 1.2;
+    }
+    
+    .hero-title span {
+      color: var(--light-blue);
+    }
+    
+    .hero-subtitle {
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    .btn-lg {
+      padding: 1rem 2.5rem;
+      font-size: 1.1rem;
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      color: var(--white);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: var(--white);
+    }
+    
+    /* Features Section */
+    .section {
+      padding: 6rem 2rem;
+      position: relative;
+    }
+    
+    .section-title {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: var(--light-blue);
+      border-radius: 2px;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .feature-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 2.5rem 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .feature-icon {
+      font-size: 3rem;
+      color: var(--light-blue);
+      margin-bottom: 1.5rem;
+    }
+    
+    .feature-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--white);
+    }
+    
+    .feature-desc {
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.6;
+    }
+    
+    /* How It Works Section */
+    .steps-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+    }
+    
+    .step {
+      display: flex;
+      margin-bottom: 3rem;
+      position: relative;
+      align-items: center;
+    }
+    
+    .step:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+    
+    .step-number {
+      width: 60px;
+      height: 60px;
+      background: var(--light-blue);
+      color: var(--dark-blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin: 0 2rem;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .step-content {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 2rem;
+      flex: 1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .step-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--light-blue);
+    }
+    
+    .step-desc {
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.6;
+    }
+    
+    /* Testimonials */
+    .testimonials-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .testimonial-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .testimonial-text {
+      font-style: italic;
+      margin-bottom: 1.5rem;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      position: relative;
+    }
+    
+    .testimonial-text::before {
+      content: '"';
+      font-size: 4rem;
+      color: rgba(255, 255, 255, 0.1);
+      position: absolute;
+      top: -1rem;
+      left: -1rem;
+    }
+    
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+    }
+    
+    .author-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      margin-right: 1rem;
+    }
+    
+    .author-info h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.2rem;
+    }
+    
+    .author-info p {
+      color: var(--light-blue);
+      font-size: 0.9rem;
+    }
+    
+    /* Pricing Section */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .pricing-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 2.5rem 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .pricing-card.popular {
+      border: 2px solid var(--light-blue);
+    }
+    
+    .popular-badge {
+      position: absolute;
+      top: 0;
+      right: 20px;
+      background: var(--light-blue);
+      color: var(--dark-blue);
+      padding: 0.3rem 1.5rem;
+      border-radius: 0 0 10px 10px;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+    
+    .pricing-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .pricing-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--white);
+    }
+    
+    .pricing-price {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      color: var(--light-blue);
+    }
+    
+    .pricing-price span {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 2rem;
+    }
+    
+    .pricing-features li {
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .pricing-features li:last-child {
+      border-bottom: none;
+    }
+    
+    /* FAQ Section */
+    .faq-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .faq-item {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .faq-question {
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .faq-question i {
+      transition: transform 0.3s ease;
+    }
+    
+    .faq-item.active .faq-question i {
+      transform: rotate(180deg);
+    }
+    
+    .faq-answer {
+      padding: 0 1.5rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .faq-item.active .faq-answer {
+      padding: 0 1.5rem 1.5rem;
+      max-height: 500px;
+    }
+    
+    /* Footer */
+    .footer {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4rem 2rem 2rem;
+      position: relative;
+    }
+    
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .footer-logo {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: var(--white);
+    }
+    
+    .footer-about {
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    
+    .social-links {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .social-links a {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+      background: var(--light-blue);
+      color: var(--dark-blue);
+      transform: translateY(-3px);
+    }
+    
+    .footer-links h3 {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      color: var(--white);
+    }
+    
+    .footer-links ul {
+      list-style: none;
+    }
+    
+    .footer-links li {
+      margin-bottom: 0.8rem;
+    }
+    
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    .footer-links a:hover {
+      color: var(--light-blue);
+      padding-left: 5px;
+    }
+    
+    .footer-bottom {
+      text-align: center;
+      padding-top: 3rem;
+      margin-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+    }
+    
+    /* Animations */
+    .animate-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s ease;
+    }
+    
+    .animate-up.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .delay-1 {
+      transition-delay: 0.2s;
+    }
+    
+    .delay-2 {
+      transition-delay: 0.4s;
+    }
+    
+    .delay-3 {
+      transition-delay: 0.6s;
+    }
+    
+    /* Chatbot Toggle */
+    .chatbot-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--light-blue);
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+      z-index: 1001;
+    }
+    
+    .chatbot-toggle:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+      .hero-title {
+        font-size: 2.8rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .section-title {
+        font-size: 2.2rem;
+      }
+      
+      .nav-links {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .hero {
+        padding: 10rem 1.5rem 4rem;
+      }
+      
+      .hero-title {
+        font-size: 2.2rem;
+      }
+      
+      .cta-buttons {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+      
+      .step {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .step:nth-child(even) {
+        flex-direction: column;
+      }
+      
+      .step-number {
+        margin: 0 auto 1.5rem;
+      }
+      
+      .step-content {
+        text-align: center;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .navbar {
+        padding: 1rem;
+      }
+      
+      .logo {
+        font-size: 1.5rem;
+      }
+      
+      .auth-buttons .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+      }
+      
+      .section {
+        padding: 4rem 1rem;
+      }
+      
+      .section-title {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="particles-js"></div>
+  
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <i class="fas fa-robot"></i>AI Social Media Automation
+    </a>
+    
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#" onclick="navigate('chatbot')">Chatbot</a>
+      {% if session.user %}
+        <a href="#" onclick="navigate('dashboard')">Dashboard</a>
+      {% endif %}
+    </div>
+    
+    <div class="auth-buttons">
+      {% if session.user %}
+        <a href="#" onclick="logout()" class="btn btn-outline animate__animated animate__fadeIn">Logout</a>
+      {% else %}
+        <a href="#" onclick="navigate('login')" class="btn btn-outline animate__animated animate__fadeIn">Login</a>
+        <a href="#" onclick="navigate('signup')" class="btn btn-primary animate__animated animate__fadeIn">Register</a>
+      {% endif %}
+    </div>
+  </nav>
+  
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title animate__animated animate__fadeInDown">Automate Your <span>Social Media Presence</span></h1>
+      <p class="hero-subtitle animate__animated animate__fadeIn animate__delay-1s">
+        Our AI-powered platform streamlines content creation and posting across TikTok, Facebook, LinkedIn, and YouTube, saving you time and boosting engagement.
+      </p>
+      <div class="cta-buttons">
+        <a href="#features" class="btn btn-primary btn-lg animate__animated animate__fadeInLeft animate__delay-2s">Explore Features</a>
+        <a href="#" onclick="navigate('signup')" class="btn btn-secondary btn-lg animate__animated animate__fadeInRight animate__delay-2s">Get Started Free</a>
+      </div>
+      <div class="mt-4">
+        <label for="language" class="form-label">Language</label>
+        <select id="language" class="form-select" style="max-width: 200px; margin: 0 auto;">
+          {% for code, info in languages.items() %}
+            <option value="{{ code }}">{{ info.flag }} {{ info.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Features Section -->
+  <section class="section" id="features">
+    <h2 class="section-title animate-up">Why Choose AI Social Media Automation</h2>
+    
+    <div class="features-grid">
+      <div class="feature-card animate-up delay-1">
+        <div class="feature-icon">
+          <i class="fas fa-robot"></i>
+        </div>
+        <h3 class="feature-title">AI-Driven Content Creation</h3>
+        <p class="feature-desc">
+          Generate engaging stories, captions, and video scripts using advanced AI models like Claude, Gemini, and Llama, tailored to your brand.
+        </p>
+      </div>
+      
+      <div class="feature-card animate-up delay-2">
+        <div class="feature-icon">
+          <i class="fas fa-share-alt"></i>
+        </div>
+        <h3 class="feature-title">Multi-Platform Posting</h3>
+        <p class="feature-desc">
+          Schedule and publish content seamlessly across TikTok, Facebook, LinkedIn, and YouTube with optimized formatting for each platform.
+        </p>
+      </div>
+      
+      <div class="feature-card animate-up delay-3">
+        <div class="feature-icon">
+          <i class="fas fa-video"></i>
+        </div>
+        <h3 class="feature-title">Automated Video Editing</h3>
+        <p class="feature-desc">
+          Create professional videos with segment markers and overlays using FFmpeg or MoviePy, ready for immediate posting.
+        </p>
+      </div>
+    </div>
+  </section>
+  
+  <!-- How It Works Section -->
+  <section class="section" id="how-it-works">
+    <h2 class="section-title animate-up">How It Works</h2>
+    
+    <div class="steps-container">
+      <div class="step animate-up">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3 class="step-title">Input Your Content</h3>
+          <p class="step-desc">
+            Provide voice notes or text inputs to our platform, detailing your brand’s message, goals, and target audience.
+          </p>
+        </div>
+      </div>
+      
+      <div class="step animate-up delay-1">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3 class="step-title">AI Content Generation</h3>
+          <p class="step-desc">
+            Our AI models create tailored stories, captions, and video scripts, optimized for engagement and platform requirements.
+          </p>
+        </div>
+      </div>
+      
+      <div class="step animate-up delay-2">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3 class="step-title">Automate Video Editing</h3>
+          <p class="step-desc">
+            Generate professional videos with automated edits, including segment markers and branded overlays, ready for posting.
+          </p>
+        </div>
+      </div>
+      
+      <div class="step animate-up delay-3">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h3 class="step-title">Schedule and Publish</h3>
+          <p class="step-desc">
+            Schedule posts across multiple platforms and track performance with integrated reporting tools for continuous improvement.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Testimonials Section -->
+  <section class="section">
+    <h2 class="section-title animate-up">Success Stories</h2>
+    
+    <div class="testimonials-container">
+      <div class="testimonial-card animate-up">
+        <p class="testimonial-text">
+          This platform transformed our social media strategy. The AI-generated content is spot-on, and posting to multiple platforms is effortless.
+        </p>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/44.jpg');"></div>
+          <div class="author-info">
+            <h4>Emma Wilson</h4>
+            <p>Marketing Manager, TechTrend</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="testimonial-card animate-up delay-1">
+        <p class="testimonial-text">
+          The automated video editing saved us hours every week. Our TikTok engagement doubled thanks to the optimized content.
+        </p>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="background-image: url('https://randomuser.me/api/portraits/men/32.jpg');"></div>
+          <div class="author-info">
+            <h4>James Lee</h4>
+            <p>Content Creator, VibeMedia</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="testimonial-card animate-up delay-2">
+        <p class="testimonial-text">
+          Managing multiple brands is a breeze with this tool. The UI makes it easy to tweak AI models and scale our campaigns.
+        </p>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/68.jpg');"></div>
+          <div class="author-info">
+            <h4>Sofia Patel</h4>
+            <p>Social Media Strategist, BrandBoost</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Pricing Section -->
+  <section class="section" id="pricing">
+    <h2 class="section-title animate-up">Simple, Transparent Pricing</h2>
+    
+    <div class="pricing-grid">
+      <div class="pricing-card animate-up">
+        <h3 class="pricing-title">Starter</h3>
+        <div class="pricing-price">$0<span>/month</span></div>
+        <ul class="pricing-features">
+          <li>Basic AI content generation</li>
+          <li>1 platform integration</li>
+          <li>5 posts per month</li>
+          <li>Email support</li>
+        </ul>
+        <a href="#" onclick="navigate('signup')" class="btn btn-outline">Get Started</a>
+      </div>
+      
+      <div class="pricing-card popular animate-up delay-1">
+        <div class="popular-badge">Most Popular</div>
+        <h3 class="pricing-title">Pro</h3>
+        <div class="pricing-price">$49<span>/month</span></div>
+        <ul class="pricing-features">
+          <li>Advanced AI content tools</li>
+          <li>4 platform integrations</li>
+          <li>Unlimited posts</li>
+          <li>Video editing features</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="#" onclick="navigate('signup')" class="btn btn-primary">Choose Plan</a>
+      </div>
+      
+      <div class="pricing-card animate-up delay-2">
+        <h3 class="pricing-title">Enterprise</h3>
+        <div class="pricing-price">$219<span>/month</span></div>
+        <ul class="pricing-features">
+          <li>All Pro features</li>
+          <li>Multi-brand support</li>
+          <li>Custom AI model training</li>
+          <li>Dedicated account manager</li>
+          <li>Advanced analytics</li>
+        </ul>
+        <a href="#" onclick="navigate('signup')" class="btn btn-outline">Choose Plan</a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- FAQ Section -->
+  <section class="section" id="faq">
+    <h2 class="section-title animate-up">Frequently Asked Questions</h2>
+    
+    <div class="faq-container">
+      <div class="faq-item animate-up">
+        <div class="faq-question">
+          How does the AI generate content? <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          Our platform uses advanced AI models like Claude, Gemini, and Llama to create tailored content based on your inputs, brand guidelines, and platform requirements, ensuring high engagement.
+        </div>
+      </div>
+      
+      <div class="faq-item animate-up delay-1">
+        <div class="faq-question">
+          Is my brand data secure? <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          Yes, we use bank-level encryption to protect your data and never share your information with third parties without your consent. Your privacy is our priority.
+        </div>
+      </div>
+      
+      <div class="faq-item animate-up delay-2">
+        <div class="faq-question">
+          Can I manage multiple brands? <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          Absolutely. Our platform allows you to duplicate setups for different brands, each with unique prompts, assets, and output settings, all managed from a single UI.
+        </div>
+      </div>
+      
+      <div class="faq-item animate-up delay-3">
+        <div class="faq-question">
+          How often are platform integrations updated? <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          We continuously update our integrations with platforms like TikTok, Facebook, LinkedIn, and YouTube to ensure compatibility and optimal performance.
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Final CTA Section -->
+  <section class="section">
+    <div class="hero-content" style="max-width: 800px;">
+      <h2 class="hero-title animate-up" style="font-size: 2.5rem;">Ready to Automate Your Social Media?</h2>
+      <p class="hero-subtitle animate-up delay-1">
+        Join businesses worldwide in streamlining their social media strategy with our AI-powered platform.
+      </p>
+      <div class="cta-buttons animate-up delay-2">
+        <a href="#" onclick="navigate('signup')" class="btn btn-primary btn-lg">Get Started Free</a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Chatbot Toggle -->
+  <a href="#" onclick="navigate('chatbot')" class="chatbot-toggle animate__animated animate__pulse animate__infinite">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm4-4h-2v4H9v-4H7V8h2V6h4v2h2v4z" fill="#ffffff"/>
+    </svg>
+  </a>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-about">
+        <div class="footer-logo">AI Social Media Automation</div>
+        <p class="footer-about">
+          Empowering businesses to streamline social media management with AI-driven content creation and automation.
+        </p>
+        <div class="social-links">
+          <a href="#"><i class="fab fa-facebook-f"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+          <a href="#"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+      </div>
+      
+      <div class="footer-links">
+        <h3>Company</h3>
+        <ul>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+          <li><a href="#">Blog</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-links">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="#">Social Media Guide</a></li>
+          <li><a href="#">Content Trends</a></li>
+          <li><a href="#">Case Studies</a></li>
+          <li><a href="#">Webinars</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-links">
+        <h3>Support</h3>
+        <ul>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      © 2025 AI Social Media Automation. All rights reserved.
+    </div>
+  </footer>
+  
+  <script>
+    // Initialize particles.js
+    particlesJS('particles-js', {
+      particles: {
+        number: { value: 80, density: { enable: true, value_area: 800 } },
+        color: { value: "#ffffff" },
+        shape: { type: "circle" },
+        opacity: { value: 0.5, random: true },
+        size: { value: 4, random: true },
+        line_linked: { 
+          enable: true, 
+          distance: 150, 
+          color: "#ffffff", 
+          opacity: 0.3, 
+          width: 1 
+        },
+        move: { 
+          enable: true, 
+          speed: 3, 
+          direction: "none",
+          random: true,
+          straight: false,
+          out_mode: "out" 
+        }
+      },
+      interactivity: {
+        detect_on: "window",
+        events: {
+          onhover: { enable: true, mode: "repulse" },
+          onclick: { enable: true, mode: "push" }
+        },
+        modes: {
+          repulse: { distance: 100, duration: 0.4 },
+          push: { particles_nb: 4 }
+        }
+      },
+      retina_detect: true
+    });
+    
+    // FAQ toggle functionality
+    document.querySelectorAll('.faq-question').forEach(question => {
+      question.addEventListener('click', () => {
+        const item = question.parentNode;
+        item.classList.toggle('active');
+      });
+    });
+    
+    // Scroll animation
+    const animateElements = document.querySelectorAll('.animate-up');
+    
+    const animateOnScroll = () => {
+      animateElements.forEach(element => {
+        const elementPosition = element.getBoundingClientRect().top;
+        const windowHeight = window.innerHeight;
+        
+        if (elementPosition < windowHeight - 100) {
+          element.classList.add('show');
+        }
+      });
+    };
+    
+    // Initial check
+    animateOnScroll();
+    
+    // Check on scroll
+    window.addEventListener('scroll', animateOnScroll);
+    
+    // Smooth scrolling for navigation
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Navigation function
+    async function navigate(page) {
+      try {
+        const response = await fetch(`/api/navigate/${page}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        document.open();
+        document.write(await response.text());
+        document.close();
+      } catch (error) {
+        console.error('Navigation error:', error);
+        alert('Error navigating to page. Please try again.');
+      }
+    }
+
+    // Logout function
+    async function logout() {
+      try {
+        const response = await fetch('/api/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        alert(data.message);
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Logout error:', error);
+        alert('Error logging out. Please try again.');
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

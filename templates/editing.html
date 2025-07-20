@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryVerse AI | Video Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1a56db;
+            --deep-blue: #1e3a8a;
+            --white: #ffffff;
+            --off-white: #f8fafc;
+            --light-gray: #e5e7eb;
+            --dark-gray: #1f2937;
+            --gradient-blue: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
+            --neumorphic-shadow: 8px 8px 16px rgba(0, 0, 0, 0.1), -8px -8px 16px rgba(255, 255, 255, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--off-white);
+            color: var(--dark-gray);
+        }
+
+        header {
+            background: rgba(26, 86, 219, 0.9);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .logo i {
+            color: #60a5fa;
+            margin-right: 0.5rem;
+        }
+
+        .cta-button {
+            background: var(--white);
+            color: var(--primary-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            padding: 5rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .editing-panel {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--neumorphic-shadow);
+            margin-bottom: 2rem;
+        }
+
+        .panel-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            color: var(--deep-blue);
+            margin-bottom: 1rem;
+        }
+
+        .file-upload {
+            padding: 1.5rem;
+            border: 2px dashed var(--light-gray);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-upload:hover, .file-upload.dragover {
+            border-color: var(--primary-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .file-upload i {
+            font-size: 2rem;
+            color: var(--primary-blue);
+        }
+
+        .file-upload span {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .video-preview {
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .video-preview video {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .trim-options {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .trim-option {
+            background: var(--off-white);
+            border-radius: 8px;
+            padding: 1rem;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .trim-option h3 {
+            font-size: 1rem;
+            color: var(--deep-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .trim-button, .manual-trim-button {
+            background: var(--gradient-blue);
+            color: var(--white);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .trim-button:hover, .manual-trim-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .input-group {
+            margin-bottom: 0.5rem;
+        }
+
+        .input-label {
+            font-weight: 600;
+            color: var(--deep-blue);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid var(--light-gray);
+            border-radius: 6px;
+            background: var(--off-white);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        .trimmed-videos {
+            margin-top: 1.5rem;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .video-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: var(--neumorphic-shadow);
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
+        }
+
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .play-button:hover {
+            background: var(--primary-blue);
+        }
+
+        .download-button {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .download-button:hover {
+            background: var(--deep-blue);
+        }
+
+        .edit-button {
+            background: #f59e0b;
+            color: var(--white);
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .edit-button:hover {
+            background: #d97706;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid var(--light-gray);
+            border-radius: 6px;
+            margin: 0.5rem 0;
+            background: var(--off-white);
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        .add-text-button {
+            background: var(--gradient-blue);
+            color: var(--white);
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .add-text-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-weight: 600;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .success-message {
+            color: #10b981;
+            font-weight: 600;
+            text-align: center;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><i class="fas fa-magic"></i>StoryVerse</div>
+        <button class="cta-button">Get Started</button>
+    </header>
+
+    <main class="main-content">
+        <div class="editing-panel">
+            <h2 class="panel-title">Video Editor</h2>
+            <div class="file-upload" id="file-upload-area" title="Upload a video (MP4/MOV, max 100MB)">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Drag & drop video or <span id="browse-span">browse</span></p>
+                <p>MP4, MOV (Max 100MB)</p>
+                <input type="file" id="file-upload" accept="video/*">
+            </div>
+
+            <div class="video-preview" id="video-preview" style="display: none;">
+                <h3>Original Video</h3>
+                <video id="original-video" controls></video>
+            </div>
+
+            <div class="trim-options">
+                <div class="trim-option">
+                    <h3>Auto Trim (Audio-Based)</h3>
+                    <button class="trim-button" id="trim-30s" data-duration="30" title="Trim video to 30-second clips based on audio">30 Seconds</button>
+                    <button class="trim-button" id="trim-60s" data-duration="60" title="Trim video to 60-second clips based on audio">60 Seconds</button>
+                </div>
+                <div class="trim-option">
+                    <h3>Manual Trim</h3>
+                    <div class="input-group">
+                        <label class="input-label">Start (seconds)</label>
+                        <input type="number" id="start-time" class="input-field" min="0" step="0.1" value="0" title="Start time for trimming">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">End (seconds)</label>
+                        <input type="number" id="end-time" class="input-field" min="0" step="0.1" value="30" title="End time for trimming">
+                    </div>
+                    <button class="manual-trim-button" id="manual-trim" title="Trim video to custom duration">Trim</button>
+                </div>
+            </div>
+
+            <p id="error-message" class="error-message" style="display: none;"></p>
+            <p id="success-message" class="success-message" style="display: none;"></p>
+
+            <div class="trimmed-videos" id="trimmed-videos" style="display: none;">
+                <h3>Your Clips</h3>
+                <div class="video-grid" id="video-grid"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let clips = []; // Store all trimmed clips
+        let currentEditClip = null; // Track clip being edited
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileUpload = document.getElementById('file-upload');
+            const fileUploadArea = document.getElementById('file-upload-area');
+            const browseSpan = document.getElementById('browse-span');
+            const videoPreview = document.getElementById('video-preview');
+            const originalVideo = document.getElementById('original-video');
+            const trim30sButton = document.getElementById('trim-30s');
+            const trim60sButton = document.getElementById('trim-60s');
+            const manualTrimButton = document.getElementById('manual-trim');
+            const startTimeInput = document.getElementById('start-time');
+            const endTimeInput = document.getElementById('end-time');
+            const trimmedVideos = document.getElementById('trimmed-videos');
+            const videoGrid = document.getElementById('video-grid');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            function showMessage(message, isError = false) {
+                errorMessage.style.display = isError ? 'block' : 'none';
+                successMessage.style.display = isError ? 'none' : 'block';
+                (isError ? errorMessage : successMessage).textContent = message;
+            }
+
+            function resetFileUploadArea() {
+                fileUploadArea.innerHTML = `
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop video or <span id="browse-span">browse</span></p>
+                    <p>MP4, MOV (Max 100MB)</p>
+                `;
+                document.getElementById('browse-span').addEventListener('click', () => fileUpload.click());
+            }
+
+            function updateVideoGrid() {
+                videoGrid.innerHTML = '';
+                clips.forEach((clip, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.innerHTML = `
+                        <div class="video-container">
+                            <video src="/static/trimmed/${clip.filename}" id="video-${index}"></video>
+                            <button class="play-button" data-index="${index}" title="Play/Pause">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="download-button" onclick="window.location.href='/static/trimmed/${clip.filename}'" title="Download Clip">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                        <input type="text" class="text-input" id="text-input-${index}" placeholder="Enter text for video" title="Add text to video">
+                        <button class="add-text-button" data-index="${index}" title="Apply text to video">Add Text</button>
+                        <button class="edit-button" data-index="${index}" title="Edit this clip">Edit Clip</button>
+                    `;
+                    videoGrid.appendChild(card);
+                });
+                trimmedVideos.style.display = clips.length ? 'block' : 'none';
+
+                // Add event listeners for play buttons
+                document.querySelectorAll('.play-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const index = button.getAttribute('data-index');
+                        const video = document.getElementById(`video-${index}`);
+                        if (video.paused) {
+                            video.play();
+                            button.innerHTML = '<i class="fas fa-pause"></i>';
+                        } else {
+                            video.pause();
+                            button.innerHTML = '<i class="fas fa-play"></i>';
+                        }
+                    });
+                });
+
+                // Add event listeners for edit buttons
+                document.querySelectorAll('.edit-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const index = button.getAttribute('data-index');
+                        currentEditClip = clips[index];
+                        startTimeInput.value = currentEditClip.start || 0;
+                        endTimeInput.value = currentEditClip.end || 30;
+                        originalVideo.src = `/static/trimmed/${currentEditClip.filename}`;
+                        videoPreview.style.display = 'block';
+                        showMessage('Ready to edit clip');
+                    });
+                });
+
+                // Add event listeners for text buttons
+                document.querySelectorAll('.add-text-button').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const index = button.getAttribute('data-index');
+                        const text = document.getElementById(`text-input-${index}`).value;
+                        if (!text) {
+                            showMessage('Please enter text', true);
+                            return;
+                        }
+                        try {
+                            const response = await fetch('/api/add_text', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ filename: clips[index].filename, text })
+                            });
+                            const data = await response.json();
+                            if (response.ok) {
+                                clips[index].filename = data.filename;
+                                updateVideoGrid();
+                                showMessage('Text added successfully!');
+                            } else {
+                                throw new Error(data.error);
+                            }
+                        } catch (error) {
+                            showMessage(error.message, true);
+                        }
+                    });
+                });
+            }
+
+            async function handleFileUpload(files) {
+                if (!files[0]) return;
+                const file = files[0];
+                if (file.size > 100 * 1024 * 1024) {
+                    showMessage('File size exceeds 100MB', true);
+                    resetFileUploadArea();
+                    return;
+                }
+                fileUploadArea.innerHTML = `<i class="fas fa-spinner fa-spin"></i><p>Uploading ${file.name}</p>`;
+                const formData = new FormData();
+                formData.append('file', file);
+                try {
+                    const response = await fetch('/api/upload_video', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        originalVideo.src = `/static/videos/${data.filename}`;
+                        videoPreview.style.display = 'block';
+                        fileUploadArea.innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i><p>${file.name}</p>`;
+                        currentEditClip = null; // Reset edit clip
+                        showMessage('Video uploaded successfully!');
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    showMessage(error.message, true);
+                    resetFileUploadArea();
+                }
+            }
+
+            async function trimVideo(duration = null, start = null, end = null) {
+                const filename = currentEditClip ? currentEditClip.filename : originalVideo.src.split('/').pop();
+                if (!filename) {
+                    showMessage('No video selected', true);
+                    return;
+                }
+                try {
+                    const response = await fetch('/api/trim_video', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename, duration, start, end, is_trimmed: !!currentEditClip })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        if (currentEditClip) {
+                            const index = clips.findIndex(c => c.filename === currentEditClip.filename);
+                            clips[index] = { filename: data.clips[0], start, end };
+                        } else {
+                            data.clips.forEach(clip => clips.push({ filename: clip, start, end }));
+                        }
+                        updateVideoGrid();
+                        showMessage('Video trimmed successfully!');
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    showMessage(error.message, true);
+                }
+            }
+
+            fileUpload.addEventListener('change', () => handleFileUpload(fileUpload.files));
+            browseSpan.addEventListener('click', () => fileUpload.click());
+            fileUploadArea.addEventListener('dragover', e => {
+                e.preventDefault();
+                fileUploadArea.classList.add('dragover');
+            });
+            fileUploadArea.addEventListener('dragleave', e => {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
+            });
+            fileUploadArea.addEventListener('drop', e => {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
+                handleFileUpload(e.dataTransfer.files);
+            });
+
+            trim30sButton.addEventListener('click', () => {
+                currentEditClip = null;
+                originalVideo.src.includes('trimmed') && (originalVideo.src = '');
+                videoPreview.style.display = originalVideo.src ? 'block' : 'none';
+                trimVideo(30);
+            });
+            trim60sButton.addEventListener('click', () => {
+                currentEditClip = null;
+                originalVideo.src.includes('trimmed') && (originalVideo.src = '');
+                videoPreview.style.display = originalVideo.src ? 'block' : 'none';
+                trimVideo(60);
+            });
+            manualTrimButton.addEventListener('click', () => {
+                const start = parseFloat(startTimeInput.value);
+                const end = parseFloat(endTimeInput.value);
+                if (end <= start || start < 0) {
+                    showMessage('Invalid start or end time', true);
+                    return;
+                }
+                trimVideo(null, start, end);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - StoryVerse AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1a56db;
+            --light-gray: #e5e7eb;
+            --dark-gray: #1f2937;
+            --white: #ffffff;
+            --off-white: #f8fafc;
+            --transition-medium: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--off-white);
+            color: var(--dark-gray);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .login-container {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-gray);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: var(--transition-medium);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition-medium);
+        }
+
+        .login-button:hover {
+            background: #1e3a8a;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-weight: 600;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+
+        .success-message {
+            color: #10b981;
+            font-weight: 600;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .forgot-password a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login to StoryVerse AI</h2>
+        <form id="login-form">
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="login-button">Login</button>
+        </form>
+        <p id="error-message" class="error-message"></p>
+        <p id="success-message" class="success-message"></p>
+        <div class="forgot-password">
+            <a href="/api/navigate/forgot">Forgot Password?</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        successMessage.textContent = data.message;
+                        successMessage.style.display = 'block';
+                        if (data.redirect) {
+                            window.location.href = data.redirect; // Redirect to index.html
+                        }
+                    } else {
+                        errorMessage.textContent = data.message;
+                        errorMessage.style.display = 'block';
+                    }
+                } catch (error) {
+                    errorMessage.textContent = 'An error occurred. Please try again.';
+                    errorMessage.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

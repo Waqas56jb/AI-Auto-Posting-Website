@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryVerse AI | Next-Gen Video Creation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1a56db;
+            --deep-blue: #1e3a8a;
+            --light-blue: #3b82f6;
+            --accent-blue: #60a5fa;
+            --white: #ffffff;
+            --off-white: #f8fafc;
+            --light-gray: #e5e7eb;
+            --dark-gray: #1f2937;
+            --gradient-blue: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
+            --neumorphic-shadow: 8px 8px 16px rgba(0, 0, 0, 0.1), -8px -8px 16px rgba(255, 255, 255, 0.1);
+            --neumorphic-inset: inset 4px 4px 8px rgba(0, 0, 0, 0.1), inset -4px -4px 8px rgba(255, 255, 255, 0.1);
+            --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-medium: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--off-white);
+            color: var(--dark-gray);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(26, 86, 219, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 2rem;
+            color: var(--white);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            color: var(--accent-blue);
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            position: relative;
+            padding: 0.5rem 0;
+            transition: var(--transition-fast);
+            opacity: 0.9;
+        }
+
+        nav a:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--white);
+            transition: var(--transition-medium);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        .cta-button {
+            background: var(--white);
+            color: var(--primary-blue);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition-medium);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .cta-button i {
+            font-size: 1.1rem;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+            background: var(--gradient-blue);
+            color: var(--white);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="%23ffffff" opacity=".05"/><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-56.24V0Z" fill="%23ffffff" opacity=".1"/><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%23ffffff" opacity=".2"/></svg>');
+            background-size: cover;
+            background-position: bottom;
+            background-repeat: no-repeat;
+            opacity: 0.8;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-text {
+            max-width: 700px;
+        }
+
+        .hero h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+            max-width: 600px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .primary-button {
+            background: var(--white);
+            color: var(--primary-blue);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-medium);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .secondary-button {
+            background: transparent;
+            color: var(--white);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: var(--transition-medium);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .secondary-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .hero-image {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50%;
+            max-width: 700px;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            border-radius: 20px;
+        }
+
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .main-content {
+            padding: 6rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--deep-blue);
+            margin-bottom: 3rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--light-blue);
+            border-radius: 2px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 5rem;
+        }
+
+        .feature-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: var(--neumorphic-shadow);
+            transition: var(--transition-medium);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--gradient-blue);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+            font-size: 1.8rem;
+            box-shadow: 0 10px 20px rgba(26, 86, 219, 0.2);
+        }
+
+        .feature-card h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--deep-blue);
+        }
+
+        .feature-card p {
+            color: var(--dark-gray);
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .feature-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .feature-link:hover {
+            color: var(--deep-blue);
+            gap: 0.75rem;
+        }
+
+        .creation-panel {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--neumorphic-shadow);
+            margin-bottom: 5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .panel-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--deep-blue);
+        }
+
+        .panel-subtitle {
+            color: var(--dark-gray);
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--deep-blue);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1.25rem;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: var(--transition-fast);
+            background: var(--off-white);
+            box-shadow: var(--neumorphic-inset);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        textarea.input-field {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border: 2px dashed var(--light-gray);
+            border-radius: 12px;
+            background: var(--off-white);
+            cursor: pointer;
+            transition: var(--transition-fast);
+            position: relative;
+        }
+
+        .file-upload:hover, .file-upload.dragover {
+            border-color: var(--primary-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .file-upload i {
+            font-size: 2.5rem;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+
+        .file-upload p {
+            color: var(--dark-gray);
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .file-upload span {
+            color: var(--primary-blue);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .file-upload span:hover {
+            text-decoration: underline;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .generate-button, .secondary-action {
+            background: var(--gradient-blue);
+            color: var(--white);
+            padding: 1.25rem 2.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-medium);
+            box-shadow: 0 10px 20px rgba(26, 86, 219, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .generate-button:hover, .secondary-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(26, 86, 219, 0.4);
+            background: linear-gradient(135deg, var(--deep-blue), var(--primary-blue));
+        }
+
+        .secondary-action {
+            background: var(--white);
+            color: var(--primary-blue);
+            border: 2px solid var(--light-gray);
+        }
+
+        .secondary-action:hover {
+            background: var(--off-white);
+            border-color: var(--primary-blue);
+        }
+
+        .story-buttons {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .story-button {
+            background: var(--white);
+            color: var(--primary-blue);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: 2px solid var(--light-gray);
+            cursor: pointer;
+            transition: var(--transition-medium);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .story-button:hover {
+            background: var(--off-white);
+            border-color: var(--primary-blue);
+            transform: translateY(-3px);
+        }
+
+        .result-section {
+            margin-top: 2rem;
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--neumorphic-shadow);
+        }
+
+        .result-section h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--deep-blue);
+            margin-bottom: 1rem;
+        }
+
+        .result-section pre {
+            background: var(--off-white);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .success-message {
+            color: #10b981;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .preview-section {
+            display: flex;
+            gap: 3rem;
+            margin-bottom: 5rem;
+            align-items: center;
+        }
+
+        .preview-content {
+            flex: 1;
+        }
+
+        .preview-image {
+            flex: 1;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-image img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .preview-image:hover img {
+            transform: scale(1.03);
+        }
+
+        .testimonials {
+            margin-bottom: 5rem;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--neumorphic-shadow);
+            position: relative;
+        }
+
+        .testimonial-card::before {
+            content: '"';
+            position: absolute;
+            top: 1rem;
+            left: 1.5rem;
+            font-family: serif;
+            font-size: 5rem;
+            color: var(--light-gray);
+            line-height: 1;
+            z-index: 0;
+        }
+
+        .testimonial-content {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 1.5rem;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .author-info h4 {
+            font-weight: 600;
+            color: var(--deep-blue);
+        }
+
+        .author-info p {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+            opacity: 0.8;
+        }
+
+        .pricing {
+            margin-bottom: 5rem;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .pricing-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: var(--neumorphic-shadow);
+            transition: var(--transition-medium);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .pricing-card.popular {
+            border: 2px solid var(--primary-blue);
+            transform: translateY(-10px);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 0;
+            right: 2rem;
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 0.5rem 1.5rem;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .pricing-tier {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--deep-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-price span {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--dark-gray);
+            opacity: 0.8;
+        }
+
+        .pricing-features {
+            margin-bottom: 2rem;
+        }
+
+        .pricing-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .pricing-feature i {
+            color: var(--primary-blue);
+        }
+
+        .pricing-button {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-medium);
+        }
+
+        .pricing-card.popular .pricing-button {
+            background: var(--gradient-blue);
+            color: var(--white);
+            box-shadow: 0 10px 20px rgba(26, 86, 219, 0.3);
+        }
+
+        .pricing-card.popular .pricing-button:hover {
+            background: linear-gradient(135deg, var(--deep-blue), var(--primary-blue));
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(26, 86, 219, 0.4);
+        }
+
+        .pricing-card:not(.popular) .pricing-button {
+            background: var(--white);
+            color: var(--primary-blue);
+            border: 2px solid var(--light-gray);
+        }
+
+        .pricing-card:not(.popular) .pricing-button:hover {
+            background: var(--off-white);
+            border-color: var(--primary-blue);
+            transform: translateY(-3px);
+        }
+
+        .faq {
+            margin-bottom: 5rem;
+        }
+
+        .faq-item {
+            background: var(--white);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: var(--neumorphic-shadow);
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--deep-blue);
+            transition: var(--transition-fast);
+        }
+
+        .faq-question:hover {
+            background: var(--off-white);
+        }
+
+        .faq-question i {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            padding: 0 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 1.5rem 1.5rem;
+            max-height: 500px;
+        }
+
+        footer {
+            background: var(--deep-blue);
+            color: var(--white);
+            padding: 5rem 2rem 2rem;
+            position: relative;
+        }
+
+        .footer-wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="%23ffffff" opacity=".1"/><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-56.24V0Z" fill="%23ffffff" opacity=".1"/><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%23ffffff" opacity=".1"/></svg>');
+            background-size: cover;
+            transform: rotate(180deg);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .footer-logo {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: var(--white);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-logo i {
+            color: var(--accent-blue);
+        }
+
+        .footer-about p {
+            opacity: 0.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            transition: var(--transition-fast);
+        }
+
+        .footer-social a:hover {
+            background: var(--primary-blue);
+            transform: translateY(-3px);
+        }
+
+        .footer-links h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--white);
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: var(--white);
+            opacity: 0.8;
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+            padding-left: 5px;
+        }
+
+        .footer-newsletter p {
+            opacity: 0.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .newsletter-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .newsletter-button {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 0 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+
+        .newsletter-button:hover {
+            background: var(--light-blue);
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 3rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .footer-bottom p {
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .footer-legal {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-legal a {
+            color: var(--white);
+            opacity: 0.7;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .footer-legal a:hover {
+            opacity: 1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @media (max-width: 1024px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+            
+            .preview-section {
+                flex-direction: column;
+            }
+            
+            .preview-content {
+                order: 2;
+            }
+            
+            .preview-image {
+                order: 1;
+                margin-bottom: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero {
+                padding: 7rem 1rem 3rem;
+                text-align: center;
+            }
+            
+            .hero-content {
+                align-items: center;
+            }
+            
+            .hero-text {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .hero-image {
+                position: relative;
+                width: 100%;
+                transform: none;
+                margin-top: 2rem;
+            }
+            
+            .main-content {
+                padding: 3rem 1rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .feature-card, .pricing-card {
+                padding: 1.5rem;
+            }
+            
+            .creation-panel {
+                padding: 1.5rem;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-legal {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-magic logo-icon"></i>
+            <span>StoryVerse</span>
+        </div>
+        <nav>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#testimonials">Testimonials</a>
+            <a href="#faq">FAQ</a>
+        </nav>
+        <button class="cta-button">
+            <i class="fas fa-rocket"></i> Get Started
+        </button>
+    </header>
+
+    <section class="hero">
+        <div class="particles" id="particles-js"></div>
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>Transform Your Ideas Into Viral Videos</h1>
+                <p>StoryVerse AI helps you create stunning, engaging content for YouTube, TikTok, and Instagram in minutes. No technical skills required.</p>
+                <div class="hero-buttons">
+                    <button class="primary-button">
+                        <i class="fas fa-play-circle"></i> Watch Demo
+                    </button>
+                    <button class="secondary-button">
+                        <i class="fas fa-star"></i> Start Free Trial
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="main-content">
+        <section id="features">
+            <h2 class="section-title">Powerful AI Video Creation</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI Story Generation</h3>
+                    <p>Our advanced AI crafts compelling narratives from simple prompts, perfect for viral content.</p>
+                    <a href="#" class="feature-link">
+                        Learn more <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <h3>Voice Transcription</h3>
+                    <p>Automatically convert audio and video files into editable text with industry-leading accuracy.</p>
+                    <a href="#" class="feature-link">
+                        Learn more <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <h3>Video Production</h3>
+                    <p>Transform text into professional videos with AI avatars, animations, and music.</p>
+                    <a href="#" class="feature-link">
+                        Learn more <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works">
+            <div class="creation-panel">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Create Your Story</h3>
+                        <p class="panel-subtitle">Start with text, audio, or let our AI generate ideas for you</p>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="story-text" class="input-label">Your Story Content</label>
+                    <textarea id="story-text" class="input-field" placeholder="Type or paste your story here..."></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Or Upload Media</label>
+                    <div class="file-upload" id="file-upload-area">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop files here or <span id="browse-span">browse</span></p>
+                        <p class="small">Supports MP3, WAV, MP4, MOV (Max 100MB)</p>
+                        <input type="file" id="file-upload" accept="audio/*,video/*">
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="secondary-action" id="suggest-button">
+                        <i class="fas fa-lightbulb"></i> AI Prompt Suggestions
+                    </button>
+                    <button class="generate-button" id="generate-button">
+                        <i class="fas fa-magic"></i> Generate Story
+                    </button>
+                </div>
+                
+                <div class="result-section" id="result-section" style="display: none;">
+                    <h3>Results</h3>
+                    <pre id="result-text"></pre>
+                    <p id="result-message" class="success-message" style="display: none;"></p>
+                    <p id="error-message" class="error-message" style="display: none;"></p>
+                </div>
+
+                <div class="input-group" id="story-section" style="display: none;">
+                    <label for="generated-story" class="input-label">Generated Story</label>
+                    <textarea id="generated-story" class="input-field" placeholder="Your generated story will appear here..."></textarea>
+                    <div class="story-buttons">
+                        <button class="story-button" id="download-button">
+                            <i class="fas fa-download"></i> Download Story
+                        </button>
+                        <button class="story-button" id="copy-button">
+                            <i class="fas fa-copy"></i> Copy Text
+                        </button>
+                        <button class="story-button" id="cancel-button">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="preview-section">
+            <div class="preview-content">
+                <h2 class="section-title">See Your Content Come to Life</h2>
+                <p>Our AI analyzes your story and automatically creates engaging visuals, selects appropriate music, and generates professional-grade videos optimized for each platform.</p>
+                <ul style="margin-top: 1.5rem; list-style-position: inside;">
+                    <li style="margin-bottom: 0.75rem;">YouTube-optimized long-form content</li>
+                    <li style="margin-bottom: 0.75rem;">TikTok-ready short clips</li>
+                    <li style="margin-bottom: 0.75rem;">Instagram Reels with trending music</li>
+                    <li>Customizable templates for any niche</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="testimonials" id="testimonials">
+            <h2 class="section-title">Trusted by Creators Worldwide</h2>
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>StoryVerse has completely transformed my content creation process. I went from spending hours editing to producing 3-5 high-quality videos daily!</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah J." class="author-avatar">
+                        <div class="author-info">
+                            <h4>Sarah J.</h4>
+                            <p>Lifestyle Creator</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>The AI suggestions alone are worth the subscription. I've doubled my engagement by using their data-driven content recommendations.</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Marcus T." class="author-avatar">
+                        <div class="author-info">
+                            <h4>Marcus T.</h4>
+                            <p>Tech Reviewer</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>As a small business owner, I don't have time for complex video editing. StoryVerse lets me create professional ads in minutes.</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Priya K." class="author-avatar">
+                        <div class="author-info">
+                            <h4>Priya K.</h4>
+                            <p>E-commerce Entrepreneur</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pricing" id="pricing">
+            <h2 class="section-title">Simple, Transparent Pricing</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h4 class="pricing-tier">Starter</h4>
+                    <div class="pricing-price">$19<span>/month</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>10 videos per month</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Basic AI avatars</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Standard music library</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>720p video resolution</span>
+                        </div>
+                    </div>
+                    <button class="pricing-button">Get Started</button>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="popular-badge">Most Popular</div>
+                    <h4 class="pricing-tier">Pro</h4>
+                    <div class="pricing-price">$49<span>/month</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>50 videos per month</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Premium AI avatars</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Extended music library</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>1080p video resolution</span>
+                        </div>
+                    </div>
+                    <button class="pricing-button">Get Started</button>
+                </div>
+                <div class="pricing-card">
+                    <h4 class="pricing-tier">Enterprise</h4>
+                    <div class="pricing-price">$99<span>/month</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Unlimited videos</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Custom AI avatars</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Premium+ music library</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>4K video resolution</span>
+                        </div>
+                    </div>
+                    <button class="pricing-button">Get Started</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq" id="faq">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>How does the AI video creation work?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Our AI analyzes your text to understand the narrative structure, key points, and emotional tone. It then selects appropriate visuals, animations, and music to create a compelling video. You can customize every aspect before finalizing.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>What video formats are supported?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>We support all major formats including MP4, MOV, and AVI. The videos are optimized for each platform (9:16 for TikTok/Reels, 16:9 for YouTube, and 1:1 for Instagram posts).</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Can I use my own voice or music?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Absolutely! You can upload your own audio files or record directly in the app. Our AI will sync the visuals perfectly with your audio.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Is there a free trial available?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Yes, we offer a 7-day free trial with access to all Pro features. No credit card required to start.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-wave"></div>
+        <div class="footer-content">
+            <div class="footer-about">
+                <div class="footer-logo">
+                    <i class="fas fa-magic"></i>
+                    <span>StoryVerse</span>
+                </div>
+                <p>Empowering creators with AI-powered video tools to tell better stories and grow their audience.</p>
+                <div class="footer-social">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h3>Product</h3>
+                <ul>
+                    <li><a href="#">Features</a></li>
+                    <li><a href="#">Pricing</a></li>
+                    <li><a href="#">Templates</a></li>
+                    <li><a href="#">Integrations</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h3>Resources</h3>
+                <ul>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Tutorials</a></li>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Community</a></li>
+                </ul>
+            </div>
+            <div class="footer-newsletter">
+                <h3>Stay Updated</h3>
+                <p>Subscribe to our newsletter for product updates and content tips.</p>
+                <div class="newsletter-form">
+                    <input type="email" placeholder="Your email" class="newsletter-input" required>
+                    <button type="submit" class="newsletter-button">Join</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 StoryVerse AI. All rights reserved.</p>
+            <div class="footer-legal">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Cookie Policy</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const storyText = document.getElementById('story-text');
+            const fileUpload = document.getElementById('file-upload');
+            const fileUploadArea = document.getElementById('file-upload-area');
+            const browseSpan = document.getElementById('browse-span');
+            const suggestButton = document.getElementById('suggest-button');
+            const generateButton = document.getElementById('generate-button');
+            const resultSection = document.getElementById('result-section');
+            const resultText = document.getElementById('result-text');
+            const resultMessage = document.getElementById('result-message');
+            const errorMessage = document.getElementById('error-message');
+            const storySection = document.getElementById('story-section');
+            const generatedStory = document.getElementById('generated-story');
+            const downloadButton = document.getElementById('download-button');
+            const copyButton = document.getElementById('copy-button');
+            const cancelButton = document.getElementById('cancel-button');
+
+            // Helper function to show messages
+            function showMessage(message, isError = false) {
+                resultSection.style.display = 'block';
+                if (isError) {
+                    errorMessage.textContent = message;
+                    errorMessage.style.display = 'block';
+                    resultMessage.style.display = 'none';
+                } else {
+                    resultMessage.textContent = message;
+                    resultMessage.style.display = 'block';
+                    errorMessage.style.display = 'none';
+                }
+                resultText.textContent = '';
+            }
+
+            // Helper function to update button state
+            function setButtonState(button, disabled, text) {
+                button.disabled = disabled;
+                button.innerHTML = disabled ? `<i class="fas fa-spinner fa-spin"></i> ${text}` : `<i class="fas ${button.id === 'suggest-button' ? 'fa-lightbulb' : 'fa-magic'}"></i> ${text}`;
+            }
+
+            // Reset file upload area to default state
+            function resetFileUploadArea() {
+                fileUploadArea.innerHTML = `
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop files here or <span id="browse-span">browse</span></p>
+                    <p class="small">Supports MP3, WAV, MP4, MOV (Max 100MB)</p>
+                `;
+                fileUploadArea.classList.remove('dragover');
+                document.getElementById('browse-span').addEventListener('click', () => fileUpload.click());
+            }
+
+            // Handle file upload (for both click and drag-and-drop)
+            async function handleFileUpload(files) {
+                if (files && files[0]) {
+                    const file = files[0];
+                    if (file.size > 100 * 1024 * 1024) {
+                        showMessage('File size exceeds 100MB limit', true);
+                        resetFileUploadArea();
+                        return;
+                    }
+                    fileUploadArea.innerHTML = `
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Uploading ${file.name}</p>
+                        <p class="small">Please wait...</p>
+                    `;
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    try {
+                        const response = await fetch('/api/transcribe', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await response.json();
+                        if (response.ok) {
+                            storyText.value = data.transcript;
+                            fileUploadArea.innerHTML = `
+                                <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                                <p>${file.name}</p>
+                                <p class="small">Transcription complete</p>
+                            `;
+                            showMessage('Transcription completed successfully!');
+                        } else {
+                            throw new Error(data.error || 'Transcription failed');
+                        }
+                    } catch (error) {
+                        showMessage(error.message, true);
+                        resetFileUploadArea();
+                    }
+                }
+            }
+
+            // File input change event
+            fileUpload.addEventListener('change', function() {
+                handleFileUpload(this.files);
+            });
+
+            // Click-to-browse functionality
+            browseSpan.addEventListener('click', () => {
+                fileUpload.click();
+            });
+
+            // Drag-and-drop functionality
+            fileUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.add('dragover');
+            });
+
+            fileUploadArea.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.add('dragover');
+            });
+
+            fileUploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
+            });
+
+            fileUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                handleFileUpload(files);
+            });
+
+            // AI Prompt Suggestions with Grammar/Spelling Check
+            suggestButton.addEventListener('click', async function() {
+                const text = storyText.value.trim();
+                if (!text) {
+                    showMessage('Please enter text or upload a file first', true);
+                    return;
+                }
+                setButtonState(suggestButton, true, 'Checking Grammar...');
+                try {
+                    const response = await fetch('/api/check_grammar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        // Split text into sentences
+                        const sentences = text.split(/(?<=\.|\?|!)\s+/).filter(s => s.trim());
+                        let highlightedText = '';
+                        sentences.forEach((sentence, index) => {
+                            const issue = data.issues.find(issue => issue.original === sentence.trim());
+                            if (issue) {
+                                highlightedText += `<span style="color: #dc2626;">${sentence}</span>\n<span style="color: #10b981;">${issue.corrected}</span>\n`;
+                            } else {
+                                highlightedText += sentence + '\n';
+                            }
+                        });
+                        resultText.innerHTML = highlightedText;
+                        resultSection.style.display = 'block';
+                        showMessage('Grammar and spelling check completed!');
+                    } else {
+                        throw new Error(data.error || 'Grammar check failed');
+                    }
+                } catch (error) {
+                    showMessage(error.message, true);
+                } finally {
+                    setButtonState(suggestButton, false, 'AI Prompt Suggestions');
+                }
+            });
+
+            // Generate Story
+            generateButton.addEventListener('click', async function() {
+                const text = storyText.value.trim();
+                if (!text) {
+                    showMessage('Please enter text or upload a file first', true);
+                    return;
+                }
+                setButtonState(generateButton, true, 'Generating Story...');
+                try {
+                    const response = await fetch('/api/generate_story', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        generatedStory.value = data.story;
+                        storySection.style.display = 'block';
+                        showMessage('Story generated successfully!');
+                    } else {
+                        throw new Error(data.error || 'Story generation failed');
+                    }
+                } catch (error) {
+                    showMessage(error.message, true);
+                } finally {
+                    setButtonState(generateButton, false, 'Generate Story');
+                }
+            });
+
+            // Download Story
+            downloadButton.addEventListener('click', () => {
+                const text = generatedStory.value;
+                if (!text) {
+                    showMessage('No story to download', true);
+                    return;
+                }
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'story.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+                showMessage('Story downloaded successfully!');
+            });
+
+            // Copy Text
+            copyButton.addEventListener('click', () => {
+                const text = generatedStory.value;
+                if (!text) {
+                    showMessage('No story to copy', true);
+                    return;
+                }
+                navigator.clipboard.writeText(text).then(() => {
+                    showMessage('Story copied to clipboard!');
+                }).catch(err => {
+                    showMessage('Failed to copy story', true);
+                });
+            });
+
+            // Cancel Story
+            cancelButton.addEventListener('click', () => {
+                generatedStory.value = '';
+                storySection.style.display = 'none';
+                showMessage('Story generation cancelled.');
+            });
+
+            // Particle animation
+            const particlesContainer = document.querySelector('.particles');
+            const particleCount = 30;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                const size = Math.random() * 5 + 2;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const delay = Math.random() * 5;
+                const duration = Math.random() * 10 + 10;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                particle.style.opacity = Math.random() * 0.5 + 0.1;
+                particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+                particlesContainer.appendChild(particle);
+            }
+
+            // FAQ accordion functionality
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+                    faqItems.forEach(otherItem => {
+                        if (otherItem !== item) {
+                            otherItem.classList.remove('active');
+                        }
+                    });
+                    item.classList.toggle('active');
+                });
+            });
+
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with AI Social Media Bot</title>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <style>
+    :root {
+      --primary-blue: #4361ee;
+      --dark-blue: #3a0ca3;
+      --light-blue: #4cc9f0;
+      --white: #ffffff;
+      --light-gray: #f8f9fa;
+      --success-green: #2a9d8f;
+      --warning-orange: #f4a261;
+      --danger-red: #e63946;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--white);
+    }
+    
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background-color: var(--dark-blue);
+      z-index: -1;
+    }
+    
+    .chat-container {
+      max-width: 600px;
+      margin: 5rem auto;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .chat-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--light-blue);
+    }
+    
+    .chat-controls {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .btn {
+      padding: 0.7rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      background: var(--light-blue);
+      color: var(--dark-blue);
+      border: 2px solid var(--light-blue);
+    }
+    
+    .btn:hover {
+      background: transparent;
+      color: var(--light-blue);
+    }
+    
+    .chat-body {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .message {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 10px;
+      max-width: 80%;
+    }
+    
+    .user-message {
+      background: var(--primary-blue);
+      color: var(--white);
+      margin-left: auto;
+    }
+    
+    .bot-message {
+      background: rgba(255, 255, 255, 0.2);
+      color: var(--white);
+      margin-right: auto;
+    }
+    
+    .chat-input {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    input[type="text"] {
+      flex: 1;
+      padding: 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--white);
+      font-size: 1rem;
+    }
+    
+    input[type="text"]::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    select {
+      padding: 0.8rem;
+      border-radius: 10px;
+      background: var(--light-blue);
+      color: var(--dark-blue);
+      border: none;
+      cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+      .chat-container {
+        margin: 2rem;
+        padding: 1.5rem;
+      }
+      
+      .chat-title {
+        font-size: 1.5rem;
+      }
+      
+      .chat-input {
+        flex-direction: column;
+      }
+      
+      input[type="text"], select {
+        width: 100%;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .chat-container {
+        margin: 1rem;
+        padding: 1rem;
+      }
+      
+      .chat-title {
+        font-size: 1.2rem;
+      }
+      
+      .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="particles-js"></div>
+  
+  <div class="chat-container animate__animated animate__fadeIn">
+    <div class="chat-header">
+      <h2 class="chat-title">AI Social Media Assistant</h2>
+      
+    </div>
+    
+    <div class="chat-body" id="chat-body">
+      
+    </div>
+    
+    <div class="chat-input">
+      <select id="language-select">
+        <option value="en">English 🇬🇧</option>
+        <option value="es">Spanish 🇪🇸</option>
+        <option value="fr">French 🇫🇷</option>
+        <option value="de">German 🇩🇪</option>
+        <option value="it">Italian 🇮🇹</option>
+        <option value="pt">Portuguese 🇵🇹</option>
+        <option value="ru">Russian 🇷🇺</option>
+        <option value="zh">Chinese 🇨🇳</option>
+        <option value="ja">Japanese 🇯🇵</option>
+        <option value="ar">Arabic 🇸🇦</option>
+        <option value="hi">Hindi 🇮🇳</option>
+      </select>
+      <input type="text" id="user-input" placeholder="Type your message here...">
+      <button class="btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+  
+  <script>
+    particlesJS('particles-js', {
+      particles: {
+        number: { value: 80, density: { enable: true, value_area: 800 } },
+        color: { value: "#ffffff" },
+        shape: { type: "circle" },
+        opacity: { value: 0.5, random: true },
+        size: { value: 4, random: true },
+        line_linked: { 
+          enable: true, 
+          distance: 150, 
+          color: "#ffffff", 
+          opacity: 0.3, 
+          width: 1 
+        },
+        move: { 
+          enable: true, 
+          speed: 3, 
+          direction: "none",
+          random: true,
+          straight: false,
+          out_mode: "out" 
+        }
+      },
+      interactivity: {
+        detect_on: "window",
+        events: {
+          onhover: { enable: true, mode: "repulse" },
+          onclick: { enable: true, mode: "push" }
+        },
+        modes: {
+          repulse: { distance: 100, duration: 0.4 },
+          push: { particles_nb: 4 }
+        }
+      },
+      retina_detect: true
+    });
+    
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const language = document.getElementById('language-select').value;
+      const chatBody = document.getElementById('chat-body');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      const userMessage = document.createElement('div');
+      userMessage.className = 'message user-message';
+      userMessage.textContent = message;
+      chatBody.appendChild(userMessage);
+      chatBody.scrollTop = chatBody.scrollHeight;
+      
+      input.value = '';
+      
+      try {
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: message, input_lang: language, output_lang: language })
+        });
+        const data = await response.json();
+        
+        const botMessage = document.createElement('div');
+        botMessage.className = 'message bot-message';
+        botMessage.textContent = data.response;
+        chatBody.appendChild(botMessage);
+        chatBody.scrollTop = chatBody.scrollHeight;
+      } catch (error) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'message bot-message';
+        errorMessage.textContent = 'Error: Could not connect to the server.';
+        chatBody.appendChild(errorMessage);
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
+    }
+    
+    document.getElementById('download-btn').addEventListener('click', async () => {
+      const chatBody = document.getElementById('chat-body');
+      const messages = Array.from(chatBody.getElementsByClassName('message'))
+        .map(msg => `${msg.classList.contains('user-message') ? 'You' : 'Bot'}: ${msg.textContent}`)
+        .join('\n');
+        
+      try {
+        const response = await fetch('/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: messages })
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          window.location.href = data.url;
+        } else {
+          alert(data.message);
+        }
+      } catch (error) {
+        alert('Error downloading chat history.');
+      }
+    });
+    
+    document.getElementById('user-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
