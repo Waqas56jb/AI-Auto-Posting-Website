@@ -531,7 +531,7 @@ def ask_question():
     data = request.get_json()
     if not data:
         logger.warning("Chatbot query attempt with missing JSON data")
-        return jsonify({'response': '⚠️ Please enter a message.', 'lang': 'en'})
+        return jsonify({'response': '\u26a0\ufe0f Please enter a message.', 'lang': 'en'})
 
     user_input = data.get('query', '').strip()
     input_lang = data.get('input_lang', 'en')
@@ -539,14 +539,23 @@ def ask_question():
 
     if not user_input:
         logger.warning("Chatbot query attempt with empty input")
-        return jsonify({'response': '⚠️ Please enter a message.', 'lang': output_lang})
+        return jsonify({'response': '\u26a0\ufe0f Please enter a message.', 'lang': output_lang})
 
     try:
         if input_lang != 'en':
             user_input = translate_text(user_input, 'en')
 
-        response = model.generate_content(user_input)
-        text = response.text.strip() if response.text else '⚠️ No response received from the model.'
+        # Project-specific context, no mention of Lucy, no fixed intro
+        project_context = (
+            "You are a professional virtual assistant for a story generator project. "
+            "You help users generate stories for video content, explain how the project works, "
+            "and guide them on posting to TikTok, Facebook, YouTube, and LinkedIn. "
+            "Be friendly, helpful, and focused on story/video generation. Do not use any name or fixed introduction."
+        )
+        full_prompt = f"{project_context}\nUser: {user_input}"
+
+        response = model.generate_content(full_prompt)
+        text = response.text.strip() if response.text else '\u26a0\ufe0f No response received from the model.'
 
         if output_lang != 'en':
             text = translate_text(text, output_lang)
@@ -555,10 +564,35 @@ def ask_question():
         return jsonify({'response': text, 'lang': output_lang})
     except Exception as e:
         logger.error(f"Error processing chatbot query: {str(e)}")
-        error_msg = f'❌ Error: {str(e)}'
+        error_msg = f'\u274c Error: {str(e)}'
         if output_lang != 'en':
             error_msg = translate_text(error_msg, output_lang)
         return jsonify({'response': error_msg, 'lang': output_lang})
+
+@app.route('/api/gemini_chat', methods=['POST'])
+def gemini_chat():
+    data = request.get_json()
+    if not data:
+        return jsonify({'response': 'No input provided.'}), 400
+    user_input = data.get('query', '').strip()
+    if not user_input:
+        return jsonify({'response': 'Please enter a message.'}), 400
+    try:
+        # Project-specific context, no name, no fixed intro
+        project_context = (
+    "please keep length of response focused to the point and concise",
+    "You are a professional virtual assistant for a story generator project. "
+    "Respond in a friendly, concise, conversational way. "
+    "Answer user questions, help generate stories for video content, and guide them on posting to TikTok, Facebook, YouTube, and LinkedIn. "
+    "Do not use any name or fixed introduction. If the user just says hello, greet them briefly and ask how you can help."
+
+        )
+        full_prompt = f"{project_context}\nUser: {user_input}"
+        response = model.generate_content(full_prompt)
+        text = response.text.strip() if response.text else 'No response received from Gemini.'
+        return jsonify({'response': text})
+    except Exception as e:
+        return jsonify({'response': f'Error: {str(e)}'}), 500
 
 @app.route('/download', methods=['POST'])
 def download_text():
@@ -815,6 +849,10 @@ STORY TO VALIDATE:
     except Exception as e:
         logger.error(f"Error validating story: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/chatbot')
+def chatbot_page():
+    return render_template('chatbot.html', languages=LANGUAGES)
 
 if __name__ == '__main__':
     logger.info("Starting Flask application")
