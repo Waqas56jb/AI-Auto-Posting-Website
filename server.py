@@ -82,18 +82,17 @@ genai.configure(api_key=google_api_key)
 model = genai.GenerativeModel(
     model_name='gemini-1.5-flash',
     system_instruction="""
-    You are an expert social media content assistant specializing in concise, engaging video scripts.
-    Generate scripts with:
-    - **Caption**: Short, platform-optimized caption if requested.
-    - **Video Script**: Clear, concise narrative with slightly expanded segments.
-    - **Tone**: Calm, confident, informative, slightly playful, British, non-salesy.
-    - **Structure**: Match the exact format provided, with short sentences and no filler words.
-    For queries, provide brief, clear responses.
+    You are Lucy from "Lucy & The Wealth Machine," a British social media content creator. 
+    Generate video scripts as if you are speaking directly to a friend, using a calm, reflective, personal, and passionate tone. 
+    Use exclusively UK English spelling (e.g., realised, neighbours, organised) and vocabulary (e.g., flat, lift, lorry). 
+    Ensure the narrative feels authentic, with consistent energy and emotion, as if one person is sharing their heartfelt story. 
+    Avoid Americanisms (e.g., apartment, elevator, truck), hype, or salesy language. 
+    Each segment should flow naturally into the next, maintaining rhythm and a single voice throughout.
     """,
     generation_config={
-        'temperature': 0.7,
-        'top_p': 0.9,
-        'top_k': 40,
+        'temperature': 0.6,
+        'top_p': 0.85,
+        'top_k': 35,
         'max_output_tokens': 800
     }
 )
@@ -137,83 +136,128 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def clean_lucy_story(story):
-    # Remove specified headers, keep lessons, reduce filler
-    patterns = [
-        r'(?im)^\s*Final CTA:?\s*',
-        r'(?im)^\s*Segment\s*\d+:?\s*',
-        r'(?im)^\s*Core Story Framework:?\s*',
-        r'(?im)^\s*Core Lesson:?\s*',
-        r'(?im)^\s*Micro-Lessons:?\s*',
-        r'(?im)^\s*microlessons:?\s*',
-        r'(?im)^\s*Video Length:?\s*.*',
-        r'(?im)^\s*Style:?\s*.*',
-        r'(?im)^\s*story title:?\s*',
-        r'(?im)^\s*\ud83d\udcdc\s*Core Story Framework:?\s*',
-        r'(?im)^\s*\ud83c\udfac\s*Script Title:?\s*(.*)',
-        r'(?im)^\s*\ud83c\udfaf\s*Final CTA:?\s*',
-    ]
     cleaned = story
-    for i, pat in enumerate(patterns[:-1]):
-        cleaned = re.sub(pat, '', cleaned)
-    title_match = re.search(patterns[-2], cleaned, re.IGNORECASE | re.MULTILINE)
-    if title_match:
-        title = title_match.group(1).strip()
-        cleaned = re.sub(patterns[-2], title, cleaned)
-    # Keep lessons (lines starting with "- ") but remove filler
-    lines = cleaned.split('\n')
-    cleaned_lines = []
-    in_segment = False
-    for line in lines:
-        line = line.strip()
-        if line.startswith('🎬'):
-            in_segment = True
-            cleaned_lines.append(line)
-        elif in_segment and (line.startswith('“') and line.endswith('”')):
-            line = re.sub(r'\b(just|really|very|completely|totally)\b', '', line)
-            cleaned_lines.append(line.strip())
-        elif line.startswith('CUT'):
-            cleaned_lines.append(line)
-            in_segment = False
-        elif line and not line.startswith('- '):  # Keep non-lesson lines
-            line = re.sub(r'\b(just|really|very|completely|totally)\b', '', line)
-            cleaned_lines.append(line)
-        elif line.startswith('- '):  # Keep lesson lines
-            line = re.sub(r'\b(just|really|very|completely|totally)\b', '', line)
-            cleaned_lines.append(line.strip())
-    cleaned = '\n'.join(cleaned_lines)
+    cleaned = re.sub(r'^```.*?\n', '', cleaned, flags=re.MULTILINE)
+    cleaned = re.sub(r'```$', '', cleaned.strip())
+    cleaned = re.sub(r'^-(\s+)?', '', cleaned, flags=re.MULTILINE)
+    cleaned = cleaned.replace('"', '“').replace('"', '”')
+    cleaned = re.sub(r'\b(just|really|very|completely|totally)\b', '', cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r'\n{2,}', '\n', cleaned)
+    cleaned = cleaned.replace('\r\n', '\n')
     return cleaned.strip()
 
-def extract_framing_and_story(transcript):
-    framing_match = re.search(r'framing starts:(.*?)(framing ends)', transcript, re.IGNORECASE | re.DOTALL)
-    if framing_match:
-        framing = framing_match.group(1).strip()
-        story = transcript.replace(framing_match.group(0), '').strip()
+def parse_story_to_json(story_text):
+    try:
+        lines = story_text.split('\n')
+        result = {
+            'title': '',
+            'segments': [],
+            'finalCTA': '',
+            'personality_score': 0
+        }
+        current_segment = None
+        in_segment = False
+        hooks = []
+        uk_words = ['realised', 'neighbours', 'organised', 'learnt', 'colour', 'favour', 'analyse', 'flat', 'lift', 'lorry']
+        personal_words = ['I', 'my', 'me', 'myself']
+        reflective_words = ['felt', 'learned', 'realised', 'thought', 'wondered']
+        personality_tokens = []
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith('🎬 Title:'):
+                result['title'] = line.replace('🎬 Title:', '').strip()
+            elif line.startswith('🎬 ') and not line.startswith('🎬 Title:'):
+                if current_segment:
+                    result['segments'].append(current_segment)
+                current_segment = {
+                    'title': line.replace('🎬 ', '').strip(),
+                    'hooks': [],
+                    'narration': '',
+                    'engagement': '',
+                    'cut': '',
+                    'wordCount': 0,
+                    'readTimeSeconds': 0
+                }
+                in_segment = True
+                hooks = []
+            elif in_segment and line.startswith('“') and line.endswith('”'):
+                if not current_segment['narration']:
+                    if len(hooks) < 3:
+                        hooks.append(line)
+                        current_segment['hooks'] = hooks
+                    elif not current_segment['engagement']:
+                        current_segment['engagement'] = line
+                else:
+                    current_segment['narration'] = line
+                personality_tokens.extend(re.findall(r'\b\w+\b', line.lower()))
+            elif in_segment and line.startswith('CUT'):
+                current_segment['cut'] = line
+                text = ' '.join(current_segment['hooks'] + [current_segment['narration'], current_segment['engagement']])
+                word_count = len(re.findall(r'\b\w+\b', text))
+                current_segment['wordCount'] = word_count
+                current_segment['readTimeSeconds'] = round((word_count / 120) * 60)
+                in_segment = False
+            elif line and not in_segment and not result['finalCTA']:
+                result['finalCTA'] = line
+                personality_tokens.extend(re.findall(r'\b\w+\b', line.lower()))
+
+        if current_segment:
+            result['segments'].append(current_segment)
+
+        uk_count = sum(1 for word in personality_tokens if word in uk_words)
+        personal_count = sum(1 for word in personality_tokens if word in personal_words)
+        reflective_count = sum(1 for word in personality_tokens if word in reflective_words)
+        total_tokens = len(personality_tokens)
+        if total_tokens > 0:
+            result['personality_score'] = min(100, round(
+                ((uk_count * 2 + personal_count * 1.5 + reflective_count) / total_tokens) * 100
+            ))
+
+        return result
+    except Exception as e:
+        logger.error(f"Error parsing story to JSON: {str(e)}")
+        return {'error': str(e), 'title': '', 'segments': [], 'finalCTA': '', 'personality_score': 0}
+
+def extract_framing_and_story(transcript: str):
+    match = re.search(r'framing starts:(.*?)(framing ends)', transcript, re.IGNORECASE | re.DOTALL)
+    if match:
+        framing = match.group(1).strip()
+        story = transcript.replace(match.group(0), '').strip()
     else:
         framing = ""
-        story = transcript
+        story = transcript.strip()
     return framing, story
 
 # Routes
 @app.route('/')
 def index():
+    logger.info("Navigated to index page")
     return render_template('LandingPage.html', languages=LANGUAGES)
 
 @app.route('/api/navigate/<page>')
 def navigate(page):
+    """
+    Handles navigation to various pages, rendering corresponding templates.
+    Logs navigation events for tracking user flow.
+    """
     valid_pages = ['index', 'login', 'signup', 'forgot', 'chatbot', 'dashboard', 'reset']
     if page not in valid_pages:
         logger.warning(f"Attempted to navigate to invalid page: {page}")
-        return jsonify({'message': 'Invalid page'}), 404
-    if page == 'index':
-        return render_template('index.html', languages=LANGUAGES)
-    template = 'LandingPage.html' if page == 'index' else f'{page}.html'
-    if page == 'reset':
-        token = request.args.get('token')
-        if not token:
-            return jsonify({'message': 'Token is required'}), 400
-        return render_template('reset.html', token=token, languages=LANGUAGES)
-    return render_template(template, languages=LANGUAGES)
+        return jsonify({'message': f'Invalid page: {page}'}), 404
+    logger.info(f"Navigated to page: {page}")
+    template = f'{page}.html'
+    try:
+        if page == 'reset':
+            token = request.args.get('token')
+            if not token:
+                logger.warning("Reset page accessed without token")
+                return jsonify({'message': 'Token is required for reset page'}), 400
+            return render_template(template, token=token, languages=LANGUAGES)
+        return render_template(template, languages=LANGUAGES)
+    except Exception as e:
+        logger.error(f"Error rendering template {template}: {str(e)}")
+        return jsonify({'message': f'Error navigating to {page}: {str(e)}'}), 500
 
 @app.route('/api/db-status')
 def db_status():
@@ -277,8 +321,11 @@ def signup():
         conn.commit()
         cursor.close()
         conn.close()
-        logger.info(f"Successful signup for email: {email}")
-        return jsonify({'message': 'Signup successful! Redirecting to login...'}), 200
+        logger.info(f"Successful signup for email: {email}, redirecting to login")
+        return jsonify({
+            'message': 'Signup successful! Redirecting to login...',
+            'redirect': url_for('navigate', page='login')
+        }), 200
     except mysql.connector.Error as e:
         logger.error(f"Database error during signup: {str(e)}")
         return jsonify({'message': f'Database error: {str(e)}'}), 500
@@ -314,6 +361,36 @@ def login():
         return jsonify({'message': 'Login successful', 'redirect': url_for('navigate', page='index')}), 200
     except mysql.connector.Error as e:
         logger.error(f"Database error during login: {str(e)}")
+        return jsonify({'message': f'Database error: {str(e)}'}), 500
+
+@app.route('/api/verify-email', methods=['POST'])
+def verify_email():
+    data = request.get_json()
+    if not data:
+        logger.warning("Email verification attempt with missing JSON data")
+        return jsonify({'message': 'Invalid request'}), 400
+
+    email = data.get('email')
+    if not email:
+        logger.warning("Email verification attempt with missing email")
+        return jsonify({'message': 'Email is required'}), 400
+
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not user:
+            logger.warning(f"Email verification failed: Email {email} not found")
+            return jsonify({'message': 'Email not found'}), 404
+
+        logger.info(f"Email verification successful for: {email}")
+        return jsonify({'message': 'Email verified, please set new password'}), 200
+    except mysql.connector.Error as e:
+        logger.error(f"Database error during email verification: {str(e)}")
         return jsonify({'message': f'Database error: {str(e)}'}), 500
 
 @app.route('/api/forgot', methods=['POST'])
@@ -358,9 +435,13 @@ def forgot_password():
 
         if not all([sender_email, smtp_password]):
             logger.warning("SMTP credentials not set, returning token for demo")
-            return jsonify({'message': 'Password reset token generated (check server logs for token)', 'token': token}), 200
+            return jsonify({
+                'message': 'Password reset token generated (check server logs for token)',
+                'token': token,
+                'redirect': url_for('navigate', page='reset', token=token)
+            }), 200
 
-        msg = MIMEText(f"Your password reset link: http://localhost:5000/api/navigate/reset?token={token}\nIt expires at {expires_at}.", 'plain')
+        msg = MIMEText(f"Your password reset link: {url_for('navigate', page='reset', token=token, _external=True)}\nIt expires at {expires_at}.", 'plain')
         msg['Subject'] = 'Password Reset Request'
         msg['From'] = sender_email
         msg['To'] = email
@@ -370,12 +451,18 @@ def forgot_password():
                 server.starttls()
                 server.login(sender_email, smtp_password)
                 server.sendmail(sender_email, email, msg.as_string())
-            logger.info(f"Password reset email sent to: {email}")
+            logger.info(f"Password reset email sent to: {email}, redirecting to reset page with token")
+            return jsonify({
+                'message': 'Password reset link sent to your email',
+                'redirect': url_for('navigate', page='reset', token=token)
+            }), 200
         except smtplib.SMTPException as e:
             logger.error(f"Email sending error: {str(e)}")
-            return jsonify({'message': 'Error sending email, token generated (check server logs)', 'token': token}), 500
-
-        return jsonify({'message': 'Password reset link sent to your email'}), 200
+            return jsonify({
+                'message': 'Error sending email, token generated (check server logs)',
+                'token': token,
+                'redirect': url_for('navigate', page='reset', token=token)
+            }), 500
     except mysql.connector.Error as e:
         logger.error(f"Database error during forgot password: {str(e)}")
         return jsonify({'message': f'Database error: {str(e)}'}), 500
@@ -388,11 +475,10 @@ def reset_password():
         return jsonify({'message': 'Invalid request'}), 400
 
     email = data.get('email')
-    token = data.get('token')
     new_password = data.get('newPassword')
     confirm_password = data.get('confirmPassword')
 
-    if not all([email, token, new_password, confirm_password]):
+    if not all([email, new_password, confirm_password]):
         logger.warning("Reset password attempt with incomplete fields")
         return jsonify({'message': 'All fields are required'}), 400
     if new_password != confirm_password:
@@ -402,24 +488,14 @@ def reset_password():
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT token, expires_at FROM password_resets WHERE email = %s ORDER BY created_at DESC LIMIT 1",
-            (email,)
-        )
-        result = cursor.fetchone()
+        cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
 
-        if not result or result[0] != token:
+        if not user:
             cursor.close()
             conn.close()
-            logger.warning(f"Reset password failed for email {email}: Invalid token")
-            return jsonify({'message': 'Invalid or expired token'}), 400
-
-        token_expiry = result[1]
-        if datetime.now() > token_expiry:
-            cursor.close()
-            conn.close()
-            logger.warning(f"Reset password failed for email {email}: Token expired")
-            return jsonify({'message': 'Token has expired'}), 400
+            logger.warning(f"Reset password failed for email {email}: Email not found")
+            return jsonify({'message': 'Email not found'}), 404
 
         hashed_password = generate_password_hash(new_password)
         cursor.execute(
@@ -431,7 +507,10 @@ def reset_password():
         cursor.close()
         conn.close()
         logger.info(f"Password reset successful for email: {email}")
-        return jsonify({'message': 'Password reset successfully'}), 200
+        return jsonify({
+            'message': 'Password reset successfully',
+            'redirect': url_for('navigate', page='login')
+        }), 200
     except mysql.connector.Error as e:
         logger.error(f"Database error during reset password: {str(e)}")
         return jsonify({'message': f'Database error: {str(e)}'}), 500
@@ -441,7 +520,7 @@ def logout():
     email = session.get('user', 'unknown')
     session.pop('user', None)
     logger.info(f"User logged out: {email}")
-    return jsonify({'message': 'Logged out successfully'}), 200
+    return jsonify({'message': 'Logged out successfully', 'redirect': url_for('navigate', page='index')}), 200
 
 @app.route('/ask', methods=['POST'])
 def ask_question():
@@ -557,85 +636,117 @@ def check_grammar():
 @app.route('/api/generate_story', methods=['POST'])
 def generate_story():
     data = request.get_json()
-    transcript = data.get('text')
-    if not transcript:
-        return jsonify({'error': 'No transcript provided'}), 400
+    transcript = data.get('text', '')
+    title = data.get('title', '')
+    tone = data.get('tone', '')
+    core_lesson = data.get('coreLesson', '')
+    micro_lessons = data.get('microLessons', [])
+
+    if not transcript and not title:
+        return jsonify({'error': 'Please provide either story content or a title'}), 400
+
+    framing = f"Tone: {tone if tone else 'Calm, reflective, personal, passionate, British'}. " \
+              f"Title: {title if title else 'Generate a suitable title'}. " \
+              f"Core Lesson: {core_lesson if core_lesson else 'Generate a relevant theme'}. " \
+              f"Micro-Lessons: {', '.join(micro_lessons) if micro_lessons else 'Generate three relevant micro-lessons'}. " \
+              "Lucy is a British woman sharing her story as if speaking to a close friend. Use UK English spelling (e.g., realised, neighbours, organised) and vocabulary (e.g., flat, lift, lorry). Avoid Americanisms (e.g., apartment, elevator, truck), hype, or salesy language. Ensure the narrative flows naturally with consistent energy, passion, and emotion, as if one person is speaking throughout."
 
     try:
-        framing, story = extract_framing_and_story(transcript)
         prompt = f"""
-You are a story design assistant creating a voiceover script for Lucy from "Lucy & The Wealth Machine."
+You are Lucy from "Lucy & The Wealth Machine," a British woman sharing a heartfelt story as if speaking to a close friend.
+Generate a 4-part voiceover script that feels authentic, with consistent rhythm, passion, and emotion throughout.
+Use exclusively UK English spelling (e.g., realised, neighbours, organised) and vocabulary (e.g., flat, lift, lorry).
+Avoid Americanisms (e.g., apartment, elevator, truck), hype, or salesy language.
+The narrative must flow naturally, as if one person is speaking, with no disjointed tone or style shifts.
 
-Input:
-- Framing: "{framing}"
-- Story: "{story}"
+You MUST return output in the EXACT pattern shown below — including headings, line order, quotation marks, CUT markers, and spacing.
+This format is parsed by software, so structure must be reliable.
 
-Task: Create a 4-part voiceover script matching the structure of this example, with slightly expanded segments for depth:
+Use FRAMING to guide tone, title, core lesson, micro-lessons, and exclusions.
+Integrate the core lesson and micro-lessons organically into the story narrative; do NOT include them explicitly in the output.
+Use STORY as the raw source material. Do not invent facts beyond STORY or clearly implied by FRAMING.
+Ensure narration paragraphs are clear, personal, 6-8 sentences, with consistent energy and passion.
+Each segment should feel like a natural continuation of the previous one.
 
-Example:
-🎬 Script Title: Hooked: The Psychology of Viral Video Openings
-Video Length: ~5 minutes (4 scenes, each = 1 short-form video)
-Style: Calm, confident, informative, slightly playful
-📘 Core Story Framework
-Core Lesson: Mastering video hooks requires understanding the psychology behind engagement, not copying trends.
-Micro-Lessons:
-- Three-step hook: Context Lean, Scroll Stop Interjection, Contrarian Snapback.
-- Visual hooks: Combine text and motion.
-- Build common ground with cultural references.
-- Compress value with short sentences.
-🎬 Segment 1: The Hook That Almost Didn't Work
-“Today: video hooks. Want better videos? Better hooks.”
-“Forget lists of viral hooks.”
-“Understand the psychology.”
-“Hi, I'm Lucy. A million followers, billions of views. I learned video hooks the hard way. Catchy phrases? Nope. It's about a curiosity loop—instant attention. My three-step formula works every time. But first, a hook that nearly flopped…”
-“What’s your biggest video intro mistake? Let me know!”
+Each of the 4 segments MUST contain:
+- Segment heading: "🎬 <Title>" (no "Segment X")
+- 3 short quoted hook lines (each on its own line, smart quotes “…” required)
+- Blank line
+- One quoted narration paragraph (clear, personal, 6-8 sentences, single pair of smart quotes)
+- One short quoted engagement question (soft, reflective, personal, passionate)
+- CUT marker: CUT X (no brackets)
+
+After all 4 segments, include:
+- One unquoted closing line (reflective, personal, passionate, not salesy)
+
+ALWAYS include the top metadata block with:
+🎬 Title:
+<Title line>
+
+DO NOT include Video Length, Style, Core Story Framework, Core Lesson, Micro-Lessons, or "🎯 Final CTA" heading in the output.
+
+EXAMPLE FORMAT (follow structure and tone, do NOT copy content):
+
+🎬 Title:
+From Property Nightmare to Hands-Off Wealth: My Journey
+
+🎬 The Mistake That Shattered My Dreams
+“I thought I’d found the perfect tenant—until the police knocked.”
+“My first flat was ready, and I rushed to let it.”
+“I missed the trouble brewing right under my nose.”
+
+“My name’s Lucy. Fifteen years ago, I dove into property investment, chasing a dream of financial freedom. I was so eager that I skipped proper tenant checks and ignored odd behaviour from my first tenant. Months later, my flat was a crime scene—drugs, police, furious neighbours. It cost me thousands, and I nearly gave up. But that heartbreak taught me to slow down and think. I realised mistakes are lessons if you choose to learn.”
+“Ever leapt into something and regretted it? What happened?”
 CUT 1
-...
 
-Output Format (remove headers below, keep lessons):
-- Final CTA
-- Segment 1, Segment 2, Segment 3, Segment 4
-- Core Story Framework
-- Core Lesson
-- Micro-Lessons
-- Video Length
-- Style
-- story title
-- 🎯 Final CTA
-- 🎬 Script Title: (keep title only)
+🎬 The Turning Point That Changed Everything
+“That chaos woke me up.”
+“I stopped, reflected, and rebuilt.”
+“One decision set me on a new path.”
 
-Desired Output:
-Hooked: The Psychology of Viral Video Openings
-- Three-step hook: Context Lean, Scroll Stop Interjection, Contrarian Snapback.
-- Visual hooks: Combine text and motion.
-- Build common ground with cultural references.
-- Compress value with short sentences.
-🎬 The Hook That Almost Didn't Work
-“Today: video hooks. Want better videos? Better hooks.”
-“Forget lists of viral hooks.”
-“Understand the psychology.”
-“Hi, I'm Lucy. A million followers, billions of views. I learned video hooks the hard way. Catchy phrases? Nope. It's about a curiosity loop—instant attention. My three-step formula works every time. But first, a hook that nearly flopped…”
-“What’s your biggest video intro mistake? Let me know!”
-CUT 1
-...
+“That disaster wasn’t the end—it was my beginning. I didn’t want midnight calls or endless stress. I sat down and mapped out every mistake I’d made. That’s when I started building what I call ‘The Machine.’ I invested in proper training, found reliable trades, and set up systems to handle tenants and repairs. It wasn’t cheap, but it gave me peace. My flats stayed let, and I could finally breathe.”
+“What’s a moment that changed how you think? Share it.”
+CUT 2
 
-Requirements:
-- Use framing to guide tone and style.
-- Match example structure: title, lessons (without heading), 4 segments with 🎬 titles, 3 quoted hooks, expanded main quoted story (add 1-2 sentences for depth), quoted CTA, CUT markers.
-- Keep sentences short, avoid filler (e.g., "just," "really," "very").
-- Reflect Lucy’s tone: calm, confident, informative, slightly playful, British, non-salesy.
-- Avoid made-up events (e.g., lawsuits).
-- Avoid “we” phrases (e.g., “we built a system”).
-- Each segment ends with a soft, open-ended question.
-- Remove specified headers, keep lesson lines (starting with "- ").
-"""
+🎬 Letting Go to Gain Control
+“I thought doing everything myself proved I was serious.”
+“Handing over tasks was my breakthrough.”
+“Systems gave me freedom, not chaos.”
+
+“I used to think being hands-on showed my commitment. I was wrong. Delegation changed everything. Now, experts handle acquisitions, refurbishments, and tenant issues. I review reports monthly and make the big calls. If something goes wrong, my systems catch it before it spirals. I’ve got time for my family, my life, and my dreams. True wealth is living on your terms.”
+“What could you let go of to find more freedom?”
+CUT 3
+
+🎬 The Machine That Runs Itself
+“People ask how my system works.”
+“It’s not flashy; it’s steady.”
+“It could work for you—or it might not.”
+
+“I don’t chase quick wins or showy projects. My system delivers steady income without the hassle. Investors join me, skipping the stress of repairs or tenant dramas. I check the numbers; the machine hums along. It’s not for everyone, but if you crave calm over chaos, it might be for you. Freedom comes from building something that doesn’t own you.”
+“Could a system like this change your life? Let’s talk.”
+CUT 4
+
+Building wealth isn’t about grinding harder—it’s about crafting smarter systems.
+
+FRAMING (guide tone, title, lessons):
+{framing}
+
+STORY (source material; do not invent beyond this):
+{transcript}
+
+Now write the full story in THIS EXACT FORMAT. Replace example content with Lucy’s new story based on STORY and FRAMING. Preserve line breaks, headings, and smart quotes exactly as shown. Ensure the narrative feels like one passionate, reflective voice throughout, using UK English and vocabulary.
+""".strip()
+
         response = model.generate_content(prompt)
-        story_text = response.text.strip()
+        story_text = response.text.strip() if response.text else ""
         clean_story = clean_lucy_story(story_text)
-        return jsonify({'story': clean_story})
+        structured_story = parse_story_to_json(clean_story)
+        logger.info(f"Generated story with title: {structured_story.get('title', 'Untitled')}")
+        return jsonify({'story': clean_story, 'structured': structured_story})
+
     except Exception as e:
         logger.error(f"Error generating story: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e), 'story': '', 'structured': {}}), 500
 
 @app.route('/api/validate_story', methods=['POST'])
 def validate_story():
@@ -646,45 +757,57 @@ def validate_story():
 
     try:
         validation_prompt = f"""
-You are checking a story for Lucy from “Lucy & The Wealth Machine.”
+You are validating a Lucy-format story from "Lucy & The Wealth Machine."
 
-Criteria:
-- Matches structure: title (no '🎬 Script Title:'), lessons (no heading, keep text), 4 segments with 🎬 titles, 3 quoted hooks, expanded main quoted story, quoted CTA, CUT markers.
-- Headers removed: 'Final CTA', 'Segment 1-4', 'Core Story Framework', 'Core Lesson', 'Micro-Lessons', 'Video Length', 'Style', 'story title', '🎯 Final CTA'.
-- Lessons included without heading.
-- Concise language: Short sentences, no filler (e.g., "just," "really," "very").
-- Segments slightly expanded (1-2 extra sentences) for depth.
-- Lucy’s tone: calm, confident, informative, slightly playful, British, non-salesy.
-- Reflects Lucy’s expertise, not generic.
-- No made-up events (e.g., lawsuits).
-- No “we” phrases (e.g., “we built this”).
-- Each segment ends with a soft, open-ended question.
+Check the following:
 
-Return JSON:
+STRUCTURE
+- Top block: 🎬 Title:, followed by title line.
+- NO Video Length, Style, Core Story Framework, Core Lesson, Micro-Lessons, or "🎯 Final CTA" heading.
+- Exactly 4 segments with headings: 🎬 <Title> (no "Segment X").
+- Each segment has:
+  - 3 short quoted hook lines (each on own line, smart quotes).
+  - Blank line.
+  - One quoted narration paragraph (6-8 sentences, single pair of smart quotes, clear and personal).
+  - One quoted engagement question (soft, reflective, personal).
+  - CUT X marker (no brackets).
+- Ends with one unquoted closing line (reflective, personal, not salesy).
+
+VOICE
+- UK English spelling (e.g., realised, neighbours, organised) and vocabulary (e.g., flat, lift, lorry) required; flag Americanisms (e.g., apartment, elevator, truck).
+- First-person singular (I, my); no "we" unless source specifies collaboration.
+- Calm, reflective, personal, passionate British tone; no American hype or guru tone.
+- Narrative feels like one person speaking naturally with consistent energy and emotion.
+- No invented lawsuits, drama, or money claims unless in source.
+- Lessons integrated organically into narrative, not listed explicitly.
+
+Return strict JSON:
 {{
   "result": "✅ Pass" or "❌ Fail",
-  "summary": "One-sentence summary",
-  "issues": ["list of issues"],
-  "suggested_fixes": ["list of fixes"],
-  "clean_version": "optional: revised story if changes are minor"
+  "summary": "One sentence summary",
+  "issues": ["List of structure/tone/accuracy problems, including Americanisms"],
+  "suggested_fixes": ["Brief fix suggestions"],
+  "clean_version": "Revised story in same format if fixes are minor; else empty string"
 }}
 
-Story:
-\"""{story}\"""
-"""
+STORY TO VALIDATE:
+\"\"\"{story}\"\"\"
+""".strip()
+
         response = model.generate_content(validation_prompt)
-        validation_result = response.text.strip()
+        raw = response.text.strip() if response.text else ""
         try:
-            validation_json = json.loads(validation_result)
+            validation_json = json.loads(raw)
         except json.JSONDecodeError:
             validation_json = {
                 "result": "❌ Fail",
-                "summary": "Failed to parse validation response",
-                "issues": ["Invalid JSON response"],
-                "suggested_fixes": ["Retry validation"],
-                "clean_version": story
+                "summary": "Validator did not return valid JSON.",
+                "issues": ["Model output was not valid JSON.", "Check logs and retry."],
+                "suggested_fixes": ["Regenerate validation.", "Tighten prompt or use lower temperature."],
+                "clean_version": ""
             }
         return jsonify({'validation': validation_json})
+
     except Exception as e:
         logger.error(f"Error validating story: {str(e)}")
         return jsonify({'error': str(e)}), 500
