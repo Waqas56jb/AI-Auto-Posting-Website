@@ -259,6 +259,10 @@ def navigate(page):
         logger.error(f"Error rendering template {template}: {str(e)}")
         return jsonify({'message': f'Error navigating to {page}: {str(e)}'}), 500
 
+@app.route('/forgot')
+def forgot_page():
+    return render_template('forget.html', languages=LANGUAGES)
+
 @app.route('/api/db-status')
 def db_status():
     return jsonify(check_db_connection())

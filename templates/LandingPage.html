@@ -1125,6 +1125,28 @@
     </svg>
   </a>
 
+  <!-- Chatbot Popup Modal -->
+  <div id="chatbot-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(30,42,80,0.18); z-index:2000; justify-content:center; align-items:center;">
+    <div class="chatbot-container" style="position:relative;">
+      <button id="close-chatbot" style="position:absolute; top:18px; right:18px; background:none; border:none; font-size:1.5rem; color:var(--deep-blue); cursor:pointer; z-index:10;" aria-label="Close chatbot">&times;</button>
+      <div class="chatbot-logo">
+        <i class="fas fa-magic logo-icon"></i>
+        <span>StoryVerse</span>
+      </div>
+      <h2>Ask Lucy - Your AI Assistant</h2>
+      <div class="chat-window" id="chat-window-modal" style="margin-bottom:1.2rem;"></div>
+      <form class="chatbot-form" id="chatbot-form-modal" autocomplete="off">
+        <input type="text" id="chatbot-input-modal" class="chatbot-input" placeholder="Type your question..." required>
+        <button type="submit" class="chatbot-send">
+          <i class="fa fa-paper-plane"></i> Send
+        </button>
+      </form>
+      <div class="chatbot-footer">
+        <span>Lucy & The Wealth Machine &copy; 2025</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-wave"></div>
@@ -1325,21 +1347,21 @@
     document.querySelectorAll('.nav-chatbot').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        navigate('chatbot');
+        window.location.href = '/api/navigate/chatbot';
       });
     });
 
     document.querySelectorAll('.nav-login').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        navigate('login');
+        window.location.href = '/api/navigate/login';
       });
     });
 
     document.querySelectorAll('.nav-signup').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        navigate('signup');
+        window.location.href = '/api/navigate/signup';
       });
     });
 
@@ -1367,6 +1389,65 @@
       message.textContent = `Language changed to ${e.target.options[e.target.selectedIndex].text}`;
       document.querySelector('.hero-content').appendChild(message);
       setTimeout(() => message.remove(), 3000);
+    });
+
+    // Chatbot popup/modal logic
+    const chatbotToggle = document.querySelector('.chatbot-toggle');
+    const chatbotModal = document.getElementById('chatbot-modal');
+    const closeChatbot = document.getElementById('close-chatbot');
+    const chatWindowModal = document.getElementById('chat-window-modal');
+    const chatbotFormModal = document.getElementById('chatbot-form-modal');
+    const chatbotInputModal = document.getElementById('chatbot-input-modal');
+
+    function addMessageModal(message, sender = 'bot') {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `chat-message ${sender}`;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      if (sender === 'bot') {
+        let formatted = message
+          .replace(/(?:^|\n)([A-Z][^\n]{0,60}:)/g, '<div style="font-weight:700;text-decoration:underline;margin-top:0.7em;">$1</div>')
+          .replace(/\n\s*-\s+/g, '<div style="margin-left:1.2em;">• ')
+          .replace(/\n{2,}/g, '<br><br>')
+          .replace(/\n/g, '<br>');
+        bubble.innerHTML = formatted;
+      } else {
+        bubble.textContent = message;
+      }
+      msgDiv.appendChild(bubble);
+      chatWindowModal.appendChild(msgDiv);
+      chatWindowModal.scrollTop = chatWindowModal.scrollHeight;
+    }
+
+    chatbotToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      chatbotModal.style.display = 'flex';
+      setTimeout(() => chatbotInputModal.focus(), 200);
+    });
+    closeChatbot.addEventListener('click', function() {
+      chatbotModal.style.display = 'none';
+      chatWindowModal.innerHTML = '';
+    });
+    chatbotFormModal.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const userMsg = chatbotInputModal.value.trim();
+      if (!userMsg) return;
+      addMessageModal(userMsg, 'user');
+      chatbotInputModal.value = '';
+      addMessageModal('Lucy is typing...', 'bot');
+      try {
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: userMsg })
+        });
+        const data = await response.json();
+        chatWindowModal.removeChild(chatWindowModal.lastChild);
+        addMessageModal(data.response, 'bot');
+      } catch (err) {
+        chatWindowModal.removeChild(chatWindowModal.lastChild);
+        addMessageModal('Sorry, something went wrong. Please try again.', 'bot');
+      }
     });
   </script>
 </body>

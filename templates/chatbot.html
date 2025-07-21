@@ -1,324 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat with AI Social Media Bot</title>
-  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-  <style>
-    :root {
-      --primary-blue: #4361ee;
-      --dark-blue: #3a0ca3;
-      --light-blue: #4cc9f0;
-      --white: #ffffff;
-      --light-gray: #f8f9fa;
-      --success-green: #2a9d8f;
-      --warning-orange: #f4a261;
-      --danger-red: #e63946;
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
-    }
-    
-    body {
-      background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
-      min-height: 100vh;
-      overflow-x: hidden;
-      color: var(--white);
-    }
-    
-    #particles-js {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      background-color: var(--dark-blue);
-      z-index: -1;
-    }
-    
-    .chat-container {
-      max-width: 600px;
-      margin: 5rem auto;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-    
-    .chat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-    
-    .chat-title {
-      font-size: 1.8rem;
-      font-weight: 600;
-      color: var(--light-blue);
-    }
-    
-    .chat-controls {
-      display: flex;
-      gap: 1rem;
-    }
-    
-    .btn {
-      padding: 0.7rem 1.5rem;
-      border-radius: 50px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-block;
-      background: var(--light-blue);
-      color: var(--dark-blue);
-      border: 2px solid var(--light-blue);
-    }
-    
-    .btn:hover {
-      background: transparent;
-      color: var(--light-blue);
-    }
-    
-    .chat-body {
-      max-height: 400px;
-      overflow-y: auto;
-      margin-bottom: 1.5rem;
-      padding: 1rem;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.05);
-    }
-    
-    .message {
-      margin-bottom: 1rem;
-      padding: 1rem;
-      border-radius: 10px;
-      max-width: 80%;
-    }
-    
-    .user-message {
-      background: var(--primary-blue);
-      color: var(--white);
-      margin-left: auto;
-    }
-    
-    .bot-message {
-      background: rgba(255, 255, 255, 0.2);
-      color: var(--white);
-      margin-right: auto;
-    }
-    
-    .chat-input {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    
-    input[type="text"] {
-      flex: 1;
-      padding: 0.8rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--white);
-      font-size: 1rem;
-    }
-    
-    input[type="text"]::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-    
-    select {
-      padding: 0.8rem;
-      border-radius: 10px;
-      background: var(--light-blue);
-      color: var(--dark-blue);
-      border: none;
-      cursor: pointer;
-    }
-    
-    @media (max-width: 768px) {
-      .chat-container {
-        margin: 2rem;
-        padding: 1.5rem;
-      }
-      
-      .chat-title {
-        font-size: 1.5rem;
-      }
-      
-      .chat-input {
-        flex-direction: column;
-      }
-      
-      input[type="text"], select {
-        width: 100%;
-      }
-    }
-    
-    @media (max-width: 576px) {
-      .chat-container {
-        margin: 1rem;
-        padding: 1rem;
-      }
-      
-      .chat-title {
-        font-size: 1.2rem;
-      }
-      
-      .btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot - StoryVerse AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1a56db;
+            --deep-blue: #1e3a8a;
+            --light-blue: #3b82f6;
+            --accent-blue: #60a5fa;
+            --white: #ffffff;
+            --off-white: #f8fafc;
+            --light-gray: #e5e7eb;
+            --dark-gray: #1f2937;
+            --gradient-blue: linear-gradient(135deg, var(--primary-blue), var(--deep-blue));
+            --neumorphic-shadow: 8px 8px 16px rgba(0, 0, 0, 0.1), -8px -8px 16px rgba(255, 255, 255, 0.1);
+            --neumorphic-inset: inset 4px 4px 8px rgba(0, 0, 0, 0.1), inset -4px -4px 8px rgba(255, 255, 255, 0.1);
+            --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-medium: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--off-white);
+            color: var(--dark-gray);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .chatbot-container {
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: var(--neumorphic-shadow);
+            padding: 2.5rem 2rem 2rem 2rem;
+            max-width: 410px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+        }
+        .chatbot-container::before {
+            content: "";
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, var(--primary-blue) 60%, transparent 100%);
+            opacity: 0.10;
+            z-index: 0;
+        }
+        .chatbot-logo {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 2rem;
+            color: var(--primary-blue);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        .chatbot-logo .logo-icon {
+            font-size: 1.8rem;
+            color: var(--accent-blue);
+        }
+        .chatbot-container h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--deep-blue);
+            margin-bottom: 1.7rem;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .chat-window {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--off-white);
+            border-radius: 12px;
+            border: 2px solid var(--light-gray);
+            box-shadow: var(--neumorphic-inset);
+            padding: 1rem;
+            margin-bottom: 1.2rem;
+            min-height: 300px;
+            max-height: 350px;
+        }
+        .chat-message {
+            margin-bottom: 1.1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-message.user .bubble {
+            align-self: flex-end;
+            background: var(--gradient-blue);
+            color: var(--white);
+            border-radius: 16px 16px 4px 16px;
+        }
+        .chat-message.bot .bubble {
+            align-self: flex-start;
+            background: #f1f5fd;
+            color: var(--deep-blue);
+            border-radius: 16px 16px 16px 4px;
+            border: 1.5px solid var(--light-blue);
+            font-family: 'Inter', sans-serif;
+            font-size: 1.08rem;
+            line-height: 1.7;
+        }
+        .bubble {
+            padding: 0.95rem 1.3rem;
+            font-size: 1.08rem;
+            max-width: 90%;
+            box-shadow: 0 2px 8px rgba(26,86,219,0.07);
+            word-break: break-word;
+            white-space: pre-line;
+            transition: background 0.2s;
+        }
+        .chatbot-form {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+        .chatbot-input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-size: 1rem;
+            background: var(--off-white);
+            color: var(--dark-gray);
+            box-shadow: var(--neumorphic-inset);
+            transition: var(--transition-fast);
+        }
+        .chatbot-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background: #e0e7ff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+        }
+        .chatbot-send {
+            background: var(--gradient-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 0.85rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition-medium);
+            box-shadow: 0 4px 15px rgba(26, 86, 219, 0.13);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chatbot-send:hover {
+            background: linear-gradient(135deg, var(--deep-blue), var(--primary-blue));
+            box-shadow: 0 8px 25px rgba(26, 86, 219, 0.18);
+            transform: translateY(-2px);
+        }
+        .chatbot-footer {
+            text-align: center;
+            margin-top: 1.2rem;
+            color: #64748b;
+            font-size: 0.97rem;
+        }
+        @media (max-width: 480px) {
+            .chatbot-container {
+                padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+            }
+            .chatbot-logo {
+                font-size: 1.3rem;
+            }
+            .chatbot-container h2 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div id="particles-js"></div>
-  
-  <div class="chat-container animate__animated animate__fadeIn">
-    <div class="chat-header">
-      <h2 class="chat-title">AI Social Media Assistant</h2>
-      
+    <div class="chatbot-container">
+        <div class="chatbot-logo">
+            <i class="fas fa-magic logo-icon"></i>
+            <span>StoryVerse</span>
+        </div>
+        <h2>Ask Lucy - Your AI Assistant</h2>
+        <div class="chat-window" id="chat-window">
+            <!-- Chat messages will appear here -->
+        </div>
+        <form class="chatbot-form" id="chatbot-form" autocomplete="off">
+            <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Type your question..." required>
+            <button type="submit" class="chatbot-send">
+                <i class="fa fa-paper-plane"></i>
+                Send
+            </button>
+        </form>
+        <div class="chatbot-footer">
+            <span>Lucy & The Wealth Machine &copy; 2025</span>
+        </div>
     </div>
-    
-    <div class="chat-body" id="chat-body">
-      
-    </div>
-    
-    <div class="chat-input">
-      <select id="language-select">
-        <option value="en">English 🇬🇧</option>
-        <option value="es">Spanish 🇪🇸</option>
-        <option value="fr">French 🇫🇷</option>
-        <option value="de">German 🇩🇪</option>
-        <option value="it">Italian 🇮🇹</option>
-        <option value="pt">Portuguese 🇵🇹</option>
-        <option value="ru">Russian 🇷🇺</option>
-        <option value="zh">Chinese 🇨🇳</option>
-        <option value="ja">Japanese 🇯🇵</option>
-        <option value="ar">Arabic 🇸🇦</option>
-        <option value="hi">Hindi 🇮🇳</option>
-      </select>
-      <input type="text" id="user-input" placeholder="Type your message here...">
-      <button class="btn" onclick="sendMessage()">Send</button>
-    </div>
-  </div>
-  
-  <script>
-    particlesJS('particles-js', {
-      particles: {
-        number: { value: 80, density: { enable: true, value_area: 800 } },
-        color: { value: "#ffffff" },
-        shape: { type: "circle" },
-        opacity: { value: 0.5, random: true },
-        size: { value: 4, random: true },
-        line_linked: { 
-          enable: true, 
-          distance: 150, 
-          color: "#ffffff", 
-          opacity: 0.3, 
-          width: 1 
-        },
-        move: { 
-          enable: true, 
-          speed: 3, 
-          direction: "none",
-          random: true,
-          straight: false,
-          out_mode: "out" 
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const chatbotForm = document.getElementById('chatbot-form');
+        const chatbotInput = document.getElementById('chatbot-input');
+
+        function addMessage(message, sender = 'bot') {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-message ${sender}`;
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+
+            // Format bot response for professionalism and readability
+            if (sender === 'bot') {
+                // Headings: bold, underline; bullet points; paragraphs
+                let formatted = message
+                    .replace(/(?:^|\n)([A-Z][^\n]{0,60}:)/g, '<div style="font-weight:700;text-decoration:underline;margin-top:0.7em;">$1</div>') // Headings
+                    .replace(/\n\s*-\s+/g, '<div style="margin-left:1.2em;">• ') // Bullet points
+                    .replace(/\n{2,}/g, '<br><br>') // Paragraph spacing
+                    .replace(/\n/g, '<br>'); // Line breaks
+                bubble.innerHTML = formatted;
+            } else {
+                bubble.textContent = message;
+            }
+
+            msgDiv.appendChild(bubble);
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
         }
-      },
-      interactivity: {
-        detect_on: "window",
-        events: {
-          onhover: { enable: true, mode: "repulse" },
-          onclick: { enable: true, mode: "push" }
-        },
-        modes: {
-          repulse: { distance: 100, duration: 0.4 },
-          push: { particles_nb: 4 }
-        }
-      },
-      retina_detect: true
-    });
-    
-    async function sendMessage() {
-      const input = document.getElementById('user-input');
-      const language = document.getElementById('language-select').value;
-      const chatBody = document.getElementById('chat-body');
-      const message = input.value.trim();
-      
-      if (!message) return;
-      
-      const userMessage = document.createElement('div');
-      userMessage.className = 'message user-message';
-      userMessage.textContent = message;
-      chatBody.appendChild(userMessage);
-      chatBody.scrollTop = chatBody.scrollHeight;
-      
-      input.value = '';
-      
-      try {
-        const response = await fetch('/ask', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: message, input_lang: language, output_lang: language })
+
+        chatbotForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const userMsg = chatbotInput.value.trim();
+            if (!userMsg) return;
+            addMessage(userMsg, 'user');
+            chatbotInput.value = '';
+            addMessage('Lucy is typing...', 'bot');
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: userMsg })
+                });
+                const data = await response.json();
+                // Remove "Lucy is typing..." placeholder
+                chatWindow.removeChild(chatWindow.lastChild);
+                addMessage(data.response, 'bot');
+            } catch (err) {
+                chatWindow.removeChild(chatWindow.lastChild);
+                addMessage('Sorry, something went wrong. Please try again.', 'bot');
+            }
         });
-        const data = await response.json();
-        
-        const botMessage = document.createElement('div');
-        botMessage.className = 'message bot-message';
-        botMessage.textContent = data.response;
-        chatBody.appendChild(botMessage);
-        chatBody.scrollTop = chatBody.scrollHeight;
-      } catch (error) {
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'message bot-message';
-        errorMessage.textContent = 'Error: Could not connect to the server.';
-        chatBody.appendChild(errorMessage);
-        chatBody.scrollTop = chatBody.scrollHeight;
-      }
-    }
-    
-    document.getElementById('download-btn').addEventListener('click', async () => {
-      const chatBody = document.getElementById('chat-body');
-      const messages = Array.from(chatBody.getElementsByClassName('message'))
-        .map(msg => `${msg.classList.contains('user-message') ? 'You' : 'Bot'}: ${msg.textContent}`)
-        .join('\n');
-        
-      try {
-        const response = await fetch('/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: messages })
-        });
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-          window.location.href = data.url;
-        } else {
-          alert(data.message);
-        }
-      } catch (error) {
-        alert('Error downloading chat history.');
-      }
-    });
-    
-    document.getElementById('user-input').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        sendMessage();
-      }
-    });
-  </script>
+    </script>
 </body>
 </html>
