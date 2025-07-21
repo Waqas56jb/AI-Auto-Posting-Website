@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Social Media Automation</title>
+  <title>AI Social Media Automation | Smart Content Creation & Scheduling</title>
+  <meta name="description" content="AI-powered social media automation platform that creates, edits, and schedules content across TikTok, Facebook, LinkedIn, and YouTube with intelligent optimization.">
   <!-- Particles.js -->
   <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
   <!-- Font Awesome -->
@@ -44,6 +45,7 @@
       min-height: 100vh;
       overflow-x: hidden;
       color: var(--dark-gray);
+      line-height: 1.7;
     }
 
     #particles-js {
@@ -67,6 +69,13 @@
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      transition: var(--transition-medium);
+    }
+
+    .navbar.scrolled {
+      padding: 1rem 3rem;
+      background: rgba(26, 86, 219, 0.98);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
 
     .logo {
@@ -78,11 +87,17 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      transition: var(--transition-fast);
+    }
+
+    .logo:hover {
+      transform: translateY(-2px);
     }
 
     .logo i {
       font-size: 1.8rem;
       color: var(--accent-blue);
+      transition: var(--transition-fast);
     }
 
     .nav-links {
@@ -193,6 +208,7 @@
     .hero-content {
       max-width: 800px;
       margin: 0 auto;
+      position: relative;
     }
 
     .hero-title {
@@ -206,6 +222,20 @@
 
     .hero-title span {
       color: var(--accent-blue);
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero-title span::after {
+      content: '';
+      position: absolute;
+      bottom: 5px;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.3);
+      z-index: -1;
+      transform: skewY(-2deg);
     }
 
     .hero-subtitle {
@@ -213,6 +243,44 @@
       opacity: 0.9;
       margin-bottom: 2.5rem;
       line-height: 1.6;
+    }
+
+    .stats-container {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin: 3rem 0;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 0.5rem;
+      position: relative;
+      display: inline-block;
+    }
+
+    .stat-number::after {
+      content: '+';
+      position: absolute;
+      top: 0;
+      right: -15px;
+      font-size: 1.5rem;
+      color: var(--accent-blue);
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .cta-buttons {
@@ -260,6 +328,128 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
 
+    /* Platform Showcase Section */
+    .platforms-section {
+      padding: 6rem 2rem;
+      background: var(--white);
+    }
+
+    .platforms-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .platforms-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--deep-blue);
+      margin-bottom: 3rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .platforms-title::after {
+      content: '';
+      position: absolute;
+      bottom: -1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: var(--light-blue);
+      border-radius: 2px;
+    }
+
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .platform-card {
+      background: var(--off-white);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--neumorphic-shadow);
+      transition: var(--transition-medium);
+      text-align: center;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .platform-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .platform-icon {
+      width: 70px;
+      height: 70px;
+      background: var(--gradient-blue);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      color: var(--white);
+      font-size: 1.8rem;
+      box-shadow: 0 10px 20px rgba(26, 86, 219, 0.2);
+    }
+
+    .platform-name {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--deep-blue);
+    }
+
+    .platform-desc {
+      color: var(--dark-gray);
+      line-height: 1.6;
+      opacity: 0.9;
+      margin-bottom: 1.5rem;
+    }
+
+    .platform-features {
+      text-align: left;
+      margin-top: 1.5rem;
+    }
+
+    .platform-features h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--deep-blue);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .platform-features ul {
+      list-style: none;
+      padding-left: 1.5rem;
+    }
+
+    .platform-features li {
+      position: relative;
+      margin-bottom: 0.6rem;
+      color: var(--dark-gray);
+      font-size: 0.95rem;
+    }
+
+    .platform-features li::before {
+      content: '•';
+      position: absolute;
+      left: -1.2rem;
+      color: var(--primary-blue);
+      font-weight: bold;
+    }
+
     /* Features Section */
     .section {
       padding: 6rem 2rem;
@@ -287,6 +477,16 @@
       height: 4px;
       background: var(--light-blue);
       border-radius: 2px;
+    }
+
+    .section-subtitle {
+      font-size: 1.2rem;
+      color: var(--dark-gray);
+      opacity: 0.8;
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 3rem;
+      line-height: 1.6;
     }
 
     .features-grid {
@@ -394,6 +594,71 @@
       opacity: 0.9;
     }
 
+    /* Timeline Visualization */
+    .timeline {
+      position: relative;
+      max-width: 1000px;
+      margin: 4rem auto;
+    }
+
+    .timeline::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      background-color: var(--light-blue);
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      margin-left: -3px;
+      border-radius: 3px;
+    }
+
+    .timeline-item {
+      padding: 10px 40px;
+      position: relative;
+      width: 50%;
+      box-sizing: border-box;
+    }
+
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      right: -12px;
+      background-color: var(--white);
+      border: 4px solid var(--primary-blue);
+      top: 15px;
+      border-radius: 50%;
+      z-index: 1;
+    }
+
+    .timeline-item.left {
+      left: 0;
+    }
+
+    .timeline-item.right {
+      left: 50%;
+    }
+
+    .timeline-item.right::after {
+      left: -12px;
+    }
+
+    .timeline-content {
+      padding: 20px 30px;
+      background-color: var(--white);
+      position: relative;
+      border-radius: 6px;
+      box-shadow: var(--neumorphic-shadow);
+    }
+
+    .timeline-content h3 {
+      font-family: 'Poppins', sans-serif;
+      color: var(--deep-blue);
+      margin-bottom: 0.5rem;
+    }
+
     /* Testimonials */
     .testimonials-container {
       display: grid;
@@ -427,6 +692,28 @@
       top: -1rem;
       left: -1rem;
       z-index: 0;
+    }
+
+    .testimonial-results {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .result-badge {
+      background: var(--off-white);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .result-badge i {
+      color: var(--success-green);
     }
 
     .testimonial-author {
@@ -471,6 +758,7 @@
       transition: var(--transition-medium);
       text-align: center;
       border: 1px solid rgba(0, 0, 0, 0.05);
+      position: relative;
     }
 
     .pricing-card.popular {
@@ -797,6 +1085,30 @@
       .nav-links {
         display: none;
       }
+
+      .timeline::after {
+        left: 31px;
+      }
+
+      .timeline-item {
+        width: 100%;
+        padding-left: 70px;
+        padding-right: 25px;
+      }
+
+      .timeline-item::after {
+        left: 18px;
+      }
+
+      .timeline-item.left::after, 
+      .timeline-item.right::after {
+        left: 18px;
+      }
+
+      .timeline-item.left, 
+      .timeline-item.right {
+        left: 0;
+      }
     }
 
     @media (max-width: 768px) {
@@ -839,6 +1151,14 @@
       .step-content {
         text-align: center;
       }
+
+      .stats-container {
+        gap: 1.5rem;
+      }
+
+      .stat-number {
+        font-size: 2rem;
+      }
     }
 
     @media (max-width: 576px) {
@@ -861,6 +1181,14 @@
 
       .section-title {
         font-size: 1.8rem;
+      }
+
+      .stat-number {
+        font-size: 1.8rem;
+      }
+
+      .stat-label {
+        font-size: 0.8rem;
       }
     }
     .chatbot-container {
@@ -1044,43 +1372,177 @@
       <p class="hero-subtitle animate__animated animate__fadeIn animate__delay-1s">
         Our AI-powered platform streamlines content creation and posting across TikTok, Facebook, LinkedIn, and YouTube, saving you time and boosting engagement.
       </p>
+      
+      <div class="stats-container animate__animated animate__fadeIn animate__delay-1s">
+        <div class="stat-item">
+          <div class="stat-number">10,000</div>
+          <div class="stat-label">Posts Created</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">2,500</div>
+          <div class="stat-label">Happy Clients</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">85%</div>
+          <div class="stat-label">Engagement Boost</div>
+        </div>
+      </div>
+      
       <div class="cta-buttons">
         <a href="#features" class="btn btn-primary btn-lg animate__animated animate__fadeInLeft animate__delay-2s">Explore Features</a>
         <a href="#" class="btn btn-secondary btn-lg animate__animated animate__fadeInRight animate__delay-2s nav-signup">Get Started Free</a>
       </div>
+    </div>
+  </section>
+
+  <!-- Platform Showcase Section -->
+  <section class="platforms-section">
+    <div class="platforms-container">
+      <h2 class="platforms-title animate-up">Optimized for Every Platform</h2>
+      <p class="section-subtitle animate-up delay-1">
+        Our AI understands the unique requirements of each social platform and tailors content accordingly for maximum impact.
+      </p>
       
+      <div class="platform-grid">
+        <div class="platform-card animate-up">
+          <div class="platform-icon">
+            <i class="fab fa-tiktok"></i>
+          </div>
+          <h3 class="platform-name">TikTok</h3>
+          <p class="platform-desc">
+            Create viral short-form videos with trending sounds, hashtags, and captions optimized for TikTok's algorithm.
+          </p>
+          <div class="platform-features">
+            <h4><i class="fas fa-check-circle"></i> Key Features:</h4>
+            <ul>
+              <li>Trending hashtag suggestions</li>
+              <li>Vertical video formatting</li>
+              <li>Engagement-boosting captions</li>
+              <li>Optimal posting times</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="platform-card animate-up delay-1">
+          <div class="platform-icon">
+            <i class="fab fa-facebook-f"></i>
+          </div>
+          <h3 class="platform-name">Facebook</h3>
+          <p class="platform-desc">
+            Generate Facebook posts that drive engagement with optimized text length, image sizing, and call-to-actions.
+          </p>
+          <div class="platform-features">
+            <h4><i class="fas fa-check-circle"></i> Key Features:</h4>
+            <ul>
+              <li>Ideal post length analysis</li>
+              <li>Automatic image resizing</li>
+              <li>Engagement question generation</li>
+              <li>Group post optimization</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="platform-card animate-up delay-2">
+          <div class="platform-icon">
+            <i class="fab fa-linkedin-in"></i>
+          </div>
+          <h3 class="platform-name">LinkedIn</h3>
+          <p class="platform-desc">
+            Professional content tailored for LinkedIn with industry-specific terminology and thought leadership framing.
+          </p>
+          <div class="platform-features">
+            <h4><i class="fas fa-check-circle"></i> Key Features:</h4>
+            <ul>
+              <li>Professional tone adjustment</li>
+              <li>Industry keyword optimization</li>
+              <li>Article snippet generation</li>
+              <li>Networking prompts</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="platform-card animate-up delay-3">
+          <div class="platform-icon">
+            <i class="fab fa-youtube"></i>
+          </div>
+          <h3 class="platform-name">YouTube</h3>
+          <p class="platform-desc">
+            Create YouTube-ready content with optimized titles, descriptions, tags, and even video chapter markers.
+          </p>
+          <div class="platform-features">
+            <h4><i class="fas fa-check-circle"></i> Key Features:</h4>
+            <ul>
+              <li>SEO-optimized titles</li>
+              <li>Automatic chapter generation</li>
+              <li>Description templates</li>
+              <li>Thumbnail text suggestions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- Features Section -->
   <section class="section" id="features">
     <h2 class="section-title animate-up">Why Choose AI Social Media Automation</h2>
+    <p class="section-subtitle animate-up delay-1">
+      Our platform combines cutting-edge AI technology with deep social media expertise to deliver results that matter.
+    </p>
+    
     <div class="features-grid">
-      <div class="feature-card animate-up delay-1">
+      <div class="feature-card animate-up">
         <div class="feature-icon">
           <i class="fas fa-robot"></i>
         </div>
         <h3 class="feature-title">AI-Driven Content Creation</h3>
         <p class="feature-desc">
-          Generate engaging stories, captions, and video scripts using advanced AI models like Claude, Gemini, and Llama, tailored to your brand.
+          Generate engaging stories, captions, and video scripts using advanced AI models like Claude, Gemini, and Llama, tailored to your brand voice and audience preferences with continuous learning from your feedback.
         </p>
       </div>
-      <div class="feature-card animate-up delay-2">
+      <div class="feature-card animate-up delay-1">
         <div class="feature-icon">
           <i class="fas fa-share-alt"></i>
         </div>
         <h3 class="feature-title">Multi-Platform Posting</h3>
         <p class="feature-desc">
-          Schedule and publish content seamlessly across TikTok, Facebook, LinkedIn, and YouTube with optimized formatting for each platform.
+          Schedule and publish content seamlessly across TikTok, Facebook, LinkedIn, and YouTube with automatic formatting adjustments, optimal posting times, and platform-specific best practices built in.
         </p>
       </div>
-      <div class="feature-card animate-up delay-3">
+      <div class="feature-card animate-up delay-2">
         <div class="feature-icon">
           <i class="fas fa-video"></i>
         </div>
         <h3 class="feature-title">Automated Video Editing</h3>
         <p class="feature-desc">
-          Create professional videos with segment markers and overlays using FFmpeg or MoviePy, ready for immediate posting.
+          Create professional videos with segment markers, branded overlays, captions, and transitions using FFmpeg or MoviePy, with customizable templates for consistent branding across all content.
+        </p>
+      </div>
+      <div class="feature-card animate-up delay-1">
+        <div class="feature-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h3 class="feature-title">Performance Analytics</h3>
+        <p class="feature-desc">
+          Track engagement metrics across all platforms with our unified dashboard, receiving AI-powered recommendations to improve content performance based on historical data and industry benchmarks.
+        </p>
+      </div>
+      <div class="feature-card animate-up delay-2">
+        <div class="feature-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <h3 class="feature-title">Audience Insights</h3>
+        <p class="feature-desc">
+          Leverage our AI's understanding of your audience demographics and behavior to create content that resonates, with predictive analysis of what will perform best with your specific followers.
+        </p>
+      </div>
+      <div class="feature-card animate-up delay-3">
+        <div class="feature-icon">
+          <i class="fas fa-sync-alt"></i>
+        </div>
+        <h3 class="feature-title">Content Recycling</h3>
+        <p class="feature-desc">
+          Our system intelligently repurposes your best-performing content across different platforms and formats, maximizing ROI from every piece of content you create without appearing repetitive.
         </p>
       </div>
     </div>
@@ -1089,13 +1551,17 @@
   <!-- How It Works Section -->
   <section class="section" id="how-it-works">
     <h2 class="section-title animate-up">How It Works</h2>
+    <p class="section-subtitle animate-up delay-1">
+      From idea to published content in just four simple steps - all powered by AI
+    </p>
+    
     <div class="steps-container">
       <div class="step animate-up">
         <div class="step-number">1</div>
         <div class="step-content">
           <h3 class="step-title">Input Your Content</h3>
           <p class="step-desc">
-            Provide voice notes or text inputs to our platform, detailing your brand’s message, goals, and target audience.
+            Provide voice notes, text inputs, or even rough ideas to our platform. Our AI understands natural language and can extract key messages, brand guidelines, and campaign objectives from your input. You can specify target audience, tone, and any specific requirements.
           </p>
         </div>
       </div>
@@ -1104,7 +1570,7 @@
         <div class="step-content">
           <h3 class="step-title">AI Content Generation</h3>
           <p class="step-desc">
-            Our AI models create tailored stories, captions, and video scripts, optimized for engagement and platform requirements.
+            Our AI models create tailored content optimized for each platform. For TikTok: short, punchy scripts with trending hashtags. For LinkedIn: professional thought leadership pieces. For YouTube: detailed video outlines with SEO-optimized titles and descriptions. All while maintaining your unique brand voice.
           </p>
         </div>
       </div>
@@ -1113,7 +1579,7 @@
         <div class="step-content">
           <h3 class="step-title">Automate Video Editing</h3>
           <p class="step-desc">
-            Generate professional videos with automated edits, including segment markers and branded overlays, ready for posting.
+            The platform automatically edits your raw footage or selects from your media library. It adds captions, transitions, branded intros/outros, and even suggests background music. For static posts, it creates visually appealing layouts with optimal text-to-image ratios for each platform.
           </p>
         </div>
       </div>
@@ -1122,8 +1588,48 @@
         <div class="step-content">
           <h3 class="step-title">Schedule and Publish</h3>
           <p class="step-desc">
-            Schedule posts across multiple platforms and track performance with integrated reporting tools for continuous improvement.
+            Our AI suggests optimal posting times based on your audience's activity patterns. You can review, make final tweaks, and approve content for immediate posting or schedule it for later. The platform handles all the publishing across your connected accounts automatically.
           </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Timeline Visualization -->
+    <div class="timeline animate-up delay-2">
+      <div class="timeline-item left">
+        <div class="timeline-content">
+          <h3>Content Creation</h3>
+          <p>AI generates multiple content variations based on your input, allowing you to choose the best version or combine elements.</p>
+        </div>
+      </div>
+      <div class="timeline-item right">
+        <div class="timeline-content">
+          <h3>Media Processing</h3>
+          <p>Automated systems process your media files, applying edits, captions, and branding according to platform specifications.</p>
+        </div>
+      </div>
+      <div class="timeline-item left">
+        <div class="timeline-content">
+          <h3>Quality Review</h3>
+          <p>You review the generated content through our dashboard, with options to make manual adjustments if needed.</p>
+        </div>
+      </div>
+      <div class="timeline-item right">
+        <div class="timeline-content">
+          <h3>Optimization</h3>
+          <p>AI analyzes each piece against performance benchmarks and suggests improvements before publishing.</p>
+        </div>
+      </div>
+      <div class="timeline-item left">
+        <div class="timeline-content">
+          <h3>Publishing</h3>
+          <p>Content is posted automatically at optimal times, with tracking pixels and UTM parameters for performance monitoring.</p>
+        </div>
+      </div>
+      <div class="timeline-item right">
+        <div class="timeline-content">
+          <h3>Performance Analysis</h3>
+          <p>After publishing, the system analyzes engagement data to inform future content creation and optimization.</p>
         </div>
       </div>
     </div>
@@ -1132,11 +1638,23 @@
   <!-- Testimonials Section -->
   <section class="section">
     <h2 class="section-title animate-up">Success Stories</h2>
+    <p class="section-subtitle animate-up delay-1">
+      Don't just take our word for it - see what our customers say about their results
+    </p>
+    
     <div class="testimonials-container">
       <div class="testimonial-card animate-up">
         <p class="testimonial-text">
-          This platform transformed our social media strategy. The AI-generated content is spot-on, and posting to multiple platforms is effortless.
+          This platform transformed our social media strategy. We went from spending 20+ hours per week on content creation to just 2-3 hours, while our engagement rates increased by 120% across all platforms.
         </p>
+        <div class="testimonial-results">
+          <div class="result-badge">
+            <i class="fas fa-arrow-up"></i> 120% engagement boost
+          </div>
+          <div class="result-badge">
+            <i class="fas fa-clock"></i> 85% time saved
+          </div>
+        </div>
         <div class="testimonial-author">
           <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Emma Wilson" class="author-avatar">
           <div class="author-info">
@@ -1147,8 +1665,16 @@
       </div>
       <div class="testimonial-card animate-up delay-1">
         <p class="testimonial-text">
-          The automated video editing saved us hours every week. Our TikTok engagement doubled thanks to the optimized content.
+          The automated video editing saved us $15,000 in annual production costs. Our TikTok engagement doubled thanks to the optimized content, and we gained 50,000 new followers in just 3 months.
         </p>
+        <div class="testimonial-results">
+          <div class="result-badge">
+            <i class="fas fa-dollar-sign"></i> $15k saved
+          </div>
+          <div class="result-badge">
+            <i class="fas fa-users"></i> 50k new followers
+          </div>
+        </div>
         <div class="testimonial-author">
           <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="James Lee" class="author-avatar">
           <div class="author-info">
@@ -1159,8 +1685,16 @@
       </div>
       <div class="testimonial-card animate-up delay-2">
         <p class="testimonial-text">
-          Managing multiple brands is a breeze with this tool. The UI makes it easy to tweak AI models and scale our campaigns.
+          Managing multiple brands is a breeze with this tool. We've standardized our content quality across 12 different client accounts while reducing our workload by 60%. The AI's ability to adapt to different brand voices is incredible.
         </p>
+        <div class="testimonial-results">
+          <div class="result-badge">
+            <i class="fas fa-briefcase"></i> 12 accounts managed
+          </div>
+          <div class="result-badge">
+            <i class="fas fa-clock"></i> 60% less work
+          </div>
+        </div>
         <div class="testimonial-author">
           <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Sofia Patel" class="author-avatar">
           <div class="author-info">
@@ -1175,6 +1709,10 @@
   <!-- Pricing Section -->
   <section class="section" id="pricing">
     <h2 class="section-title animate-up">Simple, Transparent Pricing</h2>
+    <p class="section-subtitle animate-up delay-1">
+      Choose the plan that fits your needs - scale up or down as your business grows
+    </p>
+    
     <div class="pricing-grid">
       <div class="pricing-card animate-up">
         <h3 class="pricing-title">Starter</h3>
@@ -1184,6 +1722,8 @@
           <li><i class="fas fa-check"></i> 1 platform integration</li>
           <li><i class="fas fa-check"></i> 5 posts per month</li>
           <li><i class="fas fa-check"></i> Email support</li>
+          <li><i class="fas fa-check"></i> Basic analytics</li>
+          <li><i class="fas fa-check"></i> Watermarked videos</li>
         </ul>
         <a href="#" class="btn btn-outline nav-signup">Get Started</a>
       </div>
@@ -1197,6 +1737,9 @@
           <li><i class="fas fa-check"></i> Unlimited posts</li>
           <li><i class="fas fa-check"></i> Video editing features</li>
           <li><i class="fas fa-check"></i> Priority support</li>
+          <li><i class="fas fa-check"></i> Advanced analytics</li>
+          <li><i class="fas fa-check"></i> Brand kit (3 brands)</li>
+          <li><i class="fas fa-check"></i> Watermark-free exports</li>
         </ul>
         <a href="#" class="btn btn-primary nav-signup">Choose Plan</a>
       </div>
@@ -1209,22 +1752,42 @@
           <li><i class="fas fa-check"></i> Custom AI model training</li>
           <li><i class="fas fa-check"></i> Dedicated account manager</li>
           <li><i class="fas fa-check"></i> Advanced analytics</li>
+          <li><i class="fas fa-check"></i> Unlimited brand kits</li>
+          <li><i class="fas fa-check"></i> API access</li>
+          <li><i class="fas fa-check"></i> White-label reports</li>
+          <li><i class="fas fa-check"></i> 24/7 priority support</li>
         </ul>
         <a href="#" class="btn btn-outline nav-signup">Choose Plan</a>
       </div>
+    </div>
+    
+    <div class="animate-up delay-3" style="text-align: center; margin-top: 3rem;">
+      <p>Need a custom solution? <a href="#" style="color: var(--primary-blue); font-weight: 600;">Contact our sales team</a> for enterprise pricing and custom integrations.</p>
     </div>
   </section>
 
   <!-- FAQ Section -->
   <section class="section" id="faq">
     <h2 class="section-title animate-up">Frequently Asked Questions</h2>
+    <p class="section-subtitle animate-up delay-1">
+      Everything you need to know about our AI social media automation platform
+    </p>
+    
     <div class="faq-container">
       <div class="faq-item animate-up">
         <div class="faq-question">
           How does the AI generate content? <i class="fas fa-chevron-down"></i>
         </div>
         <div class="faq-answer">
-          Our platform uses advanced AI models like Claude, Gemini, and Llama to create tailored content based on your inputs, brand guidelines, and platform requirements, ensuring high engagement.
+          <p>Our platform uses advanced AI models like Claude, Gemini, and Llama to create tailored content based on your inputs, brand guidelines, and platform requirements. The AI analyzes:</p>
+          <ul>
+            <li>Your past content performance</li>
+            <li>Industry trends and benchmarks</li>
+            <li>Platform-specific best practices</li>
+            <li>Your target audience demographics</li>
+            <li>Current social media trends and hashtags</li>
+          </ul>
+          <p>You can provide feedback on generated content, and the system learns your preferences over time for increasingly accurate results.</p>
         </div>
       </div>
       <div class="faq-item animate-up delay-1">
@@ -1232,7 +1795,15 @@
           Is my brand data secure? <i class="fas fa-chevron-down"></i>
         </div>
         <div class="faq-answer">
-          Yes, we use bank-level encryption to protect your data and never share your information with third parties without your consent. Your privacy is our priority.
+          <p>Yes, we take data security extremely seriously. Our platform features:</p>
+          <ul>
+            <li>End-to-end encryption for all data transfers</li>
+            <li>SOC 2 Type II compliant infrastructure</li>
+            <li>Regular third-party security audits</li>
+            <li>Granular user permissions and access controls</li>
+            <li>Option for on-premise deployment for enterprise clients</li>
+          </ul>
+          <p>We never share your information with third parties without your explicit consent, and you retain full ownership of all content created through our platform.</p>
         </div>
       </div>
       <div class="faq-item animate-up delay-2">
@@ -1240,7 +1811,15 @@
           Can I manage multiple brands? <i class="fas fa-chevron-down"></i>
         </div>
         <div class="faq-answer">
-          Absolutely. Our platform allows you to duplicate setups for different brands, each with unique prompts, assets, and output settings, all managed from a single UI.
+          <p>Absolutely. Our platform allows you to:</p>
+          <ul>
+            <li>Create separate brand profiles with unique voice and style guidelines</li>
+            <li>Manage multiple social accounts per brand</li>
+            <li>Duplicate successful content strategies across brands</li>
+            <li>Compare performance metrics across all managed brands</li>
+            <li>Set different access levels for team members per brand</li>
+          </ul>
+          <p>Enterprise plans support unlimited brands with advanced collaboration features for agencies and large teams.</p>
         </div>
       </div>
       <div class="faq-item animate-up delay-3">
@@ -1248,22 +1827,101 @@
           How often are platform integrations updated? <i class="fas fa-chevron-down"></i>
         </div>
         <div class="faq-answer">
-          We continuously update our integrations with platforms like TikTok, Facebook, LinkedIn, and YouTube to ensure compatibility and optimal performance.
+          <p>We continuously monitor and update our platform integrations:</p>
+          <ul>
+            <li>Real-time updates when platforms change their APIs</li>
+            <li>Monthly feature enhancements based on platform updates</li>
+            <li>Quarterly complete reviews of all integration points</li>
+            <li>24/7 monitoring for any service disruptions</li>
+          </ul>
+          <p>Our team stays ahead of platform changes through official partner programs with TikTok, Facebook, LinkedIn, and YouTube to ensure uninterrupted service.</p>
         </div>
       </div>
+      <div class="faq-item animate-up">
+        <div class="faq-question">
+          What kind of content performs best with your AI? <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          <p>Our AI excels with various content types:</p>
+          <ul>
+            <li><strong>Educational content:</strong> How-tos, tutorials, explainers</li>
+            <li><strong>Behind-the-scenes:</strong> Company culture, product development</li>
+            <li><strong>User-generated content:</strong> Customer stories, testimonials</li>
+            <li><strong>Trending topics:</strong> Newsjacking, viral challenges</li>
+            <li><strong>Evergreen content:</strong> Tips, lists, best practices</li>
+          </ul>
+          <p>The system provides performance predictions for each content type based on your specific audience data.</p>
+        </div>
+      </div>
+      <div class="faq-item animate-up delay-1">
+        <div class="faq-question">
+          How does the automated video editing work? <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          <p>Our video automation includes:</p>
+          <ul>
+            <li>Automatic trimming of silent/unwanted segments</li>
+            <li>AI-powered caption generation with proper timing</li>
+            <li>Branded templates for intros/outros</li>
+            <li>Smart cropping for different aspect ratios</li>
+            <li>Background music selection based on content mood</li>
+            <li>Transition effects between scenes</li>
+            <li>Automatic color correction and stabilization</li>
+          </ul>
+          <p>You can customize templates or let the AI suggest edits based on your brand guidelines.</p>
+        </div>
+      </div>
+      <div class="faq-item animate-up delay-2">
+        <div class="faq-question">
+          Can I integrate with other marketing tools? <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          <p>Yes, we offer integrations with:</p>
+          <ul>
+            <li><strong>CRM systems:</strong> Salesforce, HubSpot, Zoho</li>
+            <li><strong>Marketing automation:</strong> Marketo, Pardot, ActiveCampaign</li>
+            <li><strong>Analytics:</strong> Google Analytics, Adobe Analytics</li>
+            <li><strong>Content management:</strong> WordPress, Contentful</li>
+            <li><strong>Cloud storage:</strong> Google Drive, Dropbox, OneDrive</li>
+          </ul>
+          <p>Enterprise plans include API access for custom integrations with any business system.</p>
+        </div>
+      </div>
+      <div class="faq-item animate-up delay-3">
+        <div class="faq-question">
+          What support options are available? <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          <p>We provide multiple support channels:</p>
+          <ul>
+            <li><strong>Starter:</strong> Email support with 48-hour response</li>
+            <li><strong>Pro:</strong> Priority email (24-hour response) + live chat</li>
+            <li><strong>Enterprise:</strong> 24/7 phone, chat, and email with dedicated account manager</li>
+          </ul>
+          <p>All plans include access to our comprehensive knowledge base, video tutorials, and community forum. We also offer onboarding sessions and premium training packages.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="animate-up delay-2" style="text-align: center; margin-top: 3rem;">
+      <p>Still have questions? <a href="#" class="nav-chatbot" style="color: var(--primary-blue); font-weight: 600;">Chat with our AI assistant</a> or <a href="#" style="color: var(--primary-blue); font-weight: 600;">contact our team</a>.</p>
     </div>
   </section>
 
   <!-- Final CTA Section -->
   <section class="cta-section">
     <div class="hero-content">
-      <h2 class="hero-title animate-up" style="font-size: 2.5rem;">Ready to Automate Your Social Media?</h2>
+      <h2 class="hero-title animate-up" style="font-size: 2.5rem;">Ready to Transform Your Social Media Strategy?</h2>
       <p class="hero-subtitle animate-up delay-1">
-        Join businesses worldwide in streamlining their social media strategy with our AI-powered platform.
+        Join thousands of businesses saving time and increasing engagement with our AI-powered platform.
       </p>
       <div class="cta-buttons animate-up delay-2">
         <a href="#" class="btn btn-primary btn-lg nav-signup">Get Started Free</a>
+        <a href="#features" class="btn btn-secondary btn-lg">See All Features</a>
       </div>
+      <p class="animate-up delay-3" style="margin-top: 1.5rem; opacity: 0.8; font-size: 0.9rem;">
+        No credit card required • 14-day free trial • Cancel anytime
+      </p>
     </div>
   </section>
 
@@ -1305,13 +1963,15 @@
           <i class="fas fa-robot"></i> AI Social Media Automation
         </div>
         <p class="footer-about">
-          Empowering businesses to streamline social media management with AI-driven content creation and automation.
+          Empowering businesses to streamline social media management with AI-driven content creation and automation. Our platform helps you create, edit, and publish content faster while maintaining quality and brand consistency.
         </p>
         <div class="social-links">
           <a href="#"><i class="fab fa-facebook-f"></i></a>
           <a href="#"><i class="fab fa-twitter"></i></a>
           <a href="#"><i class="fab fa-instagram"></i></a>
           <a href="#"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#"><i class="fab fa-youtube"></i></a>
+          <a href="#"><i class="fab fa-tiktok"></i></a>
         </div>
       </div>
       <div class="footer-links">
@@ -1321,6 +1981,8 @@
           <li><a href="#">Careers</a></li>
           <li><a href="#">Press</a></li>
           <li><a href="#">Blog</a></li>
+          <li><a href="#">Partners</a></li>
+          <li><a href="#">Contact Us</a></li>
         </ul>
       </div>
       <div class="footer-links">
@@ -1330,20 +1992,24 @@
           <li><a href="#">Content Trends</a></li>
           <li><a href="#">Case Studies</a></li>
           <li><a href="#">Webinars</a></li>
+          <li><a href="#">API Documentation</a></li>
+          <li><a href="#">Help Center</a></li>
         </ul>
       </div>
       <div class="footer-links">
-        <h3>Support</h3>
+        <h3>Legal</h3>
         <ul>
-          <li><a href="#">Help Center</a></li>
-          <li><a href="#">Contact Us</a></li>
           <li><a href="privacy.html">Privacy Policy</a></li>
           <li><a href="terms.html">Terms of Service</a></li>
+          <li><a href="#">Cookie Policy</a></li>
+          <li><a href="#">GDPR Compliance</a></li>
+          <li><a href="#">Security</a></li>
+          <li><a href="#">Acceptable Use</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      © 2025 AI Social Media Automation. All rights reserved.
+      © 2025 AI Social Media Automation. All rights reserved. | Made with <i class="fas fa-heart" style="color: var(--danger-red);"></i> for social media managers
     </div>
   </footer>
 
@@ -1387,6 +2053,16 @@
         }
       },
       retina_detect: true
+    });
+
+    // Navbar scroll effect
+    window.addEventListener('scroll', function() {
+      const navbar = document.querySelector('.navbar');
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
     });
 
     // FAQ toggle functionality
@@ -1572,30 +2248,60 @@
       e.preventDefault();
       chatbotModal.style.display = 'flex';
       setTimeout(() => chatbotInputModal.focus(), 200);
+      
+      // Add welcome message if chat is empty
+      if (chatWindowModal.children.length === 0) {
+        addMessageModal("Hello! I'm Lucy, your AI assistant. How can I help you with your social media automation today? Here are some things I can help with:\n\n- Explain platform features\n- Troubleshoot issues\n- Suggest content ideas\n- Provide best practices\n\nWhat would you like to know?", 'bot');
+      }
     });
+    
     closeChatbot.addEventListener('click', function() {
       chatbotModal.style.display = 'none';
-      chatWindowModal.innerHTML = '';
     });
+    
     chatbotFormModal.addEventListener('submit', async function(e) {
       e.preventDefault();
       const userMsg = chatbotInputModal.value.trim();
       if (!userMsg) return;
+      
       addMessageModal(userMsg, 'user');
       chatbotInputModal.value = '';
-      addMessageModal('Lucy is typing...', 'bot');
+      
+      // Show typing indicator
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'chat-message bot';
+      const typingBubble = document.createElement('div');
+      typingBubble.className = 'bubble';
+      typingBubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+      typingIndicator.appendChild(typingBubble);
+      chatWindowModal.appendChild(typingIndicator);
+      chatWindowModal.scrollTop = chatWindowModal.scrollHeight;
+      
       try {
-        const response = await fetch('/ask', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: userMsg })
-        });
-        const data = await response.json();
-        chatWindowModal.removeChild(chatWindowModal.lastChild);
-        addMessageModal(data.response, 'bot');
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Remove typing indicator
+        chatWindowModal.removeChild(typingIndicator);
+        
+        // Mock responses based on user input
+        let response;
+        if (userMsg.toLowerCase().includes('feature') || userMsg.toLowerCase().includes('what can you do')) {
+          response = "Our platform offers these key features:\n\n- AI Content Generation: Create posts, scripts, and captions\n- Multi-Platform Posting: Schedule to TikTok, Facebook, LinkedIn, YouTube\n- Automated Video Editing: Add captions, effects, branding\n- Performance Analytics: Track engagement across platforms\n- Audience Insights: Understand what content resonates\n\nWhich feature would you like more details about?";
+        } else if (userMsg.toLowerCase().includes('pricing') || userMsg.toLowerCase().includes('cost')) {
+          response = "We offer three pricing plans:\n\n1. Starter: Free (limited features)\n2. Pro: $49/month (full features for individuals)\n3. Enterprise: $219/month (advanced features for teams)\n\nAll plans include a 14-day free trial. You can see full details on our Pricing page or I can explain specific plan differences.";
+        } else if (userMsg.toLowerCase().includes('tiktok') || userMsg.toLowerCase().includes('reel')) {
+          response = "For TikTok, our AI helps with:\n\n- Trend Analysis: Identifies trending sounds and hashtags\n- Video Optimization: Formats for vertical 9:16 aspect ratio\n- Caption Writing: Creates engaging, platform-appropriate text\n- Hashtag Strategy: Suggests optimal hashtag combinations\n- Post Timing: Recommends when your audience is most active\n\nWould you like tips for increasing TikTok engagement?";
+        } else if (userMsg.toLowerCase().includes('help') || userMsg.toLowerCase().includes('support')) {
+          response = "For help, you can:\n\n- Check our Help Center for articles and tutorials\n- Email support@socialautomation.com\n- Chat with me for quick questions\n- Request a callback from our team (Pro & Enterprise plans)\n\nWhat specific issue are you experiencing? I may be able to help directly.";
+        } else {
+          response = "Thanks for your question! I'm an AI assistant trained to help with social media automation. For the most accurate response, could you please:\n\n1. Be more specific about your needs\n2. Mention which platform you're asking about\n3. Clarify if you need technical help or content ideas\n\nI'm here to help you get the most from our platform!";
+        }
+        
+        addMessageModal(response, 'bot');
       } catch (err) {
-        chatWindowModal.removeChild(chatWindowModal.lastChild);
-        addMessageModal('Sorry, something went wrong. Please try again.', 'bot');
+        chatWindowModal.removeChild(typingIndicator);
+        addMessageModal("Sorry, I'm having trouble connecting right now. Please try again shortly or email support@socialautomation.com for immediate assistance.", 'bot');
       }
     });
   </script>
