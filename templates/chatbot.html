@@ -304,5 +304,23 @@
         @keyframes blink { 0% { opacity: 0.2; } 100% { opacity: 1; } }`;
         document.head.appendChild(style);
     </script>
+    <!-- Story Pattern Input Box (NEW) -->
+    <section class="main-content" style="margin-bottom: 2rem;">
+        <div class="creation-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">Custom Story Pattern (Advanced)</h3>
+                <p class="panel-subtitle">Optionally define a new story pattern for this generation. Leave blank to use the default pattern.</p>
+            </div>
+            <div class="input-group">
+                <label for="story-pattern" class="input-label">Story Pattern Instructions</label>
+                <textarea id="story-pattern" class="input-field" placeholder="Paste or write your custom story pattern here..."></textarea>
+            </div>
+            <div class="action-buttons">
+                <button class="generate-button" id="generate-with-pattern">
+                    <i class="fas fa-magic"></i> Generate Story with Pattern
+                </button>
+            </div>
+        </div>
+    </section>
 </body>
 </html>

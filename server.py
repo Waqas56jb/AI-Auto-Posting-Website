@@ -655,19 +655,31 @@ def check_grammar():
     if not text:
         return jsonify({'error': 'No text provided'}), 400
     try:
+        # OPTIMIZATION: Truncate long text for grammar check
+        max_len = 1000
+        truncated = False
+        if len(text) > max_len:
+            text = text[:max_len]
+            truncated = True
         prompt = (
             "Analyze the following text for grammatical and spelling errors. "
             "Return a JSON array of issues, where each issue contains the original sentence, "
             "the corrected sentence, and a brief explanation of the error."
             f"\n\nText: {text}"
         )
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt, generation_config={
+            'temperature': 0.3,
+            'max_output_tokens': 300
+        })
         issues = response.text
         try:
             issues = json.loads(issues)
         except json.JSONDecodeError:
             issues = []
-        return jsonify({'issues': issues})
+        result = {'issues': issues}
+        if truncated:
+            result['note'] = 'Only the first 1000 characters were checked for grammar to ensure fast response.'
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -679,51 +691,25 @@ def generate_story():
     tone = data.get('tone', '')
     core_lesson = data.get('coreLesson', '')
     micro_lessons = data.get('microLessons', [])
+    story_pattern = data.get('story_pattern', None)
 
     if not transcript and not title:
         return jsonify({'error': 'Please provide either story content or a title'}), 400
 
-    framing = f"Tone: {tone if tone else 'Calm, reflective, personal, passionate, British'}. " \
-              f"Title: {title if title else 'Generate a suitable title'}. " \
-              f"Core Lesson: {core_lesson if core_lesson else 'Generate a relevant theme'}. " \
-              f"Micro-Lessons: {', '.join(micro_lessons) if micro_lessons else 'Generate three relevant micro-lessons'}. " \
-              "Lucy is a British woman sharing her story as if speaking to a close friend. Use UK English spelling (e.g., realised, neighbours, organised) and vocabulary (e.g., flat, lift, lorry). Avoid Americanisms (e.g., apartment, elevator, truck), hype, or salesy language. Ensure the narrative flows naturally with consistent energy, passion, and emotion, as if one person is speaking throughout."
+    if story_pattern and story_pattern.strip():
+        # Use the custom story pattern as the prompt
+        prompt = story_pattern.replace('{transcript}', transcript)
+    else:
+        framing = f"Tone: {tone if tone else 'Calm, reflective, personal, passionate, British'}. " \
+                  f"Title: {title if title else 'Generate a suitable title'}. " \
+                  f"Core Lesson: {core_lesson if core_lesson else 'Generate a relevant theme'}. " \
+                  f"Micro-Lessons: {', '.join(micro_lessons) if micro_lessons else 'Generate three relevant micro-lessons'}. " \
+                  "Lucy is a British woman sharing her story as if speaking to a close friend. Use UK English spelling (e.g., realised, neighbours, organised) and vocabulary (e.g., flat, lift, lorry). Avoid Americanisms (e.g., apartment, elevator, truck), hype, or salesy language. Ensure the narrative flows naturally with consistent energy, passion, and emotion, as if one person is speaking throughout."
 
-    try:
         prompt = f"""
-You are Lucy from "Lucy & The Wealth Machine," a British woman sharing a heartfelt story as if speaking to a close friend.
-Generate a 4-part voiceover script that feels authentic, with consistent rhythm, passion, and emotion throughout.
-Use exclusively UK English spelling (e.g., realised, neighbours, organised) and vocabulary (e.g., flat, lift, lorry).
-Avoid Americanisms (e.g., apartment, elevator, truck), hype, or salesy language.
-The narrative must flow naturally, as if one person is speaking, with no disjointed tone or style shifts.
+You are a British storyteller and content creator. Generate a 4-part voiceover script that feels authentic, with consistent rhythm, passion, and emotion throughout. Use exclusively UK English spelling (e.g., realised, neighbours, organised) and vocabulary (e.g., flat, lift, lorry). Avoid Americanisms (e.g., apartment, elevator, truck), hype, or salesy language. The narrative must flow naturally, as if one person is speaking, with no disjointed tone or style shifts.
 
-You MUST return output in the EXACT pattern shown below — including headings, line order, quotation marks, CUT markers, and spacing.
-This format is parsed by software, so structure must be reliable.
-
-Use FRAMING to guide tone, title, core lesson, micro-lessons, and exclusions.
-Integrate the core lesson and micro-lessons organically into the story narrative; do NOT include them explicitly in the output.
-Use STORY as the raw source material. Do not invent facts beyond STORY or clearly implied by FRAMING.
-Ensure narration paragraphs are clear, personal, 6-8 sentences, with consistent energy and passion.
-Each segment should feel like a natural continuation of the previous one.
-
-Each of the 4 segments MUST contain:
-- Segment heading: "🎬 <Title>" (no "Segment X")
-- 3 short quoted hook lines (each on its own line, smart quotes “…” required)
-- Blank line
-- One quoted narration paragraph (clear, personal, 6-8 sentences, single pair of smart quotes)
-- One short quoted engagement question (soft, reflective, personal, passionate)
-- CUT marker: CUT X (no brackets)
-
-After all 4 segments, include:
-- One unquoted closing line (reflective, personal, passionate, not salesy)
-
-ALWAYS include the top metadata block with:
-🎬 Title:
-<Title line>
-
-DO NOT include Video Length, Style, Core Story Framework, Core Lesson, Micro-Lessons, or "🎯 Final CTA" heading in the output.
-
-EXAMPLE FORMAT (follow structure and tone, do NOT copy content):
+EXAMPLE FORMAT (for structure and tone ONLY—do NOT copy the content below! The topic and context must come from the user's input, not the example):
 
 🎬 Title:
 From Property Nightmare to Hands-Off Wealth: My Journey
@@ -772,9 +758,10 @@ FRAMING (guide tone, title, lessons):
 STORY (source material; do not invent beyond this):
 {transcript}
 
-Now write the full story in THIS EXACT FORMAT. Replace example content with Lucy’s new story based on STORY and FRAMING. Preserve line breaks, headings, and smart quotes exactly as shown. Ensure the narrative feels like one passionate, reflective voice throughout, using UK English and vocabulary.
+IMPORTANT: The above example is for structure, energy, and UK English style ONLY. The actual story content, topic, and speaker must come from the user's transcript and context. If the transcript is not about Lucy or property, adapt the story to the new context and speaker, but always use the same structure, energy, and UK English style. The story should feel like a real person speaking, with natural rhythm and emotion, and must be fully dynamic to the user's input.
 """.strip()
 
+    try:
         response = model.generate_content(prompt)
         story_text = response.text.strip() if response.text else ""
         clean_story = clean_lucy_story(story_text)
@@ -806,7 +793,7 @@ STRUCTURE
 - Each segment has:
   - 3 short quoted hook lines (each on own line, smart quotes).
   - Blank line.
-  - One quoted narration paragraph (6-8 sentences, single pair of smart quotes, clear and personal).
+  - One quoted narration paragraph (4-5 sentences, single pair of smart quotes, clear and personal).
   - One quoted engagement question (soft, reflective, personal).
   - CUT X marker (no brackets).
 - Ends with one unquoted closing line (reflective, personal, not salesy).

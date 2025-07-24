@@ -1004,6 +1004,61 @@
             animation: float 6s ease-in-out infinite;
         }
 
+        /* Loader overlay styles */
+        #loader-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+        #loader-overlay.active {
+            display: flex;
+            opacity: 1;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        #loader-overlay > div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        .loader-spinner {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #60a5fa;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.8s linear infinite;
+            box-shadow: 0 2px 12px rgba(26,86,219,0.08);
+            background: transparent;
+        }
+        .loader-message {
+            margin-top: 1rem;
+            color: #1a56db;
+            font-size: 1.05rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            opacity: 0.85;
+            text-align: center;
+            max-width: 90vw;
+            padding: 0 1.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 1024px) {
             .hero h1 {
                 font-size: 3rem;
@@ -1193,16 +1248,15 @@
                 
                 <div class="input-group">
                     <label for="story-text" class="input-label">Your Story Content</label>
-                    <textarea id="story-text" class="input-field" placeholder="Type or paste your story here..."></textarea>
+                    <textarea id="story-text" class="input-field" placeholder="Type or paste your story here..." autocomplete="off" autocorrect="off" spellcheck="true"></textarea>
                 </div>
-                
                 <div class="input-group">
                     <label class="input-label">Or Upload Media</label>
                     <div class="file-upload" id="file-upload-area">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p>Drag & drop files here or <span id="browse-span">browse</span></p>
                         <p class="small">Supports MP3, WAV, MP4, MOV (Max 100MB)</p>
-                        <input type="file" id="file-upload" accept="audio/*,video/*">
+                        <input type="file" id="file-upload" accept="audio/*,video/*" style="display:none;">
                     </div>
                 </div>
                 
@@ -1312,4 +1366,555 @@
                         </div>
                         <div class="pricing-feature">
                             <i class="fas fa-check"></i>
-                            <span>Standard music library</span
+                            <span>Standard music library</span>
+                        </div>
+                    </div>
+                    <button class="pricing-button">Choose Plan</button>
+                </div>
+                <div class="pricing-card popular">
+                    <h4 class="pricing-tier">Pro</h4>
+                    <div class="pricing-price">$49<span>/month</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Unlimited videos</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Advanced AI avatars</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Premium music library</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Priority support</span>
+                        </div>
+                    </div>
+                    <button class="pricing-button">Choose Plan</button>
+                </div>
+                <div class="pricing-card">
+                    <h4 class="pricing-tier">Enterprise</h4>
+                    <div class="pricing-price">$99<span>/month</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Custom AI models</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Dedicated account manager</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Priority delivery</span>
+                        </div>
+                        <div class="pricing-feature">
+                            <i class="fas fa-check"></i>
+                            <span>API access</span>
+                        </div>
+                    </div>
+                    <button class="pricing-button">Contact Us</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq" id="faq">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>What is StoryVerse AI?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>StoryVerse AI is a revolutionary platform that uses advanced natural language processing and machine learning to generate compelling, engaging, and viral video content from simple text prompts. It's designed to help creators, marketers, and content producers save time and produce high-quality, on-brand videos effortlessly.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>How does StoryVerse AI work?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>StoryVerse AI works by analyzing your input (text, audio, or video) and applying a series of sophisticated algorithms to generate a story. This story is then used to create a video, which includes elements like AI avatars, animations, music, and visual effects. The platform is highly customizable, allowing you to fine-tune the output to match your desired style and tone.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>What types of content can I create with StoryVerse AI?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>With StoryVerse AI, you can create a wide variety of content, including:
+                        <ul>
+                            <li>YouTube long-form videos</li>
+                            <li>TikTok short clips</li>
+                            <li>Instagram Reels</li>
+                            <li>Facebook videos</li>
+                            <li>Product demos</li>
+                            <li>Tutorials</li>
+                            <li>Explainer videos</li>
+                            <li>And many more!</li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Is StoryVerse AI suitable for beginners?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Absolutely! StoryVerse AI is designed with beginners in mind. You don't need any technical skills or prior experience in video creation to use it. Simply provide a prompt, and the AI will generate a story for you. The platform's intuitive interface and step-by-step guidance make it easy for anyone to create engaging content.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>How accurate is the AI in generating stories?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Our AI is trained on a vast dataset of stories, including bestsellers, viral content, and popular trends. It has been fine-tuned to understand context, tone, and style, resulting in highly accurate and engaging story generation. However, the final video output might require some manual adjustments based on your preferences.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Can I customize the generated story or video?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Yes, absolutely! You have full control over the generated story and video. You can edit the text, adjust the style, change the music, and modify the visual elements to make it uniquely yours. The platform provides a rich set of customization options to ensure your content stands out.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>What are the file size limits for uploads?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>For audio uploads, we support MP3 and WAV files with a maximum size of 100MB. For video uploads, we support MP4 and MOV files with a maximum size of 100MB. Larger files can be processed, but might require a more powerful plan or a longer processing time.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>How long does it take to generate a story or video?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>The processing time depends on the complexity of your request and the plan you're on. For the Starter plan, you can expect a quick turnaround (e.g., 1-2 minutes for a simple story). The Pro plan offers faster processing, and the Enterprise plan provides the fastest delivery. Custom models can take a bit longer.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>What if I encounter an error during generation?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>If you encounter an error during generation, please try again. If the issue persists, you can contact our support team, and we'll help you resolve it. Common errors might include file upload issues, API limitations, or processing errors. Our platform is designed to be robust and handle most errors gracefully.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Is my data secure?</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Yes, your data is highly secure with us. We use industry-standard encryption and follow strict data privacy policies to protect your personal and uploaded content. We do not share your data with third parties without your explicit consent.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-wave"></div>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-magic"></i>
+                <span>StoryVerse</span>
+            </div>
+            <div class="footer-about">
+                <p>Transform your content creation with AI. StoryVerse helps you generate compelling stories and turn them into stunning videos in minutes.</p>
+                <p>Follow us on social media for updates and inspiration.</p>
+            </div>
+            <div class="footer-social">
+                <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-linkedin"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-youtube"></i></a>
+            </div>
+            <div class="footer-links">
+                <h3>Company</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h3>Resources</h3>
+                <ul>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">API</a></li>
+                    <li><a href="#">Pricing</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h3>Contact</h3>
+                <ul>
+                    <li><a href="mailto:info@storyverse.ai">info@storyverse.ai</a></li>
+                    <li><a href="tel:+1234567890">+1 (234) 567-890</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2023 StoryVerse AI. All rights reserved.</p>
+            <div class="footer-legal">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Cookie Policy</a>
+            </div>
+        </div>
+    </footer>
+
+    <div id="loader-overlay"><div><div class="loader-spinner"></div><div class="loader-message" id="loader-message">Processing...</div></div></div>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        // Particle.js configuration
+        particlesJS('particles-js', {
+            particles: {
+                number: {
+                    value: 80,
+                    density: {
+                        enable: true,
+                        value_area: 800
+                    }
+                },
+                color: {
+                    value: "#ffffff"
+                },
+                shape: {
+                    type: "circle",
+                    stroke: {
+                        width: 0,
+                        color: "#000"
+                    },
+                    polygon: {
+                        nb_sides: 5
+                    },
+                    image: {
+                        src: "https://cdn.jsdelivr.net/particles.js/2.0.0/particles.svg",
+                        width: 100,
+                        height: 100
+                    }
+                },
+                opacity: {
+                    value: 0.5,
+                    random: false,
+                    anim: {
+                        enable: false,
+                        speed: 1,
+                        opacity_min: 0.1,
+                        sync: false
+                    }
+                },
+                size: {
+                    value: 3,
+                    random: true,
+                    anim: {
+                        enable: false,
+                        speed: 40,
+                        size_min: 0.1,
+                        sync: false
+                    }
+                },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: "#ffffff",
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 6,
+                    direction: "none",
+                    random: false,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false,
+                    attract: {
+                        enable: false,
+                        rotateX: 600,
+                        rotateY: 1200
+                    }
+                }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: {
+                    onhover: {
+                        enable: true,
+                        mode: "grab"
+                    },
+                    onclick: {
+                        enable: true,
+                        mode: "push"
+                    },
+                    resize: true
+                },
+                modes: {
+                    grab: {
+                        distance: 140,
+                        line_linked: {
+                            opacity: 1
+                        }
+                    },
+                    bubble: {
+                        distance: 400,
+                        size: 40,
+                        duration: 2,
+                        opacity: 8,
+                        speed: 3
+                    },
+                    repulse: {
+                        distance: 200,
+                        duration: 0.4
+                    },
+                    push: {
+                        particles_nb: 4
+                    },
+                    remove: {
+                        particles_nb: 2
+                    }
+                }
+            },
+            retina_detect: true
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // File upload logic
+            const fileUploadArea = document.getElementById('file-upload-area');
+            const fileInput = document.getElementById('file-upload');
+            const browseSpan = document.getElementById('browse-span');
+            let fileNameDisplay = document.createElement('p');
+            fileNameDisplay.className = 'small';
+            fileNameDisplay.style.color = '#1a56db';
+            fileNameDisplay.style.marginTop = '0.5rem';
+            fileUploadArea.appendChild(fileNameDisplay);
+
+            // Open file dialog on click
+            fileUploadArea.addEventListener('click', function(e) {
+                // Only trigger if not clicking the input directly
+                if (e.target === browseSpan || e.target === fileUploadArea) {
+                    fileInput.click();
+                }
+            });
+            // Open file dialog on 'browse' click
+            browseSpan.addEventListener('click', function(e) {
+                e.stopPropagation();
+                fileInput.click();
+            });
+            // Show selected file name
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.textContent = 'Selected: ' + fileInput.files[0].name;
+                } else {
+                    fileNameDisplay.textContent = '';
+                }
+            });
+            // Drag and drop support
+            fileUploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                fileUploadArea.classList.add('dragover');
+            });
+            fileUploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
+            });
+            fileUploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    fileNameDisplay.textContent = 'Selected: ' + fileInput.files[0].name;
+                }
+            });
+
+            const storyTextArea = document.getElementById('story-text');
+            const loaderOverlay = document.getElementById('loader-overlay');
+            const loaderMessage = document.getElementById('loader-message');
+            function showLoader(msg) {
+                if (msg) loaderMessage.textContent = msg;
+                else loaderMessage.textContent = 'Processing...';
+                loaderOverlay.classList.add('active');
+            }
+            function hideLoader() { loaderOverlay.classList.remove('active'); }
+
+            // Auto-transcribe on file upload
+            fileInput.addEventListener('change', async function() {
+                if (fileInput.files.length > 0) {
+                    showLoader('Transcribing audio/video...');
+                    const file = fileInput.files[0];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    try {
+                        const resp = await fetch('/api/transcribe', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await resp.json();
+                        if (data.transcript) {
+                            storyTextArea.value = data.transcript;
+                        } else {
+                            alert('Transcription failed: ' + (data.error || 'Unknown error'));
+                        }
+                    } catch (err) {
+                        alert('Transcription error: ' + err.message);
+                    }
+                    hideLoader();
+                }
+            });
+
+            // STORY GENERATION LOGIC
+            const generateBtn = document.getElementById('generate-button');
+            const resultSection = document.getElementById('result-section');
+            const resultText = document.getElementById('result-text');
+            const errorMessage = document.getElementById('error-message');
+            const resultMessage = document.getElementById('result-message');
+
+            if (generateBtn) {
+                generateBtn.addEventListener('click', async function() {
+                    errorMessage.style.display = 'none';
+                    resultMessage.style.display = 'none';
+                    resultSection.style.display = 'block';
+                    let text = storyTextArea.value.trim();
+                    if (!text) {
+                        resultText.textContent = '';
+                        errorMessage.textContent = 'Please enter or transcribe story text.';
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    showLoader('Generating story...');
+                    let payload = { text };
+                    try {
+                        const resp = await fetch('/api/generate_story', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await resp.json();
+                        if (data.story) {
+                            resultText.textContent = data.story;
+                            resultMessage.textContent = 'Story generated successfully!';
+                            resultMessage.style.display = 'block';
+                        } else {
+                            throw new Error(data.error || 'No story returned.');
+                        }
+                    } catch (err) {
+                        resultText.textContent = '';
+                        errorMessage.textContent = 'Error: ' + err.message;
+                        errorMessage.style.display = 'block';
+                    }
+                    hideLoader();
+                });
+            }
+
+            // GRAMMAR CHECKER LOGIC
+            let grammarBtn = document.getElementById('grammar-button');
+            if (!grammarBtn) {
+                grammarBtn = document.createElement('button');
+                grammarBtn.id = 'grammar-button';
+                grammarBtn.className = 'secondary-action';
+                grammarBtn.innerHTML = '<i class="fas fa-spell-check"></i> Check Grammar';
+                const actionBtns = document.querySelector('.action-buttons');
+                if (actionBtns) actionBtns.appendChild(grammarBtn);
+            }
+            grammarBtn.addEventListener('click', async function() {
+                errorMessage.style.display = 'none';
+                resultMessage.style.display = 'none';
+                resultSection.style.display = 'block';
+                let text = storyTextArea.value.trim();
+                if (!text) {
+                    resultText.textContent = '';
+                    errorMessage.textContent = 'Please enter text to check.';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                showLoader('Checking grammar...');
+                try {
+                    const resp = await fetch('/api/check_grammar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+                    const data = await resp.json();
+                    if (data.issues && data.issues.length > 0) {
+                        let issuesHtml = 'Grammar Issues Found:\n';
+                        data.issues.forEach((issue, idx) => {
+                            issuesHtml += `\n${idx+1}. Original: ${issue.original}\n   Corrected: ${issue.corrected}\n   Explanation: ${issue.explanation}\n`;
+                        });
+                        resultText.textContent = issuesHtml;
+                        resultMessage.textContent = 'Grammar check complete.';
+                        resultMessage.style.display = 'block';
+                    } else {
+                        resultText.textContent = 'No grammar issues found!';
+                        resultMessage.textContent = 'Grammar check complete.';
+                        resultMessage.style.display = 'block';
+                    }
+                } catch (err) {
+                    resultText.textContent = '';
+                    errorMessage.textContent = 'Error: ' + err.message;
+                    errorMessage.style.display = 'block';
+                }
+                hideLoader();
+            });
+
+            const generateWithPatternBtn = document.getElementById('generate-with-pattern');
+            if (generateWithPatternBtn) {
+                generateWithPatternBtn.addEventListener('click', async function() {
+                    const storyText = document.getElementById('story-text') ? document.getElementById('story-text').value : '';
+                    const storyPattern = document.getElementById('story-pattern') ? document.getElementById('story-pattern').value : '';
+                    const resultSection = document.getElementById('result-section');
+                    const resultText = document.getElementById('result-text');
+                    const errorMessage = document.getElementById('error-message');
+                    if (resultSection) resultSection.style.display = 'block';
+                    if (errorMessage) errorMessage.style.display = 'none';
+                    if (resultText) resultText.textContent = 'Generating story...';
+                    try {
+                        const payload = { text: storyText };
+                        if (storyPattern && storyPattern.trim().length > 0) {
+                            payload.story_pattern = storyPattern;
+                        }
+                        const response = await fetch('/api/generate_story', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await response.json();
+                        if (data.story) {
+                            if (resultText) resultText.textContent = data.story;
+                        } else if (data.error) {
+                            if (errorMessage) {
+                                errorMessage.textContent = data.error;
+                                errorMessage.style.display = 'block';
+                            }
+                            if (resultText) resultText.textContent = '';
+                        }
+                    } catch (err) {
+                        if (errorMessage) {
+                            errorMessage.textContent = 'An error occurred while generating the story.';
+                            errorMessage.style.display = 'block';
+                        }
+                        if (resultText) resultText.textContent = '';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
