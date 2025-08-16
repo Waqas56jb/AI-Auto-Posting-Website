@@ -1,0 +1,47 @@
+Flask>=2.2
+Flask-Session>=0.4
+flask-cors
+python-dotenv>=1.0
+mysql-connector-python>=8.0
+werkzeug>=2.2
+
+# AI and ML dependencies
+whisper
+torch
+moviepy>=1.0
+googletrans==4.0.0rc1
+google-generativeai
+SpeechRecognition>=3.10
+
+# HTTP and API dependencies
+requests
+requests-oauthlib
+
+# Google API dependencies
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+httplib2
+uritemplate
+
+# Core dependencies
+cachetools
+certifi
+charset-normalizer
+google-api-core
+googleapis-common-protos
+idna
+oauthlib
+proto-plus
+protobuf
+pyasn1
+pyasn1_modules
+rsa
+urllib3
+
+# Scheduling
+schedule
+
+# Production dependencies
+gunicorn

@@ -109,7 +109,7 @@ ipython_config.py
 #poetry.toml
 
 # pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
 #   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
 #   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
 #pdm.lock
@@ -185,7 +185,7 @@ cython_debug/
 #  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
 #  and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#  you could uncomment the following to ignore the entire vscode folder
+#   you could uncomment the following to ignore the entire vscode folder
 # .vscode/
 
 # Ruff stuff:
@@ -206,4 +206,70 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-venv/
+# Project-specific ignores
+# Video and media files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+*.flv
+*.webm
+*.mp3
+*.wav
+*.m4a
+*.flac
+*.aac
+*.ogg
+
+# Credentials and sensitive files
+credentials/
+*.pkl
+*.pickle
+token.json
+client.json
+credentials_cache.pkl
+credentials_cache.pkl.backup
+
+# Database files
+database
+*.db
+*.sqlite
+
+# Session files
+flask_session/
+
+# Output and temporary files
+output/
+trimmed/
+uploads/
+downloads/
+
+# Large video files and directories
+static/videos/
+static/trimmed/
+static/uploads/
+static/audio/
+
+# Chrome driver (platform specific)
+chromedriver.exe
+
+# Environment template (not the actual .env)
+env_template.txt
+
+# Deployment scripts (optional - you can include these if you want)
+# deploy.sh
+# deploy.bat
+
+# Log files
+*.log
+app.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

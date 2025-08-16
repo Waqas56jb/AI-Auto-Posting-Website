@@ -569,6 +569,8 @@
             white-space: pre-wrap;
             word-wrap: break-word;
         }
+        
+
 
         .error-message {
             color: #dc2626;
@@ -1260,12 +1262,17 @@
                     </div>
                 </div>
                 
+                
+                
                 <div class="action-buttons">
                     <button class="secondary-action" id="suggest-button">
                         <i class="fas fa-lightbulb"></i> AI Prompt Suggestions
                     </button>
                     <button class="generate-button" id="generate-button">
                         <i class="fas fa-magic"></i> Generate Story
+                    </button>
+                    <button class="secondary-action" id="trimming-button">
+                        <i class="fas fa-cut"></i> Intelligent Trimming
                     </button>
                 </div>
                 
@@ -1824,55 +1831,13 @@
                 });
             }
 
-            // GRAMMAR CHECKER LOGIC
-            let grammarBtn = document.getElementById('grammar-button');
-            if (!grammarBtn) {
-                grammarBtn = document.createElement('button');
-                grammarBtn.id = 'grammar-button';
-                grammarBtn.className = 'secondary-action';
-                grammarBtn.innerHTML = '<i class="fas fa-spell-check"></i> Check Grammar';
-                const actionBtns = document.querySelector('.action-buttons');
-                if (actionBtns) actionBtns.appendChild(grammarBtn);
+            // Trimming navigation logic
+            const trimmingBtn = document.getElementById('trimming-button');
+            if (trimmingBtn) {
+                trimmingBtn.addEventListener('click', function() {
+                    window.location.href = '/edit';
+                });
             }
-            grammarBtn.addEventListener('click', async function() {
-                errorMessage.style.display = 'none';
-                resultMessage.style.display = 'none';
-                resultSection.style.display = 'block';
-                let text = storyTextArea.value.trim();
-                if (!text) {
-                    resultText.textContent = '';
-                    errorMessage.textContent = 'Please enter text to check.';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-                showLoader('Checking grammar...');
-                try {
-                    const resp = await fetch('/api/check_grammar', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text })
-                    });
-                    const data = await resp.json();
-                    if (data.issues && data.issues.length > 0) {
-                        let issuesHtml = 'Grammar Issues Found:\n';
-                        data.issues.forEach((issue, idx) => {
-                            issuesHtml += `\n${idx+1}. Original: ${issue.original}\n   Corrected: ${issue.corrected}\n   Explanation: ${issue.explanation}\n`;
-                        });
-                        resultText.textContent = issuesHtml;
-                        resultMessage.textContent = 'Grammar check complete.';
-                        resultMessage.style.display = 'block';
-                    } else {
-                        resultText.textContent = 'No grammar issues found!';
-                        resultMessage.textContent = 'Grammar check complete.';
-                        resultMessage.style.display = 'block';
-                    }
-                } catch (err) {
-                    resultText.textContent = '';
-                    errorMessage.textContent = 'Error: ' + err.message;
-                    errorMessage.style.display = 'block';
-                }
-                hideLoader();
-            });
 
             const generateWithPatternBtn = document.getElementById('generate-with-pattern');
             if (generateWithPatternBtn) {
@@ -1915,6 +1880,8 @@
                 });
             }
         });
+        
+
     </script>
 </body>
 </html>

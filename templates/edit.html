@@ -1,0 +1,4556 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Trimmer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --primary-blue: #1a56db;
+    --deep-blue: #1e3a8a;
+    --accent-blue: #60a5fa;
+    --white: #ffffff;
+    --off-white: #f8fafc;
+    --light-gray: #e5e7eb;
+    --dark-gray: #1f2937;
+            --caption-bg: #f8fafc;
+            --caption-border: #dbeafe;
+}
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    background: var(--off-white);
+    margin: 0;
+    min-height: 100vh;
+    color: var(--dark-gray);
+            line-height: 1.6;
+}
+        .header-bar, .main-header {
+    width: 100%;
+    background: var(--primary-blue);
+    color: var(--white);
+            padding: 0.8rem 2rem;
+            box-shadow: 0 4px 20px rgba(26, 86, 219, 0.15);
+    display: flex;
+    align-items: center;
+            justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+            min-height: 50px;
+            font-size: 1.1rem;
+        }
+
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+}
+.logo {
+    font-family: 'Poppins', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+            gap: 0.6rem;
+            letter-spacing: 0.5px;
+        }
+        .logo i {
+            font-size: 1.3em;
+            color: rgba(255, 255, 255, 0.9);
+}
+.container {
+    max-width: 1200px;
+            margin: 5.5rem auto 2rem auto;
+            padding: 0 1.5rem;
+            padding-bottom: 120px;
+        }
+        h2 {
+            font-family: 'Poppins', sans-serif;
+            color: var(--primary-blue);
+            font-size: 1.8rem;
+            margin-bottom: 1.8rem;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        h2:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-blue), rgba(26, 86, 219, 0.2));
+            border-radius: 3px;
+}
+.video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+            margin-bottom: 3rem;
+}
+.video-card {
+    background: var(--white);
+    border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(26, 86, 219, 0.08);
+    border: 1px solid var(--light-gray);
+            padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: visible;
+        }
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(26, 86, 219, 0.12);
+}
+.original-card {
+    border: 2.5px solid var(--primary-blue);
+            box-shadow: 0 6px 22px rgba(26, 86, 219, 0.12);
+            position: relative;
+        }
+        .original-card:before {
+            content: 'ORIGINAL';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-blue);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 1rem;
+            border-radius: 20px;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
+}
+.video-card h3 {
+    color: var(--primary-blue);
+            font-size: 1.15rem;
+    font-weight: 700;
+            margin-bottom: 1rem;
+    margin-top: 0;
+            width: 100%;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+}
+.video-card video {
+    width: 100%;
+            height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #e3f0ff;
+    border: 1px solid var(--accent-blue);
+            margin-bottom: 0.8rem;
+            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.1);
+}
+.caption-btn {
+    background: var(--primary-blue);
+    color: #fff;
+    border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            margin-top: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
+}
+.caption-btn:hover {
+    background: var(--deep-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+        }
+        .caption-btn i {
+            font-size: 0.9em;
+}
+.form-box {
+    background: var(--white);
+            padding: 2rem;
+            margin: 3rem auto;
+            box-shadow: 0 4px 20px rgba(203, 213, 225, 0.15);
+            border-radius: 14px;
+            max-width: 600px;
+            border: 1px solid var(--light-gray);
+        }
+        .form-box h3 {
+            color: var(--primary-blue);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .form-box label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+        .form-box input[type="number"] {
+            width: 80px;
+            padding: 0.5rem 0.8rem;
+            border: 1px solid var(--light-gray);
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-right: 1rem;
+            transition: all 0.3s;
+        }
+        .form-box input[type="number"]:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+        }
+        .form-box button {
+            padding: 0.6rem 1.5rem;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
+        }
+        .form-box button:hover {
+            background: var(--deep-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.2rem;
+}
+.main-footer {
+    background: var(--primary-blue);
+    color: var(--white);
+    text-align: center;
+            padding: 1rem 0;
+    font-family: 'Inter', Arial, sans-serif;
+            font-size: 0.95rem;
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            z-index: 2000;
+            box-shadow: 0 -4px 20px rgba(26, 86, 219, 0.15);
+        }
+        .main-footer div:first-child {
+            font-weight: 500;
+        }
+        .main-footer div:last-child {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 0.3rem;
+        }
+        /* Improved Caption Styles */
+        .caption-container {
+            width: 100%;
+            margin-top: 0.8rem;
+            position: relative;
+        }
+        .caption-result {
+            transition: all 0.3s ease;
+            max-height: 4.5em;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            cursor: pointer;
+            margin-bottom: 2rem;
+            word-break: break-word;
+            box-shadow: 0 2px 12px rgba(26, 86, 219, 0.08);
+            z-index: 2;
+            width: 100%;
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+        .caption-result.expanded {
+            max-height: none !important;
+            overflow: visible;
+            position: relative !important;
+            z-index: 10;
+            box-shadow: 0 6px 20px rgba(26, 86, 219, 0.15);
+        }
+        .caption-inner {
+            padding-bottom: 0.5em;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+        .caption-fade {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 2.2em;
+            background: linear-gradient(180deg, rgba(248, 250, 252, 0) 0%, #f8fafc 90%);
+            display: block;
+            pointer-events: none;
+            z-index: 1;
+            border-radius: 0 0 10px 10px;
+        }
+        .caption-actions {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+            z-index: 15;
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border: 2px solid #1a56db;
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            box-shadow: 0 4px 20px rgba(26, 86, 219, 0.15);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .caption-actions::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid #1a56db;
+        }
+        .caption-actions::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid #ffffff;
+        }
+        .caption-actions:hover {
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 8px 30px rgba(26, 86, 219, 0.25);
+            border-color: #2563eb;
+        }
+        .see-more-btn {
+            background: linear-gradient(135deg, #1a56db, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
+            position: relative;
+            overflow: hidden;
+            min-width: 80px;
+            text-align: center;
+        }
+        .see-more-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .see-more-btn:hover::before {
+            left: 100%;
+        }
+        .see-more-btn:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(26, 86, 219, 0.3);
+        }
+        .see-more-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
+        }
+        .caption-eye-btn {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+        .caption-eye-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .caption-eye-btn:hover::before {
+            left: 100%;
+        }
+        .caption-eye-btn:hover {
+            background: linear-gradient(135deg, #10b981, #059669);
+            transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+        }
+        .caption-eye-btn:active {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+        }
+        .caption-eye-btn i {
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .caption-eye-btn:hover i {
+            transform: scale(1.2);
+        }
+        .caption-icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: var(--primary-blue);
+        }
+        .caption-icon-btn:hover {
+            background: rgba(26, 86, 219, 0.1);
+            transform: scale(1.1);
+        }
+        .caption-icon-btn i {
+    font-size: 1.1rem;
+        }
+        /* Improved Upload UI */
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2.5rem;
+            border: 2px dashed #cbd5e1;
+            border-radius: 14px;
+            background: white;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-align: center;
+        }
+        .upload-container:hover {
+            border-color: var(--primary-blue);
+            background: #f8fafc;
+            box-shadow: 0 4px 20px rgba(26, 86, 219, 0.08);
+        }
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-blue);
+            margin-bottom: 1.2rem;
+        }
+        .upload-text {
+            font-size: 1.2rem;
+            color: var(--dark-gray);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+        }
+        .upload-subtext {
+            font-size: 0.95rem;
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .upload-btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
+        }
+        .upload-btn:hover {
+            background: var(--deep-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+        }
+        .upload-btn i {
+            font-size: 0.9em;
+        }
+        .file-input {
+            display: none;
+        }
+        /* Video Controls */
+        .video-controls {
+            display: flex;
+            align-items: center;
+            margin-top: 0.8rem;
+            width: 100%;
+            justify-content: center;
+            gap: 10px;
+        }
+        .video-time-bar {
+            width: 100%;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+        /* Social Share Buttons */
+        .social-share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+        }
+        .social-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .social-btn:hover {
+            transform: translateY(-3px) scale(1.1);
+        }
+        .social-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+        .social-btn:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+        .youtube-btn {
+            background: #ff0000;
+            box-shadow: 0 3px 10px rgba(255, 0, 0, 0.2);
+        }
+        .youtube-btn:hover {
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
+        }
+        .tiktok-btn {
+            background: #000000;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        .tiktok-btn:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .linkedin-btn {
+            background: #0077b5;
+            box-shadow: 0 3px 10px rgba(0, 119, 181, 0.2);
+        }
+        .linkedin-btn:hover {
+            box-shadow: 0 5px 15px rgba(0, 119, 181, 0.3);
+        }
+        .facebook-btn {
+            background: #1877f2;
+            box-shadow: 0 3px 10px rgba(24, 119, 242, 0.2);
+        }
+        .facebook-btn:hover {
+            box-shadow: 0 5px 15px rgba(24, 119, 242, 0.3);
+        }
+        .social-btn i {
+            font-size: 0.9rem;
+        }
+        /* Delete Button */
+        .delete-btn {
+            margin-left: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.1);
+        }
+        .delete-btn:hover {
+            background: #fee2e2;
+            transform: translateY(-2px);
+        }
+        .delete-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+        /* Action Buttons Container */
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            margin-top: 1rem;
+            width: 100%;
+            justify-content: center;
+        }
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 41, 59, 0.3);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(26, 86, 219, 0.2);
+            padding: 2rem;
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-close {
+            position: absolute;
+            top: 1.2rem;
+            right: 1.2rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-close:hover {
+            color: var(--primary-blue);
+            transform: rotate(90deg);
+        }
+        .modal-title {
+            color: var(--primary-blue);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .modal-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+            color: #334155;
+        }
+        .modal-textarea {
+            width: 100%;
+            min-height: 120px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 0.8rem;
+            margin-bottom: 1.2rem;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+        .modal-textarea:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+        }
+        .modal-input {
+            width: 100%;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 0.7rem 0.8rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+        .modal-input:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        .modal-btn {
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .modal-btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
+        }
+        .modal-btn-primary:hover {
+            background: var(--deep-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+        }
+        .modal-btn-secondary {
+            background: #e2e8f0;
+            color: var(--primary-blue);
+            border: none;
+        }
+        .modal-btn-secondary:hover {
+            background: #cbd5e1;
+            transform: translateY(-2px);
+        }
+        .modal-caption-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+            color: #334155;
+            white-space: pre-line;
+            line-height: 1.6;
+        }
+        .modal-hashtags {
+            font-weight: bold;
+            color: #64748b;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        /* Responsive Adjustments */
+@media (max-width: 1100px) {
+    .video-grid {
+                gap: 1.5rem;
+    }
+    }
+        @media (max-width: 768px) {
+    .container {
+                padding: 0 1rem;
+                margin-top: 4.5rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+    }
+    .video-card {
+                padding: 1.2rem;
+            }
+            .form-box {
+                padding: 1.5rem;
+            }
+            .upload-container {
+                padding: 1.5rem;
+            }
+            .upload-text {
+                font-size: 1.1rem;
+            }
+            .caption-actions {
+                bottom: -15px;
+                padding: 0.6rem 1rem;
+                gap: 0.8rem;
+            }
+            .see-more-btn {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.8rem;
+                min-width: 70px;
+            }
+            .caption-eye-btn {
+                width: 35px;
+                height: 35px;
+                padding: 0.5rem;
+            }
+            .caption-eye-btn i {
+                font-size: 0.9rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 1.2rem;
+            }
+    .video-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-box {
+                padding: 1.2rem;
+            }
+            .form-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .form-box input[type="number"] {
+                width: 100%;
+                margin-bottom: 0.8rem;
+                margin-right: 0;
+            }
+            .modal-content {
+                padding: 1.5rem;
+                width: 95%;
+    }
+}
+
+/* Timer Icon Styles */
+.timer-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 5px;
+    margin-left: -10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.timer-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+.timer-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+}
+
+.timer-btn:hover::before {
+    transform: translate(-50%, -50%) scale(1.2);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Scheduling Modal Styles */
+.scheduling-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.scheduling-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.scheduling-header {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+.scheduling-header h3 {
+    margin: 0;
+    color: #667eea;
+    font-size: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.scheduling-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.btn-schedule {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-schedule:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+
+.close-scheduling {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-scheduling:hover {
+    color: #000;
+}
+
+/* Status indicator */
+.schedule-status {
+    font-size: 12px;
+    color: #28a745;
+    margin-top: 5px;
+    text-align: center;
+}
+        
+        /* Header Content Styles */
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-left: -20px;
+        }
+        
+        .clip-video-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+            margin-right: 1rem;
+        }
+        
+        .clip-video-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 44px;
+            justify-content: center;
+        }
+        
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .schedule-btn {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        
+        .schedule-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+        }
+        
+        .settings-btn {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        
+        .settings-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+        }
+        
+        /* Responsive header adjustments */
+        @media (max-width: 1024px) {
+            .header-actions {
+                gap: 0.75rem;
+            }
+            
+            .clip-video-btn,
+            .load-video-btn {
+                padding: 0.5rem 1rem;
+                font-size: 14px;
+            }
+            
+            .header-btn {
+                padding: 0.5rem 0.75rem;
+                min-width: 42px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-actions {
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+            
+            .clip-video-btn,
+            .load-video-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 13px;
+            }
+            
+            .header-btn {
+                padding: 0.5rem 0.75rem;
+                min-width: 40px;
+            }
+        }
+        
+        .load-video-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .load-video-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* Video Header Styles */
+        .video-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .video-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .video-type-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .video-type-badge.original {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        
+        .video-type-badge.trimmed {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+        
+        /* Videos Grid Styles */
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        /* No Videos Message */
+        .no-videos-message {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        
+        .no-videos-icon {
+            font-size: 4rem;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+        
+        .no-videos-message h3 {
+            color: #9ca3af;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .no-videos-message p {
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+        
+        /* Social Logos Styles */
+        .social-logos {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .social-buttons-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        /* Responsive adjustments for social logos */
+        @media (max-width: 768px) {
+            .social-logos {
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .social-buttons-group {
+                justify-content: center;
+            }
+        }
+        
+        .social-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 16px;
+            border: none;
+        }
+        
+        .social-btn.youtube {
+            background: #ff0000;
+        }
+        
+        .social-btn.tiktok {
+            background: #000000;
+        }
+        
+        .social-btn.linkedin {
+            background: #0077b5;
+        }
+        
+        .social-btn.facebook {
+            background: #1877f2;
+        }
+        
+        .social-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+
+        
+        /* Improved Caption Styles */
+        .caption-container {
+            margin-top: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .caption-content {
+            margin-bottom: 1rem;
+        }
+        
+        .caption-text {
+            font-family: 'Times New Roman', serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #334155;
+            margin-bottom: 0.5rem;
+            max-height: 4.5em;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .caption-text.expanded {
+            max-height: none;
+        }
+        
+        .caption-hashtags {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .caption-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .see-more-btn {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .see-more-btn:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+        
+        .see-more-btn.expanded i {
+            transform: rotate(180deg);
+        }
+        
+        .caption-eye-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .caption-eye-btn:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+        
+        .caption-edit-btn {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .caption-edit-btn:hover {
+            background: #fde68a;
+            color: #78350f;
+            transform: scale(1.05);
+        }
+        
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            max-width: 300px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification-success {
+            background: #10b981;
+        }
+        
+        .notification-error {
+            background: #ef4444;
+        }
+        
+        .notification-info {
+            background: #3b82f6;
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .drop-zone {
+                padding: 1.5rem;
+            }
+            
+            .drop-zone-content h3 {
+                font-size: 1.3rem;
+            }
+            
+            .caption-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .see-more-btn, .caption-eye-btn, .caption-edit-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+     
+     /* Modal Styles */
+     .modal {
+         display: none;
+         position: fixed;
+         z-index: 1000;
+         left: 0;
+         top: 0;
+         width: 100%;
+         height: 100%;
+         background-color: rgba(0, 0, 0, 0.5);
+         backdrop-filter: blur(5px);
+     }
+     
+     .modal-content {
+         background-color: #fff;
+         margin: 5% auto;
+         padding: 0;
+         border-radius: 15px;
+         width: 90%;
+         max-width: 500px;
+         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+         animation: modalSlideIn 0.3s ease-out;
+     }
+     
+     .scheduling-modal {
+         max-width: 600px;
+     }
+     
+     @keyframes modalSlideIn {
+         from {
+             opacity: 0;
+             transform: translateY(-50px) scale(0.9);
+         }
+         to {
+             opacity: 1;
+             transform: translateY(0) scale(1);
+         }
+     }
+     
+     .modal-header {
+         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+         color: white;
+         padding: 1.5rem;
+         border-radius: 15px 15px 0 0;
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+     }
+     
+     .modal-header h3 {
+         margin: 0;
+         font-size: 1.5rem;
+         font-weight: 600;
+     }
+     
+     .close {
+         color: white;
+         font-size: 2rem;
+         font-weight: bold;
+         cursor: pointer;
+         line-height: 1;
+         transition: all 0.3s ease;
+     }
+     
+     .close:hover {
+         transform: scale(1.1);
+         opacity: 0.8;
+     }
+     
+     .modal-body {
+         padding: 2rem;
+     }
+     
+     /* Form Styles */
+     .form-group {
+         margin-bottom: 1.5rem;
+     }
+     
+     .form-group label {
+         display: block;
+         margin-bottom: 0.5rem;
+         font-weight: 600;
+         color: #374151;
+         font-size: 0.95rem;
+     }
+     
+     .form-group input,
+     .form-group select,
+     .form-group textarea {
+         width: 100%;
+         padding: 12px 16px;
+         border: 2px solid #e5e7eb;
+         border-radius: 8px;
+         font-size: 1rem;
+         transition: all 0.3s ease;
+         background: #fff;
+         box-sizing: border-box;
+     }
+     
+     .form-group input:focus,
+     .form-group select:focus,
+     .form-group textarea:focus {
+         outline: none;
+         border-color: #667eea;
+         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+     }
+     
+     .form-group textarea {
+         resize: vertical;
+         min-height: 80px;
+         font-family: 'Times New Roman', serif;
+     }
+     
+     .form-actions {
+         display: flex;
+         gap: 1rem;
+         justify-content: flex-end;
+         margin-top: 2rem;
+         padding-top: 1.5rem;
+         border-top: 1px solid #e5e7eb;
+     }
+     
+     .btn-primary,
+     .btn-secondary {
+         padding: 12px 24px;
+         border: none;
+         border-radius: 8px;
+         font-size: 1rem;
+         font-weight: 600;
+         cursor: pointer;
+         transition: all 0.3s ease;
+        min-width: 120px;
+     }
+     
+     .btn-primary {
+         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+         color: white;
+         box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+     }
+     
+     .btn-primary:hover {
+         transform: translateY(-2px);
+         box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+     }
+     
+     .btn-secondary {
+         background: #f3f4f6;
+         color: #374151;
+         border: 1px solid #d1d5db;
+     }
+     
+     .btn-secondary:hover {
+         background: #e5e7eb;
+         border-color: #9ca3af;
+     }
+     
+     /* Caption Display Styles */
+     .caption-display h4 {
+         margin: 1rem 0 0.5rem 0;
+         color: #374151;
+         font-size: 1rem;
+         font-weight: 600;
+     }
+     
+     .caption-text-display {
+         background: #f8fafc;
+         padding: 1rem;
+         border-radius: 8px;
+         border: 1px solid #e2e8f0;
+         font-family: 'Times New Roman', serif;
+         line-height: 1.6;
+         color: #334155;
+         margin-bottom: 1rem;
+     }
+     
+     .hashtags-display {
+         background: #fef3c7;
+         padding: 0.75rem 1rem;
+         border-radius: 8px;
+         border: 1px solid #fbbf24;
+         color: #92400e;
+         font-weight: 600;
+         font-size: 0.9rem;
+     }
+     
+     /* Responsive Modal */
+     @media (max-width: 768px) {
+         .modal-content {
+             width: 95%;
+             margin: 10% auto;
+         }
+         
+         .modal-header {
+             padding: 1rem;
+         }
+         
+         .modal-header h3 {
+             font-size: 1.3rem;
+         }
+         
+         .modal-body {
+             padding: 1.5rem;
+         }
+         
+         .form-actions {
+             flex-direction: column;
+         }
+         
+         .btn-primary,
+         .btn-secondary {
+             width: 100%;
+         }
+     }
+     
+     /* Trim Suggestion Card Styles */
+     .trim-suggestion {
+         background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+         border: 2px solid #0ea5e9;
+         position: relative;
+         overflow: hidden;
+     }
+     
+     .trim-suggestion::before {
+         content: '';
+         position: absolute;
+         top: 0;
+         left: 0;
+         right: 0;
+         height: 4px;
+         background: linear-gradient(90deg, #0ea5e9, #06b6d4, #0891b2);
+     }
+     
+     .ai-badge {
+         background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+         color: white;
+         padding: 4px 8px;
+         border-radius: 12px;
+         font-size: 0.7rem;
+         font-weight: 600;
+         margin-left: 0.5rem;
+     }
+     
+     .trim-suggestion-content {
+         text-align: center;
+         padding: 1rem;
+     }
+     
+     .trim-icon {
+         font-size: 3rem;
+         color: #0ea5e9;
+         margin-bottom: 1rem;
+     }
+     
+     .trim-suggestion-content h4 {
+         color: #0c4a6e;
+         margin: 0 0 0.5rem 0;
+         font-size: 1.2rem;
+     }
+     
+     .trim-suggestion-content p {
+         color: #0369a1;
+         margin: 0 0 1rem 0;
+         font-size: 0.9rem;
+         line-height: 1.4;
+     }
+     
+     .caption-preview {
+         background: white;
+         border-radius: 8px;
+         padding: 1rem;
+         margin: 1rem 0;
+         border: 1px solid #e0f2fe;
+     }
+     
+     .caption-preview .caption-text {
+         color: #334155;
+         font-size: 0.9rem;
+         line-height: 1.4;
+         margin-bottom: 0.5rem;
+     }
+     
+     .caption-preview .caption-hashtags {
+         color: #64748b;
+         font-size: 0.8rem;
+         font-weight: 600;
+     }
+     
+     .trim-actions {
+         display: flex;
+         gap: 1rem;
+         justify-content: center;
+         margin-top: 1rem;
+     }
+     
+     .trim-actions .btn-primary,
+     .trim-actions .btn-secondary {
+         padding: 8px 16px;
+         font-size: 0.9rem;
+         min-width: auto;
+     }
+     
+     /* Notification Styles */
+     .notification {
+         position: fixed;
+         top: 20px;
+         right: 20px;
+         background: white;
+         border-radius: 8px;
+         padding: 1rem 1.5rem;
+         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+         border-left: 4px solid #3b82f6;
+         transform: translateX(400px);
+         transition: transform 0.3s ease;
+         z-index: 10000;
+         max-width: 350px;
+     }
+     
+     .notification.show {
+         transform: translateX(0);
+     }
+     
+     .notification-success {
+         border-left-color: #10b981;
+     }
+     
+     .notification-error {
+         border-left-color: #ef4444;
+     }
+     
+     .notification-info {
+         border-left-color: #3b82f6;
+     }
+     
+     .notification-content {
+         display: flex;
+         align-items: center;
+         gap: 0.75rem;
+     }
+     
+     .notification-content i {
+         font-size: 1.2rem;
+     }
+     
+     .notification-success i {
+         color: #10b981;
+     }
+     
+     .notification-error i {
+         color: #ef4444;
+     }
+     
+     .notification-info i {
+         color: #3b82f6;
+     }
+     
+     .notification-content span {
+         color: #374151;
+         font-weight: 500;
+         line-height: 1.4;
+     }
+     
+     /* Enhanced Video Card Styles */
+     .video-card {
+         position: relative;
+         transition: all 0.3s ease;
+     }
+     
+     .video-card:hover {
+         transform: translateY(-5px);
+         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+     }
+     
+     .video-card .video-header {
+         position: relative;
+     }
+     
+     .video-type-badge {
+         position: absolute;
+         top: 0.5rem;
+         right: 0.5rem;
+         z-index: 2;
+     }
+     
+     .ai-badge {
+         position: absolute;
+         top: 0.5rem;
+         left: 0.5rem;
+         z-index: 2;
+     }
+     
+     /* Dashboard Styles */
+     .dashboard-section {
+         margin: 2rem 0;
+         background: var(--white);
+         border-radius: 12px;
+         padding: 2rem;
+         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+         border: 1px solid var(--light-gray);
+     }
+     
+     .dashboard-header {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         margin-bottom: 1.5rem;
+     }
+     
+     .dashboard-title {
+         font-family: 'Poppins', sans-serif;
+         font-size: 1.5rem;
+         font-weight: 700;
+         color: var(--primary-blue);
+         margin: 0;
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+     }
+     
+     .refresh-btn {
+         background: var(--primary-blue);
+         color: var(--white);
+         border: none;
+         padding: 0.75rem;
+         border-radius: 8px;
+         cursor: pointer;
+         transition: all 0.3s ease;
+         font-size: 1rem;
+     }
+     
+     .refresh-btn:hover {
+         background: var(--deep-blue);
+         transform: scale(1.05);
+     }
+     
+     .dashboard-loading {
+         text-align: center;
+         color: var(--primary-blue);
+         padding: 2rem;
+     }
+     
+     .dashboard-loading i {
+         font-size: 2rem;
+         margin-bottom: 1rem;
+         display: block;
+     }
+     
+     .dashboard-summary {
+         display: flex;
+         gap: 1rem;
+         margin-bottom: 2rem;
+         flex-wrap: wrap;
+     }
+     
+     .summary-card {
+         background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
+         color: var(--white);
+         padding: 1.5rem;
+         border-radius: 12px;
+         flex: 1;
+         min-width: 200px;
+         text-align: center;
+         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+     }
+     
+     .summary-card h4 {
+         margin: 0 0 0.5rem 0;
+         font-size: 1.1rem;
+         opacity: 0.9;
+     }
+     
+     .summary-card .number {
+         font-size: 2.5rem;
+         font-weight: bold;
+         margin: 0;
+     }
+     
+     .dashboard-dates {
+         display: flex;
+         flex-direction: column;
+         gap: 1rem;
+     }
+     
+     .date-card {
+         background: var(--off-white);
+         border-radius: 12px;
+         padding: 1.5rem;
+         border: 1px solid var(--light-gray);
+         cursor: pointer;
+         transition: all 0.3s ease;
+     }
+     
+     .date-card:hover {
+         background: var(--white);
+         transform: translateY(-2px);
+         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+     }
+     
+     .date-header {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         margin-bottom: 1rem;
+     }
+     
+     .date-info h4 {
+         color: var(--deep-blue);
+         margin: 0 0 0.25rem 0;
+         font-size: 1.2rem;
+     }
+     
+     .date-info .day-name {
+         color: var(--primary-blue);
+         font-size: 0.9rem;
+         margin: 0;
+     }
+     
+     .date-count {
+         background: var(--primary-blue);
+         color: var(--white);
+         padding: 0.5rem 1rem;
+         border-radius: 20px;
+         font-weight: bold;
+         font-size: 0.9rem;
+     }
+     
+     .videos-grid {
+         display: grid;
+         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+         gap: 1rem;
+         margin-top: 1rem;
+     }
+     
+     .video-item {
+         background: var(--white);
+         border-radius: 8px;
+         padding: 1rem;
+         border: 1px solid var(--light-gray);
+         transition: all 0.3s ease;
+     }
+     
+     .video-item:hover {
+         background: var(--off-white);
+         transform: translateY(-2px);
+         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+     }
+     
+     .video-header {
+         display: flex;
+         justify-content: space-between;
+         align-items: flex-start;
+         margin-bottom: 0.75rem;
+     }
+     
+     .video-name {
+         color: var(--deep-blue);
+         font-size: 0.9rem;
+         margin: 0;
+         word-break: break-word;
+         flex: 1;
+         margin-right: 1rem;
+     }
+     
+     .video-actions {
+         display: flex;
+         gap: 0.5rem;
+         flex-shrink: 0;
+     }
+     
+     .action-btn {
+         background: var(--primary-blue);
+         color: var(--white);
+         border: none;
+         padding: 0.5rem;
+         border-radius: 6px;
+         cursor: pointer;
+         transition: all 0.3s ease;
+         font-size: 0.8rem;
+     }
+     
+     .action-btn:hover {
+         background: var(--deep-blue);
+         transform: scale(1.1);
+     }
+     
+     .video-details {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         margin-bottom: 0.75rem;
+         font-size: 0.8rem;
+         color: var(--dark-gray);
+     }
+     
+     .video-time {
+         color: var(--primary-blue);
+         font-weight: 500;
+     }
+     
+     .dashboard-empty {
+         text-align: center;
+         color: var(--dark-gray);
+         padding: 3rem 1rem;
+     }
+     
+     .dashboard-empty i {
+         font-size: 3rem;
+         margin-bottom: 1rem;
+         display: block;
+         color: var(--primary-blue);
+     }
+     
+     .dashboard-empty p {
+         margin: 0 0 0.5rem 0;
+         font-size: 1.1rem;
+     }
+     
+     .dashboard-empty small {
+         opacity: 0.7;
+     }
+</style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <h1>AI Auto Posting</h1>
+            <div class="header-actions">
+                <button class="clip-video-btn" onclick="window.location.href='/clip-video'" title="Clip Video">
+                    <i class="fas fa-cut"></i> Clip Video
+                </button>
+                <button class="load-video-btn" onclick="loadExistingVideos()" title="Load Existing Videos">
+                    <i class="fas fa-folder-open"></i> Load Videos
+                </button>
+                <a href="/settings" class="header-btn settings-btn" title="Social Media Settings">
+                    <i class="fas fa-cog"></i>
+                </a>
+                <a href="/scheduled-posts" class="header-btn schedule-btn" title="View Scheduled Posts">
+                    ⏰
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <h2>Trimmed Videos Dashboard</h2>
+        
+
+        
+        <!-- Trimmed Videos Dashboard -->
+        <div class="dashboard-section">
+            <div class="dashboard-header">
+                <h3 class="dashboard-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Your Trimmed Videos Dashboard
+                </h3>
+                <button class="refresh-btn" onclick="loadDashboard()" title="Refresh Dashboard">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div id="dashboard-loading" class="dashboard-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading dashboard...</span>
+            </div>
+            <div id="dashboard-content" class="dashboard-content" style="display: none;">
+                <div id="dashboard-summary" class="dashboard-summary"></div>
+                <div id="dashboard-dates" class="dashboard-dates"></div>
+            </div>
+            <div id="dashboard-empty" class="dashboard-empty" style="display: none;">
+                <i class="fas fa-folder-open"></i>
+                <p>No trimmed videos found</p>
+                <small>Upload and trim videos to see them here</small>
+            </div>
+        </div>
+        
+
+        
+        <!-- Video Upload Section (Hidden by default) -->
+        <div class="upload-section" style="display: none;">
+            <h3>Upload New Video</h3>
+            <div class="form-box">
+                <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data">
+                    <div class="upload-container" onclick="document.getElementById('videoInput').click()">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text">Upload Your Video</div>
+                        <div class="upload-subtext">Click to browse or drag and drop</div>
+                        <div class="upload-btn">
+                            <i class="fas fa-upload"></i> Select File
+                        </div>
+                        <input type="file" name="video" id="videoInput" class="file-input" accept="video/*" required>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<footer class="main-footer">
+    <div>StoryVerse AI © 2025 — Smart Social Video Editing & Automation Platform</div>
+    <div>Made with <span style="color:#f59e0b;">★</span> by your AI team</div>
+</footer>
+
+<!-- Caption Edit Modal -->
+<div id="captionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Caption</h3>
+            <span class="close" id="closeCaptionModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="modalCaptionText">Caption:</label>
+                <textarea id="modalCaptionText" rows="4" placeholder="Enter your caption..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="modalCaptionHashtags">Hashtags:</label>
+                <textarea id="modalCaptionHashtags" rows="2" placeholder="Enter hashtags..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" id="cancelCaptionModal">Cancel</button>
+                <button type="button" class="btn-primary" id="saveCaptionModal">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Caption Read Modal -->
+<div id="captionReadModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Full Caption</h3>
+            <span class="close" id="closeCaptionReadModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="caption-display">
+                <h4>Caption:</h4>
+                <div id="readModalCaptionText" class="caption-text-display"></div>
+                <h4>Hashtags:</h4>
+                <div id="readModalCaptionHashtags" class="hashtags-display"></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" id="editCaptionFromReadModal">Edit Caption</button>
+                <button type="button" class="btn-primary" onclick="closeCaptionReadModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scheduling Modal -->
+<div id="schedulingModal" class="modal">
+    <div class="modal-content scheduling-modal">
+        <div class="modal-header">
+            <h3>⏰ Schedule Video Post</h3>
+            <span class="close" onclick="closeSchedulingModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="schedulingForm">
+                <div class="form-group">
+                    <label for="schedulePlatform">Platform:</label>
+                    <select id="schedulePlatform" name="platform" required>
+                        <option value="">Select Platform</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="tiktok">TikTok</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="facebook">Facebook</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scheduleDate">Date:</label>
+                    <input type="date" id="scheduleDate" name="date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scheduleTime">Time:</label>
+                    <input type="time" id="scheduleTime" name="time" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scheduleCaption">Caption:</label>
+                    <textarea id="scheduleCaption" name="caption" rows="4" placeholder="Enter your caption here..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scheduleHashtags">Hashtags:</label>
+                    <textarea id="scheduleHashtags" name="hashtags" rows="2" placeholder="Enter hashtags separated by spaces..."></textarea>
+                </div>
+                
+                <!-- Quick Time Suggestions -->
+                <div class="quick-time-suggestions" style="margin: 1rem 0; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin: 0 0 1rem 0; color: #374151; font-size: 1rem;">Quick Time Suggestions</h4>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" onclick="setQuickTime('1hour')" style="background: #e0f2fe; color: #0c4a6e; border: 1px solid #0ea5e9; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                            +1 Hour
+                        </button>
+                        <button type="button" onclick="setQuickTime('3hours')" style="background: #e0f2fe; color: #0c4a6e; border: 1px solid #0ea5e9; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                            +3 Hours
+                        </button>
+                        <button type="button" onclick="setQuickTime('tomorrow')" style="background: #e0f2fe; color: #0c4a6e; border: 1px solid #0ea5e9; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                            Tomorrow
+                        </button>
+                        <button type="button" onclick="setQuickTime('nextweek')" style="background: #e0f2fe; color: #0c4a6e; border: 1px solid #0ea5e9; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                            Next Week
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeSchedulingModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Schedule Post</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentCaptionCard = null;
+    let currentCaptionBox = null;
+
+    // Initialize file upload
+    const input = document.getElementById('videoInput');
+    const uploadForm = document.getElementById('uploadForm');
+    if (input && uploadForm) {
+        input.onchange = () => {
+            if (input.files[0]) {
+                setTimeout(() => uploadForm.submit(), 500);
+            }
+        };
+    }
+
+    // Initialize video time displays
+    document.querySelectorAll('.video-el').forEach(function(video) {
+        video.addEventListener('loadedmetadata', function() {
+            const duration = video.duration;
+            const mins = Math.floor(duration / 60);
+            const secs = Math.floor(duration % 60).toString().padStart(2, '0');
+            const durStr = mins + ':' + secs;
+            const timeBar = video.parentElement.querySelector('.video-time-bar');
+            if (timeBar) {
+                timeBar.querySelector('.total-time').textContent = durStr;
+            }
+        });
+        
+        video.addEventListener('timeupdate', function() {
+            const current = video.currentTime;
+            const mins = Math.floor(current / 60);
+            const secs = Math.floor(current % 60).toString().padStart(2, '0');
+            const curStr = mins + ':' + secs;
+            const timeBar = video.parentElement.querySelector('.video-time-bar');
+            if (timeBar) {
+                timeBar.querySelector('.current-time').textContent = curStr;
+            }
+        });
+    });
+
+    // Delete button functionality
+    document.querySelectorAll('.delete-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const filename = btn.getAttribute('data-filename');
+            if (!filename) return;
+            
+            if (!confirm('Are you sure you want to delete this clip?')) return;
+            
+            fetch('/delete_trimmed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    btn.closest('.video-card').remove();
+                } else {
+                    alert('Failed to delete the clip.');
+                }
+            })
+            .catch(() => alert('Error deleting the clip.'));
+        });
+    });
+
+    // Caption generation for all videos (original and trimmed clips)
+    document.querySelectorAll('.caption-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const card = btn.closest('.video-card');
+            const resultDiv = card.querySelector('.caption-result');
+            if (!resultDiv) return;
+            
+            // Get filename - for original video use the filename from URL, for trimmed clips use data-filename
+            let filename;
+            if (card.classList.contains('original-card')) {
+                // For original video, get filename from the video source
+                const video = card.querySelector('.original-video');
+                const source = video.querySelector('source');
+                if (source) {
+                    const src = source.getAttribute('src');
+                    filename = src.split('/').pop(); // Extract filename from URL
+                }
+            } else {
+                // For trimmed clips, use the delete button's data-filename
+                const deleteBtn = card.querySelector('.delete-btn');
+                filename = deleteBtn ? deleteBtn.getAttribute('data-filename') : null;
+            }
+            
+            if (!filename) return;
+            
+            resultDiv.style.display = 'block';
+            resultDiv.classList.remove('expanded');
+            resultDiv.style.maxHeight = '4.5em';
+            resultDiv.style.position = 'relative';
+            resultDiv.style.zIndex = 2;
+            const fade = resultDiv.querySelector('.caption-fade');
+            if (fade) fade.style.display = 'block';
+            const captionText = resultDiv.querySelector('.caption-text');
+            const captionHashtags = resultDiv.querySelector('.caption-hashtags');
+            const seeMoreBtn = resultDiv.querySelector('.see-more-btn');
+            const captionActions = resultDiv.querySelector('.caption-actions');
+            const captionEyeBtn = resultDiv.querySelector('.caption-eye-btn');
+            if (captionText) captionText.innerHTML = '<span style="color:#1a56db;">Generating caption...</span>';
+            if (captionHashtags) captionHashtags.innerHTML = '';
+            if (seeMoreBtn) seeMoreBtn.textContent = 'See more';
+            if (captionActions) captionActions.style.display = 'flex';
+            if (seeMoreBtn) seeMoreBtn.style.display = 'block';
+            if (captionEyeBtn) captionEyeBtn.style.display = 'inline-flex';
+            fetch('/api/generate_caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (captionText) captionText.innerHTML = data.caption;
+                    if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${data.hashtags}</span>`;
+                    if (seeMoreBtn) seeMoreBtn.style.display = 'block';
+                    if (captionActions) captionActions.style.display = 'flex';
+                    if (captionEyeBtn) captionEyeBtn.style.display = 'inline-flex';
+                    if (fade) fade.style.display = 'block';
+                } else {
+                    if (captionText) captionText.innerHTML = '<span style="color:#e11d48;">Failed to generate caption.</span>';
+                    if (captionHashtags) captionHashtags.innerHTML = '';
+                    if (captionActions) captionActions.style.display = 'flex';
+                    if (seeMoreBtn) seeMoreBtn.style.display = 'block';
+                    if (captionEyeBtn) captionEyeBtn.style.display = 'inline-flex';
+                }
+            })
+            .catch(() => {
+                if (captionText) captionText.innerHTML = '<span style="color:#e11d48;">Error generating caption.</span>';
+                if (captionHashtags) captionHashtags.innerHTML = '';
+                if (captionActions) captionActions.style.display = 'flex';
+                if (seeMoreBtn) seeMoreBtn.style.display = 'block';
+                if (captionEyeBtn) captionEyeBtn.style.display = 'inline-flex';
+            });
+        });
+    });
+
+    // See more/less functionality for captions
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.see-more-btn')) {
+            e.stopPropagation();
+            const btn = e.target.closest('.see-more-btn');
+            const resultDiv = btn.closest('.caption-result');
+            const fade = resultDiv.querySelector('.caption-fade');
+            
+            if (!resultDiv.classList.contains('expanded')) {
+                resultDiv.classList.add('expanded');
+                resultDiv.style.maxHeight = 'none';
+                if (fade) fade.style.display = 'none';
+                btn.textContent = 'See less';
+            } else {
+                resultDiv.classList.remove('expanded');
+                resultDiv.style.maxHeight = '4.5em';
+                if (fade) fade.style.display = 'block';
+                btn.textContent = 'See more';
+            }
+        }
+    });
+
+    // Edit caption button functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.caption-eye-btn')) {
+            e.stopPropagation();
+            const card = e.target.closest('.video-card');
+            const box = card.querySelector('.caption-result');
+            const captionText = box.querySelector('.caption-text')?.innerText || '';
+            const captionHashtags = box.querySelector('.caption-hashtags')?.innerText || '';
+            
+            document.getElementById('modalCaptionText').value = captionText;
+            document.getElementById('modalCaptionHashtags').value = captionHashtags;
+            document.getElementById('captionModal').style.display = 'flex';
+            currentCaptionBox = box;
+        }
+    });
+
+    // Modal close buttons
+    document.getElementById('closeCaptionModal').onclick = function() {
+        document.getElementById('captionModal').style.display = 'none';
+        currentCaptionBox = null;
+    };
+    
+    document.getElementById('closeCaptionReadModal').onclick = function() {
+        document.getElementById('captionReadModal').style.display = 'none';
+    };
+
+    // Modal save button
+    document.getElementById('saveCaptionModal').onclick = function() {
+        if (!currentCaptionBox) return;
+        const newText = document.getElementById('modalCaptionText').value;
+        const newTags = document.getElementById('modalCaptionHashtags').value;
+        
+        currentCaptionBox.querySelector('.caption-text').innerText = newText;
+        currentCaptionBox.querySelector('.caption-hashtags').innerText = newTags;
+        document.getElementById('captionModal').style.display = 'none';
+        currentCaptionBox = null;
+    };
+
+    // Modal cancel button
+    document.getElementById('cancelCaptionModal').onclick = function() {
+        document.getElementById('captionModal').style.display = 'none';
+        currentCaptionBox = null;
+    };
+
+    // Edit from read modal
+    document.getElementById('editCaptionFromReadModal').onclick = function() {
+        const captionText = document.getElementById('readModalCaptionText').innerText;
+        const captionHashtags = document.getElementById('readModalCaptionHashtags').innerText;
+        
+        document.getElementById('modalCaptionText').value = captionText;
+        document.getElementById('modalCaptionHashtags').value = captionHashtags;
+        document.getElementById('captionReadModal').style.display = 'none';
+        document.getElementById('captionModal').style.display = 'flex';
+    };
+
+    // Eye icon functionality to view full caption
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.caption-eye-btn')) {
+            e.stopPropagation();
+            const card = e.target.closest('.video-card');
+            const box = card.querySelector('.caption-result');
+            const captionText = box.querySelector('.caption-text')?.innerText || '';
+            const captionHashtags = box.querySelector('.caption-hashtags')?.innerText || '';
+            
+            document.getElementById('readModalCaptionText').innerText = captionText;
+            document.getElementById('readModalCaptionHashtags').innerText = captionHashtags;
+            document.getElementById('captionReadModal').style.display = 'flex';
+        }
+    });
+    
+    // Edit caption button functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.caption-edit-btn')) {
+            e.stopPropagation();
+            const card = e.target.closest('.video-card');
+            const videoPath = card.getAttribute('data-video-path');
+            if (videoPath) {
+                const filename = videoPath.split('/').pop();
+                editCaption(filename);
+            }
+        }
+    });
+
+    // Social media posting functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.social-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const btn = e.target.closest('.social-btn');
+            const platform = btn.className.includes('youtube') ? 'youtube' :
+                           btn.className.includes('tiktok') ? 'tiktok' :
+                           btn.className.includes('linkedin') ? 'linkedin' :
+                           btn.className.includes('facebook') ? 'facebook' : 'instagram';
+            
+            const card = btn.closest('.video-card');
+            const video = card.querySelector('video');
+            const source = video.querySelector('source');
+            const videoPath = source ? source.getAttribute('src') : '';
+            
+            // Get caption if available
+            const captionResult = card.querySelector('.caption-result');
+            let caption = '';
+            let hashtags = '';
+            
+            if (captionResult && captionResult.style.display !== 'none') {
+                const captionText = captionResult.querySelector('.caption-text');
+                const captionHashtags = captionResult.querySelector('.caption-hashtags');
+                caption = captionText ? captionText.innerText : '';
+                hashtags = captionHashtags ? captionHashtags.innerText : '';
+            }
+            
+            if (platform === 'youtube') {
+                // Prefer caption from the visible caption container
+                if (!caption) {
+                    const captionTextEl = card.querySelector('.caption-container .caption-text');
+                    caption = captionTextEl ? captionTextEl.innerText.trim() : '';
+                }
+                if (!hashtags) {
+                    const hashtagsEl = card.querySelector('.caption-container .caption-hashtags');
+                    hashtags = hashtagsEl ? hashtagsEl.innerText.trim() : '';
+                }
+
+                const filename = (videoPath || '').split('/').pop().split('?')[0];
+
+                const doYoutubeUpload = (cap, tags) => {
+                    fetch('/api/youtube/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            video_path: videoPath,
+                            title: '',
+                            caption: cap || '',
+                            hashtags: tags || '',
+                            privacyStatus: 'public'
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('YouTube upload success:', data);
+                            showNotification('Uploaded to YouTube successfully', 'success');
+                        } else {
+                            console.warn('YouTube upload failed:', data);
+                            showNotification(`YouTube upload failed: ${data.message || 'Unknown error'}`, 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('YouTube upload error:', err);
+                        showNotification('YouTube upload error. Check logs.', 'error');
+                    })
+                    .finally(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    });
+                };
+
+                // If caption still empty, try loading from server storage
+                if (!caption) {
+                    fetch(`/api/load_caption?filename=${encodeURIComponent(filename)}`)
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d && d.success && d.caption) {
+                                doYoutubeUpload(d.caption, d.hashtags || hashtags);
+                            } else {
+                                doYoutubeUpload('', hashtags);
+                            }
+                        })
+                        .catch(() => doYoutubeUpload('', hashtags));
+                } else {
+                    doYoutubeUpload(caption, hashtags);
+                }
+                return;
+            }
+
+            // Other platforms follow existing flow
+            // Check if credentials are configured
+            fetch(`/api/load-credentials?platform=${platform}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Credentials found, proceed with posting
+                    postToSocialMedia(platform, videoPath, caption, hashtags, btn);
+                } else {
+                    // No credentials, show non-blocking notice instead of alert
+                    console.warn('Credentials not configured for', platform);
+                    showNotification(`${platform.charAt(0).toUpperCase() + platform.slice(1)} credentials not configured. Configure them in Settings.`, 'warning');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking credentials:', error);
+                showNotification('Error checking credentials. Please try again.', 'error');
+            });
+        }
+    });
+
+    function postToSocialMedia(platform, videoPath, caption, hashtags, button) {
+        // Show loading state
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        fetch('/api/post-to-social', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                platform: platform,
+                video_path: videoPath,
+                caption: caption,
+                hashtags: hashtags
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Show success state
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.style.background = '#10b981';
+                button.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.style.background = '';
+                    button.style.boxShadow = '';
+                    button.disabled = false;
+                }, 3000);
+                
+                // Show success message
+                showNotification(`Successfully posted to ${platform}!`, 'success');
+            } else {
+                // Show error state
+                button.innerHTML = '<i class="fas fa-times"></i>';
+                button.style.background = '#ef4444';
+                button.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.style.background = '';
+                    button.style.boxShadow = '';
+                    button.disabled = false;
+                }, 3000);
+                
+                showNotification(`Error posting to ${platform}: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error posting to social media:', error);
+            
+            // Show error state
+            button.innerHTML = '<i class="fas fa-times"></i>';
+            button.style.background = '#ef4444';
+            button.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.style.background = '';
+                button.style.boxShadow = '';
+                button.disabled = false;
+            }, 3000);
+            
+            showNotification(`Error posting to ${platform}. Please try again.`, 'error');
+        });
+    }
+
+    function showNotification(message, type) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        `;
+        
+        if (type === 'success') {
+            notification.style.background = '#10b981';
+        } else {
+            notification.style.background = '#ef4444';
+        }
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 5000);
+    }
+
+    // Scheduling Functions
+    function openSchedulingModal(filename, type) {
+        console.log('Opening scheduling modal for:', filename, type);
+        const modal = document.getElementById('schedulingModal');
+        if (!modal) {
+            console.error('Scheduling modal not found!');
+            return;
+        }
+        
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('scheduleDate');
+        if (dateInput) {
+            dateInput.min = today;
+            dateInput.value = today;
+        }
+        
+        // Pre-fill with current time + 1 hour
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        const timeString = now.toTimeString().slice(0, 5);
+        const timeInput = document.getElementById('scheduleTime');
+        if (timeInput) {
+            timeInput.value = timeString;
+        }
+        
+        // Pre-fill caption and hashtags if available
+        const videoCard = document.querySelector(`[data-video-path*="${filename}"]`);
+        if (videoCard) {
+            const captionContainer = videoCard.querySelector('.caption-container');
+            if (captionContainer && captionContainer.style.display !== 'none') {
+                const captionText = captionContainer.querySelector('.caption-text');
+                const captionHashtags = captionContainer.querySelector('.caption-hashtags');
+                
+                if (captionText) {
+                    const captionInput = document.getElementById('scheduleCaption');
+                    if (captionInput) {
+                        captionInput.value = captionText.innerText || '';
+                    }
+                }
+                
+                if (captionHashtags) {
+                    const hashtagsInput = document.getElementById('scheduleHashtags');
+                    if (hashtagsInput) {
+                        hashtagsInput.value = captionHashtags.innerText || '';
+                    }
+                }
+            }
+        }
+        
+        // Show the modal
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        
+        // Add escape key listener
+        const escapeHandler = function(e) {
+            if (e.key === 'Escape') {
+                closeSchedulingModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+        // Add click outside to close
+        const clickOutsideHandler = function(e) {
+            if (e.target === modal) {
+                closeSchedulingModal();
+                document.removeEventListener('click', clickOutsideHandler);
+            }
+        };
+        document.addEventListener('click', clickOutsideHandler);
+    }
+    
+    function closeSchedulingModal() {
+        const modal = document.getElementById('schedulingModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+    }
+    
+    function closeCaptionModal() {
+        const modal = document.getElementById('captionModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    }
+    
+    function closeCaptionReadModal() {
+        const modal = document.getElementById('captionReadModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    // ... existing JavaScript functions ...
+
+    // Delete a video
+    function deleteVideo(filename) {
+        if (!confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
+            return;
+        }
+        
+        fetch('/delete_video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Video "${filename}" deleted successfully.`);
+                const videoCard = document.querySelector(`[data-video-path*="${filename}"]`);
+                if (videoCard) {
+                    videoCard.remove();
+                }
+            } else {
+                alert(`Error deleting video "${filename}": ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting video:', error);
+            alert('Error deleting video. Please try again.');
+        });
+    }
+    
+    // Social media posting function
+    function postToSocial(platform, filename) {
+        // Check if credentials are configured
+        fetch(`/api/load-credentials?platform=${platform}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Credentials found, proceed with posting
+                const videoCard = document.querySelector(`[data-video-path*="${filename}"]`);
+                const captionContainer = videoCard ? videoCard.querySelector('.caption-container') : null;
+                let caption = '';
+                let hashtags = '';
+                
+                if (captionContainer && captionContainer.style.display !== 'none') {
+                    const captionText = captionContainer.querySelector('.caption-text');
+                    const captionHashtags = captionContainer.querySelector('.caption-hashtags');
+                    caption = captionText ? captionText.innerText : '';
+                    hashtags = captionHashtags ? captionHashtags.innerText : '';
+                }
+                
+                // Simulate posting to social media
+                postToSocialMedia(platform, filename, caption, hashtags);
+            } else {
+                // No credentials, redirect to settings
+                if (confirm(`${platform.charAt(0).toUpperCase() + platform.slice(1)} credentials not configured. Would you like to go to settings to configure them?`)) {
+                    window.location.href = '/settings';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error checking credentials:', error);
+            alert('Error checking credentials. Please try again.');
+        });
+    }
+
+
+    
+
+    
+    
+    
+    // Trim video function
+    function trimVideo(videoPath, fileName) {
+        const startTime = parseFloat(document.getElementById(`start-${fileName}`).value);
+        const endTime = parseFloat(document.getElementById(`end-${fileName}`).value);
+        
+        if (endTime <= startTime || startTime < 0) {
+            alert('Invalid start or end time');
+            return;
+        }
+        
+        // Show loading state
+        const trimBtn = document.querySelector(`[onclick="trimVideo('${videoPath}', '${fileName}')"]`);
+        const originalText = trimBtn.innerHTML;
+        trimBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Trimming...';
+        trimBtn.disabled = true;
+        
+        fetch('/api/trim_video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                file: videoPath,
+                clips: [{ start: startTime, end: endTime }]
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.clips && data.clips.length > 0) {
+                // Add trimmed video to the grid
+                data.clips.forEach(clip => {
+                    addTrimmedVideo(clip, fileName, startTime, endTime);
+                });
+                
+                showNotification('Video trimmed successfully!', 'success');
+            } else {
+                throw new Error(data.error || 'Trimming failed');
+            }
+        })
+        .catch(error => {
+            console.error('Trimming error:', error);
+            showNotification('Error trimming video: ' + error.message, 'error');
+        })
+        .finally(() => {
+            // Restore button state
+            trimBtn.innerHTML = originalText;
+            trimBtn.disabled = false;
+        });
+    }
+    
+    // Add trimmed video to the grid
+    function addTrimmedVideo(clip, originalFileName, startTime, endTime) {
+        const videosGrid = document.querySelector('.videos-grid');
+        if (!videosGrid) return;
+        
+        const trimmedFileName = `${originalFileName}_trimmed_${startTime.toFixed(1)}-${endTime.toFixed(1)}`;
+        const fileNameFromPath = (clip.url || '').split('/').pop();
+        
+        const videoCard = document.createElement('div');
+        videoCard.classList.add('video-card');
+        videoCard.setAttribute('data-video-path', clip.url);
+        videoCard.setAttribute('data-video-type', 'trimmed');
+        
+        videoCard.innerHTML = `
+            <div class="video-header">
+                <h3>${trimmedFileName.length > 30 ? trimmedFileName.substring(0, 30) + '...' : trimmedFileName}</h3>
+            </div>
+            
+            <video controls class="video-el">
+                <source src="${clip.url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            
+            <!-- time bar removed per request -->
+            
+            <div class="social-logos">
+                <div class="timer-btn" onclick="openSchedulingModal('${trimmedFileName}', 'trimmed')" title="Schedule Post">
+                    ⏰
+                </div>
+                <div class="social-buttons-group">
+                    <div class="social-btn youtube" onclick="postToSocial('youtube', '${trimmedFileName}')" title="Post to YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </div>
+                    <div class="social-btn tiktok" onclick="postToSocial('tiktok', '${trimmedFileName}')" title="Post to TikTok">
+                        <i class="fab fa-tiktok"></i>
+                    </div>
+                    <div class="social-btn linkedin" onclick="postToSocial('linkedin', '${trimmedFileName}')" title="Post to LinkedIn">
+                        <i class="fas fa-linkedin"></i>
+                    </div>
+                    <div class="social-btn facebook" onclick="postToSocial('facebook', '${trimmedFileName}')" title="Post to Facebook">
+                        <i class="fab fa-facebook"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="caption-btn" type="button" onclick="generateCaption('${fileNameFromPath}')">
+                    <i class="fas fa-comment-dots"></i> Generate Caption
+                </button>
+                <button class="delete-btn" type="button" title="Delete Video" onclick="deleteVideo('${fileNameFromPath}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Improved Caption Display -->
+            <div class="caption-container" style="display: none;">
+                <div class="caption-content">
+                    <div class="caption-text"></div>
+                    <div class="caption-hashtags"></div>
+                </div>
+                <div class="caption-actions">
+                    <button class="see-more-btn">
+                        <i class="fas fa-chevron-down"></i> See more
+                    </button>
+                    <button class="caption-eye-btn" title="View Full Caption">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="caption-edit-btn" title="Edit Caption">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        videosGrid.appendChild(videoCard);
+        
+        // Initialize video time display for the new video
+        const video = videoCard.querySelector('.video-el');
+        if (video) {
+            video.addEventListener('loadedmetadata', function() {
+                const duration = video.duration;
+                if (duration && !isNaN(duration)) {
+                    const mins = Math.floor(duration / 60);
+                    const secs = Math.floor(duration % 60).toString().padStart(2, '0');
+                    const durStr = mins + ':' + secs;
+                    const timeBar = null;
+                    if (timeBar) {
+                        timeBar.querySelector('.total-time').textContent = durStr;
+                    }
+                }
+            });
+            
+            video.addEventListener('timeupdate', function() {
+                const current = video.currentTime;
+                const mins = Math.floor(current / 60);
+                const secs = Math.floor(current % 60).toString().padStart(2, '0');
+                const curStr = mins + ':' + secs;
+                const timeBar = null;
+                if (timeBar) {
+                    timeBar.querySelector('.current-time').textContent = curStr;
+                }
+            });
+        }
+    }
+
+    // Save caption to file for persistence
+    function saveCaptionToFile(filename, caption, hashtags) {
+        fetch('/api/save_caption', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                filename: filename,
+                caption: caption,
+                hashtags: hashtags
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Caption saved successfully');
+            } else {
+                console.error('Failed to save caption');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving caption:', error);
+        });
+    }
+    
+    // Load saved captions for videos
+    function loadSavedCaptions() {
+        const videoCards = document.querySelectorAll('.video-card');
+        videoCards.forEach(card => attachSavedCaptionToCard(card));
+    }
+
+    function attachSavedCaptionToCard(card) {
+        const videoPath = card.getAttribute('data-video-path');
+        if (!videoPath) return;
+        const filename = videoPath.split('/').pop();
+        fetch(`/api/load_caption?filename=${encodeURIComponent(filename)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.caption) {
+                    const captionContainer = card.querySelector('.caption-container');
+                    if (captionContainer) {
+                        const captionText = captionContainer.querySelector('.caption-text');
+                        const captionHashtags = captionContainer.querySelector('.caption-hashtags');
+                        if (captionText) captionText.innerHTML = data.caption;
+                        if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${data.hashtags}</span>`;
+                        captionContainer.style.display = 'block';
+                    }
+                } else {
+                    // Fallback to localStorage
+                    try {
+                        const cached = localStorage.getItem(`caption:${filename}`);
+                        if (cached) {
+                            const parsed = JSON.parse(cached);
+                            const captionContainer = card.querySelector('.caption-container');
+                            if (captionContainer) {
+                                const captionText = captionContainer.querySelector('.caption-text');
+                                const captionHashtags = captionContainer.querySelector('.caption-hashtags');
+                                if (captionText) captionText.innerHTML = parsed.caption || '';
+                                if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${parsed.hashtags || ''}</span>`;
+                                captionContainer.style.display = 'block';
+                            }
+                        }
+                    } catch (_) {}
+                }
+            })
+            .catch(() => {});
+    }
+    
+    // Edit caption functionality
+    function editCaption(filename) {
+        const videoCard = document.querySelector(`[data-video-path*="${filename}"]`);
+        if (!videoCard) return;
+        
+        const captionContainer = videoCard.querySelector('.caption-container');
+        if (!captionContainer) return;
+        
+        const captionText = captionContainer.querySelector('.caption-text');
+        const captionHashtags = captionContainer.querySelector('.caption-hashtags');
+        
+        if (!captionText || !captionHashtags) return;
+        
+        const currentCaption = captionText.innerText;
+        const currentHashtags = captionHashtags.innerText;
+        
+        // Create edit modal
+        const editModal = document.createElement('div');
+        editModal.className = 'modal';
+        editModal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Caption</h3>
+                    <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editCaptionText">Caption:</label>
+                        <textarea id="editCaptionText" rows="4" placeholder="Enter your caption...">${currentCaption}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCaptionHashtags">Hashtags:</label>
+                        <textarea id="editCaptionHashtags" rows="2" placeholder="Enter hashtags...">${currentHashtags}</textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                        <button type="button" class="btn-primary" onclick="saveEditedCaption('${filename}')">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(editModal);
+        editModal.style.display = 'block';
+    }
+    
+    // Save edited caption
+    function saveEditedCaption(filename) {
+        const editCaptionText = document.getElementById('editCaptionText');
+        const editCaptionHashtags = document.getElementById('editCaptionHashtags');
+        
+        if (!editCaptionText || !editCaptionHashtags) return;
+        
+        const newCaption = editCaptionText.value;
+        const newHashtags = editCaptionHashtags.value;
+        
+        // Update the display
+        const videoCard = document.querySelector(`[data-video-path*="${filename}"]`);
+        if (videoCard) {
+            const captionContainer = videoCard.querySelector('.caption-container');
+            if (captionContainer) {
+                const captionText = captionContainer.querySelector('.caption-text');
+                const captionHashtags = captionContainer.querySelector('.caption-hashtags');
+                if (captionText) captionText.innerHTML = newCaption;
+                if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${newHashtags}</span>`;
+            }
+        }
+        
+        // Save to file
+        saveCaptionToFile(filename, newCaption, newHashtags);
+        
+        // Close modal
+        const modal = document.querySelector('.modal');
+        if (modal) modal.remove();
+        
+        showNotification('Caption updated successfully!', 'success');
+    }
+    
+    // Show notification function
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.parentElement.removeChild(notification);
+                }
+            }, 300);
+        }, 5000);
+    }
+    
+    // Initialize page functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Page loaded, initializing functionality...');
+        
+        // Check URL parameters for automatic actions
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        const videoParam = urlParams.get('video');
+        
+        console.log('URL parameters - action:', action, 'video:', videoParam);
+        
+        // Initialize video time displays for existing videos
+        initializeVideoTimeDisplays();
+        
+
+        
+        // Load dashboard on page load
+        loadDashboard();
+        
+        // Load saved captions
+        loadSavedCaptions();
+        
+        // Handle automatic caption generation if action=caption is specified
+        if (action === 'caption' && videoParam) {
+            console.log('Auto-caption action detected for video:', videoParam);
+            console.log('Current URL:', window.location.href);
+            
+            // Show notification that auto-caption is being processed
+            showNotification(`Auto-generating caption for: ${videoParam}`, 'info');
+            
+            // Wait for dashboard to load, then trigger caption generation
+            setTimeout(() => {
+                console.log('Starting auto-caption process...');
+                handleAutoCaption(videoParam);
+                // Fire headless generation in parallel, so we don't block on UI lookup
+                headlessGenerateAndSaveCaption(videoParam);
+                // Try attaching saved caption to the card shortly after
+                setTimeout(() => attemptAttachSavedCaption(videoParam), 2500);
+            }, 1500); // Give dashboard time to load
+        }
+        
+        // Add URL parameter cleanup to prevent issues on page refresh
+        if (action === 'caption') {
+            // Clean up URL after processing
+            setTimeout(() => {
+                const newUrl = window.location.pathname + '?video=' + encodeURIComponent(videoParam);
+                window.history.replaceState({}, document.title, newUrl);
+                console.log('URL cleaned up, removed action parameter');
+            }, 5000);
+        }
+        
+        // Test modal functionality
+        console.log('Testing modal elements...');
+        const schedulingModal = document.getElementById('schedulingModal');
+        console.log('Scheduling modal found:', !!schedulingModal);
+        
+        if (schedulingModal) {
+            console.log('Modal HTML:', schedulingModal.outerHTML.substring(0, 200) + '...');
+        }
+        
+        // Initialize scheduling form
+        const schedulingForm = document.getElementById('schedulingForm');
+        if (schedulingForm) {
+            console.log('Scheduling form found, adding event listener...');
+            schedulingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('Form submitted!');
+                
+                const formData = new FormData(schedulingForm);
+                const data = {
+                    platform: formData.get('platform'),
+                    date: formData.get('date'),
+                    time: formData.get('time'),
+                    caption: formData.get('caption'),
+                    hashtags: formData.get('hashtags')
+                };
+                
+                console.log('Form data:', data);
+                
+                // Schedule the post
+                schedulePost(data);
+            });
+        } else {
+            console.error('Scheduling form not found!');
+        }
+        
+        // Initialize see more/less functionality and edit button
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.see-more-btn')) {
+                e.stopPropagation();
+                const btn = e.target.closest('.see-more-btn');
+                const captionContainer = btn.closest('.caption-container');
+                const captionText = captionContainer.querySelector('.caption-text');
+                
+                if (!captionText.classList.contains('expanded')) {
+                    captionText.classList.add('expanded');
+                    btn.innerHTML = '<i class="fas fa-chevron-up"></i> See less';
+                    btn.classList.add('expanded');
+                } else {
+                    captionText.classList.remove('expanded');
+                    btn.innerHTML = '<i class="fas fa-chevron-down"></i> See more';
+                    btn.classList.remove('expanded');
+                }
+            }
+        });
+        
+        // Initialize eye icon functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.caption-eye-btn')) {
+                e.stopPropagation();
+                const card = e.target.closest('.video-card');
+                const captionContainer = card.querySelector('.caption-container');
+                const captionText = captionContainer.querySelector('.caption-text')?.innerText || '';
+                const captionHashtags = captionContainer.querySelector('.caption-hashtags')?.innerText || '';
+                
+                // Show caption in read modal
+                if (document.getElementById('readModalCaptionText')) {
+                    document.getElementById('readModalCaptionText').innerText = captionText;
+                    document.getElementById('readModalCaptionHashtags').innerText = captionHashtags;
+                    document.getElementById('captionReadModal').style.display = 'block';
+                }
+            }
+        });
+        
+        // Initialize modal close buttons
+        if (document.getElementById('closeCaptionModal')) {
+            document.getElementById('closeCaptionModal').onclick = closeCaptionModal;
+        }
+        if (document.getElementById('closeCaptionReadModal')) {
+            document.getElementById('closeCaptionReadModal').onclick = closeCaptionReadModal;
+        }
+        if (document.getElementById('saveCaptionModal')) {
+            document.getElementById('saveCaptionModal').onclick = saveCaptionChanges;
+        }
+        if (document.getElementById('cancelCaptionModal')) {
+            document.getElementById('cancelCaptionModal').onclick = closeCaptionModal;
+        }
+        if (document.getElementById('editCaptionFromReadModal')) {
+            document.getElementById('editCaptionFromReadModal').onclick = editCaptionFromRead;
+        }
+        
+        console.log('Page initialization complete!');
+    });
+    
+
+    
+    // Generate transcript from uploaded file
+
+    
+    // Generate transcript from URL
+    function generateTranscriptFromUrl() {
+        const urlInput = document.getElementById('transcriptUrlInput');
+        const url = urlInput.value.trim();
+        
+        if (!url) {
+            alert('Please enter a valid URL');
+            return;
+        }
+        
+        // Show loading state
+        const transcriptResult = document.getElementById('transcriptResult');
+        const transcriptText = document.getElementById('transcriptText');
+        transcriptResult.style.display = 'block';
+        transcriptText.innerHTML = '<div style="text-align: center; color: #8b5cf6;"><i class="fas fa-spinner fa-spin"></i> Generating transcript from URL...</div>';
+        
+        fetch('/api/generate-transcript-from-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayTranscriptResult(data);
+            } else {
+                throw new Error(data.error || 'Failed to generate transcript from URL');
+            }
+        })
+        .catch(error => {
+            console.error('URL transcript generation error:', error);
+            transcriptText.innerHTML = `<div style="text-align: center; color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</div>`;
+        });
+    }
+    
+    // Display transcript result
+    function displayTranscriptResult(data) {
+        const transcriptResult = document.getElementById('transcriptResult');
+        const transcriptText = document.getElementById('transcriptText');
+        const transcriptWordCount = document.getElementById('transcriptWordCount');
+        const transcriptDuration = document.getElementById('transcriptDuration');
+        
+        transcriptResult.style.display = 'block';
+        transcriptText.innerHTML = data.transcript;
+        transcriptWordCount.textContent = `${data.word_count} words`;
+        transcriptDuration.textContent = data.duration;
+        
+        // Store transcript data for later use
+        transcriptResult.setAttribute('data-transcript', data.transcript);
+        transcriptResult.setAttribute('data-word-count', data.word_count);
+        transcriptResult.setAttribute('data-duration', data.duration);
+    }
+    
+    // Copy transcript to clipboard
+    function copyTranscript() {
+        const transcriptText = document.getElementById('transcriptText');
+        const text = transcriptText.innerText;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            showNotification('Transcript copied to clipboard!', 'success');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('Transcript copied to clipboard!', 'success');
+        });
+    }
+    
+    // Download transcript as text file
+    function downloadTranscript() {
+        const transcriptText = document.getElementById('transcriptText');
+        const text = transcriptText.innerText;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `transcript_${timestamp}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('Transcript downloaded successfully!', 'success');
+    }
+    
+    // Use transcript for caption generation
+    function useTranscriptForCaption() {
+        const transcriptResult = document.getElementById('transcriptResult');
+        const transcript = transcriptResult.getAttribute('data-transcript');
+        
+        if (!transcript) {
+            showNotification('No transcript available', 'error');
+            return;
+        }
+        
+        // Find the first video card to use for caption generation
+        const firstVideoCard = document.querySelector('.video-card');
+        if (firstVideoCard) {
+            // Generate caption using the transcript
+            generateCaptionFromTranscript(transcript, firstVideoCard);
+        } else {
+            showNotification('No video cards found to generate caption for', 'error');
+        }
+    }
+    
+    // Generate caption from transcript
+    function generateCaptionFromTranscript(transcript, videoCard) {
+        const captionContainer = videoCard.querySelector('.caption-container');
+        if (!captionContainer) return;
+        
+        captionContainer.style.display = 'block';
+        
+        const captionText = captionContainer.querySelector('.caption-text');
+        const captionHashtags = captionContainer.querySelector('.caption-hashtags');
+        
+        if (captionText) captionText.innerHTML = '<span style="color:#1a56db;"><i class="fas fa-spinner fa-spin"></i> Generating caption from transcript...</span>';
+        if (captionHashtags) captionHashtags.innerHTML = '';
+        
+        // Use the transcript to generate a better caption
+        const enhancedPrompt = `Based on this transcript: "${transcript.substring(0, 500)}...", generate an engaging social media caption with relevant hashtags.`;
+        
+        // For now, we'll use a simple approach - in production, you'd call the AI caption generator
+        const generatedCaption = `🎬 New video alert! ${transcript.substring(0, 100)}... #NewVideo #ContentCreation #SocialMedia`;
+        const generatedHashtags = `#VideoContent #SocialMedia #ContentCreator #NewVideo #Trending`;
+        
+        if (captionText) captionText.innerHTML = generatedCaption;
+        if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${generatedHashtags}</span>`;
+        
+        showNotification('Caption generated from transcript!', 'success');
+    }
+
+    // Schedule post function
+    function schedulePost(data) {
+        fetch('/api/schedule-post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showNotification('Post scheduled successfully!', 'success');
+                closeSchedulingModal();
+                // Reset form
+                document.getElementById('schedulingForm').reset();
+            } else {
+                showNotification('Failed to schedule post: ' + result.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error scheduling post:', error);
+            showNotification('Error scheduling post. Please try again.', 'error');
+        });
+    }
+    
+    // Save caption changes
+    function saveCaptionChanges() {
+        const captionText = document.getElementById('modalCaptionText').value;
+        const captionHashtags = document.getElementById('modalCaptionHashtags').value;
+        
+        if (currentCaptionBox) {
+            currentCaptionBox.querySelector('.caption-text').innerText = captionText;
+            currentCaptionBox.querySelector('.caption-hashtags').innerText = captionHashtags;
+            closeCaptionModal();
+            showNotification('Caption updated successfully!', 'success');
+        }
+    }
+    
+    // Edit caption from read modal
+    function editCaptionFromRead() {
+        const captionText = document.getElementById('readModalCaptionText').innerText;
+        const captionHashtags = document.getElementById('readModalCaptionHashtags').innerText;
+        
+        document.getElementById('modalCaptionText').value = captionText;
+        document.getElementById('modalCaptionHashtags').value = captionHashtags;
+        closeCaptionReadModal();
+        document.getElementById('captionModal').style.display = 'block';
+    }
+
+    // Load existing videos from project folders
+    function loadExistingVideos() {
+        // Fetch existing videos from backend
+        fetch('/api/existing-videos')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayVideos(data.videos);
+            } else {
+                alert('Error loading videos: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading videos. Please try again.');
+        });
+    }
+    
+    // Display videos in the grid
+    function displayVideos(videos) {
+        const videosGrid = document.querySelector('.videos-grid');
+        const noVideosMessage = document.querySelector('.no-videos-message');
+        
+        if (videos.length === 0) {
+            if (noVideosMessage) {
+                noVideosMessage.style.display = 'block';
+            }
+            if (videosGrid) {
+                videosGrid.style.display = 'none';
+            }
+            return;
+        }
+        
+        if (noVideosMessage) {
+            noVideosMessage.style.display = 'none';
+        }
+        
+        if (videosGrid) {
+            videosGrid.style.display = 'grid';
+            videosGrid.innerHTML = ''; // Clear existing videos
+            
+            videos.forEach(video => {
+                const videoCard = createVideoCard(video);
+                videosGrid.appendChild(videoCard);
+            });
+            
+            // Initialize video time displays
+            initializeVideoTimeDisplays();
+        }
+    }
+    
+    // Create a video card element
+    function createVideoCard(video) {
+        const videoCard = document.createElement('div');
+        videoCard.classList.add('video-card');
+        videoCard.setAttribute('data-video-path', video.path);
+        videoCard.setAttribute('data-video-type', video.type);
+        
+        videoCard.innerHTML = `
+            <div class="video-header">
+                <h3>${video.name.length > 30 ? video.name.substring(0, 30) + '...' : video.name}</h3>
+            </div>
+            
+            <video controls class="video-el">
+                <source src="/static/${video.path}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            
+            <!-- time bar removed per request -->
+            
+            <div class="social-logos">
+                <div class="timer-btn" onclick="openSchedulingModal('${video.name}', '${video.type}')" title="Schedule Post">
+                    ⏰
+                </div>
+                <div class="social-buttons-group">
+                    <div class="social-btn youtube" onclick="postToSocial('youtube', '${video.name}')" title="Post to YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </div>
+                    <div class="social-btn tiktok" onclick="postToSocial('tiktok', '${video.name}')" title="Post to TikTok">
+                        <i class="fab fa-tiktok"></i>
+                    </div>
+                    <div class="social-btn linkedin" onclick="postToSocial('linkedin', '${video.name}')" title="Post to LinkedIn">
+                        <i class="fas fa-linkedin"></i>
+                    </div>
+                    <div class="social-btn facebook" onclick="postToSocial('facebook', '${video.name}')" title="Post to Facebook">
+                        <i class="fab fa-facebook"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="caption-btn" type="button" onclick="generateCaption('${video.name}')">
+                    <i class="fas fa-comment-dots"></i> Generate Caption
+                </button>
+                ${video.type === 'trimmed' ? `
+                <button class="delete-btn" type="button" title="Delete Video" onclick="deleteVideo('${video.name}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                </button>
+                ` : ''}
+            </div>
+            
+            <!-- Improved Caption Display -->
+            <div class="caption-container" style="display: none;">
+                <div class="caption-content">
+                    <div class="caption-text"></div>
+                    <div class="caption-hashtags"></div>
+                </div>
+                <div class="caption-actions">
+                    <button class="see-more-btn">
+                        <i class="fas fa-chevron-down"></i> See more
+                    </button>
+                    <button class="caption-eye-btn" title="View Full Caption">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="caption-edit-btn" title="Edit Caption">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        return videoCard;
+    }
+    
+    // Initialize video time displays
+    function initializeVideoTimeDisplays() {
+        document.querySelectorAll('.video-el').forEach(video => {
+            video.addEventListener('loadedmetadata', function() {
+                const duration = video.duration;
+                if (duration && !isNaN(duration)) {
+                    const mins = Math.floor(duration / 60);
+                    const secs = Math.floor(duration % 60).toString().padStart(2, '0');
+                    const durStr = mins + ':' + secs;
+                    const timeBar = video.parentElement.querySelector('.video-time-bar');
+                    if (timeBar) {
+                        timeBar.querySelector('.total-time').textContent = durStr;
+                    }
+                }
+            });
+            
+            video.addEventListener('timeupdate', function() {
+                const current = video.currentTime;
+                const mins = Math.floor(current / 60);
+                const secs = Math.floor(current % 60).toString().padStart(2, '0');
+                const curStr = mins + ':' + secs;
+                const timeBar = video.parentElement.querySelector('.video-time-bar');
+                if (timeBar) {
+                    timeBar.querySelector('.current-time').textContent = curStr;
+                }
+            });
+        });
+    }
+    
+    // Generate caption for a video
+    function generateCaption(filename) {
+        console.log('Generating caption for:', filename);
+        
+        // Try multiple selectors to find the video card
+        let videoCard = document.querySelector(`[data-video-path*="${filename}"]`);
+        
+        if (!videoCard) {
+            // Try finding by video name
+            videoCard = document.querySelector(`.video-name:contains("${filename}")`)?.closest('.video-card');
+        }
+        
+        if (!videoCard) {
+            // Try finding by filename
+            videoCard = document.querySelector(`.video-filename:contains("${filename}")`)?.closest('.video-card');
+        }
+        
+        if (!videoCard) {
+            // Try finding by any text content that contains the filename
+            const allCards = document.querySelectorAll('.video-card');
+            for (const card of allCards) {
+                const cardText = card.textContent.toLowerCase();
+                if (cardText.includes(filename.toLowerCase())) {
+                    videoCard = card;
+                    break;
+                }
+            }
+        }
+        
+        if (!videoCard) {
+            console.error('Video card not found for:', filename);
+            showNotification(`Video card not found for: ${filename}. Please ensure the video is uploaded and visible.`, 'error');
+            return;
+        }
+        
+        let captionContainer = videoCard.querySelector('.caption-container');
+        if (!captionContainer) {
+            console.log('Caption container not found, creating one...');
+            // Create caption container if it doesn't exist
+            captionContainer = createCaptionContainer(videoCard);
+        }
+        
+        if (!captionContainer) {
+            console.error('Failed to create caption container for:', filename);
+            showNotification('Failed to create caption container', 'error');
+            return;
+        }
+        
+        captionContainer.style.display = 'block';
+        
+        const captionText = captionContainer.querySelector('.caption-text');
+        const captionHashtags = captionContainer.querySelector('.caption-hashtags');
+        const seeMoreBtn = captionContainer.querySelector('.see-more-btn');
+        const captionEyeBtn = captionContainer.querySelector('.caption-eye-btn');
+        const captionEditBtn = captionContainer.querySelector('.caption-edit-btn');
+        
+        // Show loading state
+        if (captionText) captionText.innerHTML = '<span style="color:#1a56db;"><i class="fas fa-spinner fa-spin"></i> Generating professional caption with Gemini AI...</span>';
+        if (captionHashtags) captionHashtags.innerHTML = '';
+        if (seeMoreBtn) seeMoreBtn.style.display = 'none';
+        if (captionEyeBtn) captionEyeBtn.style.display = 'none';
+        if (captionEditBtn) captionEditBtn.style.display = 'none';
+        
+        showNotification('Generating caption with Gemini AI...', 'info');
+        
+        fetch('/api/generate_caption', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename })
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('Caption generation response:', data);
+            
+            if (data.success) {
+                if (captionText) captionText.innerHTML = data.caption;
+                if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${data.hashtags}</span>`;
+                if (seeMoreBtn) seeMoreBtn.style.display = 'flex';
+                if (captionEyeBtn) captionEyeBtn.style.display = 'flex';
+                if (captionEditBtn) captionEditBtn.style.display = 'flex';
+                
+                // Save caption to file for persistence
+                saveCaptionToFile(filename, data.caption, data.hashtags);
+                // Persist UI via localStorage as an extra safeguard
+                try {
+                    localStorage.setItem(`caption:${filename}`, JSON.stringify({
+                        caption: data.caption,
+                        hashtags: data.hashtags
+                    }));
+                } catch (_) {}
+                
+                // Show success notification
+                showNotification('Professional caption generated successfully!', 'success');
+                
+                // AI trim suggestion removed per request
+            } else {
+                if (captionText) captionText.innerHTML = `<span style="color:#e11d48;"><i class="fas fa-exclamation-triangle"></i> Failed to generate caption: ${data.error || 'Unknown error'}</span>`;
+                if (captionHashtags) captionHashtags.innerHTML = '';
+                if (seeMoreBtn) seeMoreBtn.style.display = 'flex';
+                if (captionEyeBtn) captionEyeBtn.style.display = 'flex';
+                if (captionEditBtn) captionEditBtn.style.display = 'flex';
+                
+                showNotification(`Failed to generate caption: ${data.error || 'Unknown error'}`, 'error');
+            }
+        })
+        .catch((error) => {
+            console.error('Error generating caption:', error);
+            
+            if (captionText) captionText.innerHTML = '<span style="color:#e11d48;"><i class="fas fa-exclamation-triangle"></i> Error generating caption. Please try again.</span>';
+            if (captionHashtags) captionHashtags.innerHTML = '';
+            if (seeMoreBtn) seeMoreBtn.style.display = 'flex';
+            if (captionEyeBtn) captionEyeBtn.style.display = 'flex';
+            if (captionEditBtn) captionEditBtn.style.display = 'flex';
+            
+            showNotification('Error generating caption. Please check your connection and try again.', 'error');
+        });
+    }
+    
+    // Handle automatic caption generation from URL parameters
+    function handleAutoCaption(videoParam) {
+        console.log('Handling auto-caption for video:', videoParam);
+        console.log('Current video cards on page:', document.querySelectorAll('.video-card').length);
+        
+        // Wait a bit more for dashboard to fully load
+        setTimeout(() => {
+            findAndGenerateCaption(videoParam);
+        }, 3000);
+    }
+    
+    // Find video and generate caption with improved logic
+    function findAndGenerateCaption(videoParam) {
+        console.log('Finding video for caption generation:', videoParam);
+        
+        // Normalize for matching
+        const normalize = (s) => (s || '').toString().toLowerCase();
+        const paramBase = normalize(videoParam).replace(/^.*\//, '');
+        
+        // First, try to find in existing video cards
+        const videoCards = document.querySelectorAll('.video-card');
+        console.log('Found video cards:', videoCards.length);
+        
+        let targetCard = null;
+        let targetFilename = null;
+        
+        // Log all video cards for debugging
+        videoCards.forEach((card, index) => {
+            const videoPath = card.getAttribute('data-video-path');
+            const videoName = card.querySelector('.video-name')?.textContent;
+            const filename = card.querySelector('.video-filename')?.textContent;
+            const cardText = card.textContent;
+            
+            console.log(`Card ${index}:`, { 
+                videoPath, 
+                videoName, 
+                filename, 
+                cardText: cardText.substring(0, 100) + '...' 
+            });
+            
+            // Try multiple matching strategies
+            const pathBase = normalize((videoPath || '').split('/').pop());
+            const nameBase = normalize(videoName || '');
+            const fileBase = normalize(filename || '');
+            
+            if (pathBase && (pathBase.includes(paramBase) || paramBase.includes(pathBase))) {
+                targetCard = card;
+                targetFilename = filename || videoName || pathBase;
+                console.log('Match found by videoPath');
+            } else if (nameBase && (nameBase.includes(paramBase) || paramBase.includes(nameBase))) {
+                targetCard = card;
+                targetFilename = filename || videoName || nameBase;
+                console.log('Match found by videoName');
+            } else if (fileBase && (fileBase.includes(paramBase) || paramBase.includes(fileBase))) {
+                targetCard = card;
+                targetFilename = filename || videoName || fileBase;
+                console.log('Match found by filename');
+            } else if (normalize(cardText).includes(paramBase)) {
+                targetCard = card;
+                targetFilename = filename || videoName || paramBase;
+                console.log('Match found by card text content');
+            }
+        });
+        
+        if (targetCard) {
+            console.log('✅ Found target video card, triggering caption generation for:', targetFilename);
+            
+            // Scroll to the target card
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Add a highlight effect
+            targetCard.style.boxShadow = '0 0 20px rgba(26, 86, 219, 0.6)';
+            targetCard.style.border = '2px solid var(--primary-blue)';
+            
+            // Remove highlight after 3 seconds
+            setTimeout(() => {
+                targetCard.style.boxShadow = '';
+                targetCard.style.border = '';
+            }, 3000);
+            
+            // Trigger caption generation
+            setTimeout(() => {
+                generateCaption(targetFilename);
+            }, 1000);
+            
+        } else {
+            console.log('❌ Video card not found in current cards, trying dashboard search...');
+            
+            // Try to refresh dashboard and search
+            if (typeof loadDashboard === 'function') {
+                loadDashboard();
+                setTimeout(() => {
+                    searchAndGenerateCaption(videoParam);
+                }, 2000);
+            } else {
+                searchAndGenerateCaption(videoParam);
+            }
+        }
+    }
+    
+    // Create caption container for a video card
+    function createCaptionContainer(videoCard) {
+        console.log('Creating caption container for video card');
+        
+        try {
+            // Create the caption container HTML
+            const captionHTML = `
+                <div class="caption-container" style="display: none;">
+                    <div class="caption-content">
+                        <div class="caption-text"></div>
+                        <div class="caption-hashtags"></div>
+                    </div>
+                    <div class="caption-actions">
+                        <button class="see-more-btn">
+                            <i class="fas fa-chevron-down"></i> See more
+                        </button>
+                        <button class="caption-eye-btn" title="View Full Caption">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="caption-edit-btn" title="Edit Caption">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Insert the caption container after the action buttons
+            const actionButtons = videoCard.querySelector('.action-buttons');
+            if (actionButtons) {
+                actionButtons.insertAdjacentHTML('afterend', captionHTML);
+                
+                // Initialize the new caption container functionality
+                const newCaptionContainer = videoCard.querySelector('.caption-container');
+                if (newCaptionContainer) {
+                    // Add event listeners for the new buttons
+                    const seeMoreBtn = newCaptionContainer.querySelector('.see-more-btn');
+                    const captionEyeBtn = newCaptionContainer.querySelector('.caption-eye-btn');
+                    const captionEditBtn = newCaptionContainer.querySelector('.caption-edit-btn');
+                    
+                    if (seeMoreBtn) {
+                        seeMoreBtn.addEventListener('click', function() {
+                            const captionText = newCaptionContainer.querySelector('.caption-text');
+                            if (!captionText.classList.contains('expanded')) {
+                                captionText.classList.add('expanded');
+                                seeMoreBtn.innerHTML = '<i class="fas fa-chevron-up"></i> See less';
+                                seeMoreBtn.classList.add('expanded');
+                            } else {
+                                captionText.classList.remove('expanded');
+                                seeMoreBtn.innerHTML = '<i class="fas fa-chevron-down"></i> See more';
+                                seeMoreBtn.classList.remove('expanded');
+                            }
+                        });
+                    }
+                    
+                    if (captionEyeBtn) {
+                        captionEyeBtn.addEventListener('click', function() {
+                            const captionText = newCaptionContainer.querySelector('.caption-text')?.innerText || '';
+                            const captionHashtags = newCaptionContainer.querySelector('.caption-hashtags')?.innerText || '';
+                            
+                            if (document.getElementById('readModalCaptionText')) {
+                                document.getElementById('readModalCaptionText').innerText = captionText;
+                                document.getElementById('readModalHashtags').innerText = captionHashtags;
+                                document.getElementById('captionReadModal').style.display = 'block';
+                            }
+                        });
+                    }
+                    
+                    if (captionEditBtn) {
+                        captionEditBtn.addEventListener('click', function() {
+                            const captionText = newCaptionContainer.querySelector('.caption-text')?.innerText || '';
+                            const captionHashtags = newCaptionContainer.querySelector('.caption-hashtags')?.innerText || '';
+                            
+                            if (document.getElementById('editModalCaptionText')) {
+                                document.getElementById('editModalCaptionText').value = captionText;
+                                document.getElementById('editModalHashtags').value = captionHashtags;
+                                document.getElementById('captionEditModal').style.display = 'block';
+                            }
+                        });
+                    }
+                }
+                
+                return newCaptionContainer;
+            }
+        } catch (error) {
+            console.error('Error creating caption container:', error);
+        }
+        
+        return null;
+    }
+    
+    // Removed test caption helper per request
+
+    // Generate caption and save without requiring a visible card
+    function headlessGenerateAndSaveCaption(filename) {
+        try {
+            fetch('/api/generate_caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('Headless caption generation response:', data);
+                if (data?.success) {
+                    // Save to file immediately
+                    saveCaptionToFile(filename, data.caption, data.hashtags);
+                    showNotification(`Caption generated and saved for: ${filename}`, 'success');
+                }
+            })
+            .catch(err => console.error('Headless caption error:', err));
+        } catch (e) {
+            console.error('Headless caption exception:', e);
+        }
+    }
+
+    // Try to attach saved caption to the corresponding card if present
+    function attemptAttachSavedCaption(filename) {
+        try {
+            fetch(`/api/load_caption?filename=${encodeURIComponent(filename)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data?.success || !data.caption) return;
+                    const card = document.querySelector(`[data-video-path*="${filename}"]`);
+                    if (!card) return;
+                    let container = card.querySelector('.caption-container');
+                    if (!container) container = createCaptionContainer(card);
+                    if (!container) return;
+                    container.style.display = 'block';
+                    const captionText = container.querySelector('.caption-text');
+                    const captionHashtags = container.querySelector('.caption-hashtags');
+                    const seeMoreBtn = container.querySelector('.see-more-btn');
+                    const captionEyeBtn = container.querySelector('.caption-eye-btn');
+                    const captionEditBtn = container.querySelector('.caption-edit-btn');
+                    if (captionText) captionText.innerHTML = data.caption;
+                    if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${data.hashtags}</span>`;
+                    if (seeMoreBtn) seeMoreBtn.style.display = 'flex';
+                    if (captionEyeBtn) captionEyeBtn.style.display = 'flex';
+                    if (captionEditBtn) captionEditBtn.style.display = 'flex';
+                })
+                .catch(() => {});
+        } catch (_) {}
+    }
+    
+    // Check if video exists in the system
+    function checkVideoExists(videoParam) {
+        console.log('Checking if video exists in system:', videoParam);
+        
+        // Check if video exists in uploads directory
+        fetch(`/api/check_video_exists?filename=${encodeURIComponent(videoParam)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    console.log('Video exists in system:', data.location);
+                    showNotification(`Video found in ${data.location}. Loading...`, 'info');
+                } else {
+                    console.log('Video not found in system');
+                    showNotification('Video not found in system. Please upload it first.', 'warning');
+                    
+                    // Provide helpful suggestions
+                    setTimeout(() => {
+                        showNotification('Tip: Upload the video first, then try generating the caption again.', 'info');
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking video existence:', error);
+                showNotification('Unable to check video status. Please ensure the video is uploaded.', 'warning');
+            });
+    }
+
+    // Search for video in dashboard and generate caption
+    function searchAndGenerateCaption(searchTerm) {
+        console.log('Searching for video in dashboard:', searchTerm);
+        
+        // Try multiple approaches to find the video
+        
+        // 1. Try to find search input and search
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            console.log('Found search input, performing search...');
+            searchInput.value = searchTerm;
+            // Trigger search
+            const searchEvent = new Event('input', { bubbles: true });
+            searchInput.dispatchEvent(searchEvent);
+            
+            // Wait for search results and then generate caption
+            setTimeout(() => {
+                const foundCards = document.querySelectorAll('.video-card');
+                console.log('Search results found:', foundCards.length, 'cards');
+                
+                if (foundCards.length > 0) {
+                    const firstCard = foundCards[0];
+                    const filename = firstCard.getAttribute('data-video-path')?.split('/').pop() ||
+                                   firstCard.querySelector('.video-name')?.textContent || 
+                                   firstCard.querySelector('.video-filename')?.textContent || 
+                                   searchTerm;
+                    
+                    console.log('✅ Found video in search, generating caption for:', filename);
+                    generateCaption(filename);
+                } else {
+                    console.log('❌ Video not found in search results');
+                    // Try alternative approach - look for video in all cards
+                    findVideoInAllCards(searchTerm);
+                }
+            }, 2000);
+        } else {
+            console.log('Search input not found, trying alternative approach...');
+            // Try alternative approach - look for video in all cards
+            findVideoInAllCards(searchTerm);
+        }
+    }
+    
+    // Alternative approach: look for video in all cards on the page
+    function findVideoInAllCards(searchTerm) {
+        console.log('Looking for video in all cards:', searchTerm);
+        
+        // Wait a bit more for any dynamic content to load
+        setTimeout(() => {
+            const allCards = document.querySelectorAll('.video-card');
+            console.log('Total cards found:', allCards.length);
+            
+            let foundCard = null;
+            let foundFilename = null;
+            
+            allCards.forEach((card, index) => {
+                const cardText = card.textContent.toLowerCase();
+                const searchLower = searchTerm.toLowerCase();
+                
+                console.log(`Checking card ${index}:`, cardText.substring(0, 100));
+                
+                if (cardText.includes(searchLower)) {
+                    foundCard = card;
+                    const filenameFromPath = card.getAttribute('data-video-path')?.split('/').pop();
+                    const videoName = card.querySelector('.video-name')?.textContent;
+                    const filename = card.querySelector('.video-filename')?.textContent;
+                    foundFilename = filenameFromPath || filename || videoName || searchTerm;
+                    console.log('✅ Found matching card:', foundFilename);
+                }
+            });
+            
+            if (foundCard && foundFilename) {
+                console.log('✅ Video found in all cards, generating caption for:', foundFilename);
+                generateCaption(foundFilename);
+            } else {
+                console.log('❌ Video not found in any cards');
+                showNotification(`Video "${searchTerm}" not found. Please ensure the video is uploaded and visible in the dashboard.`, 'warning');
+            }
+        }, 1000);
+    }
+
+    // AI trim suggestion removed per request
+    
+    // Show notification
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.parentElement.removeChild(notification);
+                }
+            }, 300);
+        }, 5000);
+    }
+
+    // Quick time setting functions
+    function setQuickTime(type) {
+        const dateInput = document.getElementById('scheduleDate');
+        const timeInput = document.getElementById('scheduleTime');
+        
+        if (!dateInput || !timeInput) return;
+        
+        const now = new Date();
+        let targetDate = new Date();
+        let targetTime = new Date();
+        
+        switch (type) {
+            case '1hour':
+                targetTime.setHours(now.getHours() + 1);
+                break;
+            case '3hours':
+                targetTime.setHours(now.getHours() + 3);
+                break;
+            case 'tomorrow':
+                targetDate.setDate(now.getDate() + 1);
+                targetTime.setHours(9, 0, 0, 0); // 9 AM tomorrow
+                break;
+            case 'nextweek':
+                targetDate.setDate(now.getDate() + 7);
+                targetTime.setHours(10, 0, 0, 0); // 10 AM next week
+                break;
+        }
+        
+        // Update date input
+        dateInput.value = targetDate.toISOString().split('T')[0];
+        
+        // Update time input
+        const hours = targetTime.getHours().toString().padStart(2, '0');
+        const minutes = targetTime.getMinutes().toString().padStart(2, '0');
+        timeInput.value = `${hours}:${minutes}`;
+        
+        // Show confirmation
+        showNotification(`Scheduled for ${type === '1hour' ? '1 hour from now' : type === '3hours' ? '3 hours from now' : type === 'tomorrow' ? 'tomorrow at 9 AM' : 'next week at 10 AM'}`, 'success');
+    }
+    
+    // Dashboard Functions
+    async function loadDashboard() {
+        try {
+            const response = await fetch('/api/trimmed-videos-dashboard');
+            const data = await response.json();
+            
+            if (data.success) {
+                // Check if there are any dates with trimmed videos
+                const hasAnyTrimmedVideos = Object.values(data.dashboard_data).some(dateData => 
+                    dateData.videos.some(video => video.folder && video.folder !== 'root')
+                );
+                
+                if (!hasAnyTrimmedVideos) {
+                    showDashboardEmpty();
+                } else {
+                    showDashboard(data);
+                }
+            } else {
+                console.error('Failed to load dashboard:', data.message);
+                showDashboardEmpty();
+            }
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            showDashboardEmpty();
+        }
+    }
+    
+    function showDashboard(data) {
+        const loading = document.getElementById('dashboard-loading');
+        const content = document.getElementById('dashboard-content');
+        const empty = document.getElementById('dashboard-empty');
+        
+        loading.style.display = 'none';
+        content.style.display = 'block';
+        empty.style.display = 'none';
+        
+                            // Show summary - only count actual trimmed videos
+                    const summary = document.getElementById('dashboard-summary');
+                    const actualTrimmedCount = Object.values(data.dashboard_data).reduce((total, dateData) => {
+                        return total + dateData.videos.filter(video => 
+                            video.folder && video.folder !== 'root'
+                        ).length;
+                    }, 0);
+                    
+                    summary.innerHTML = `
+                        <div class="summary-card">
+                            <h4>Total Trimmed Videos</h4>
+                            <div class="number">${actualTrimmedCount}</div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Active Days</h4>
+                            <div class="number">${Object.keys(data.dashboard_data).length}</div>
+                        </div>
+                    `;
+        
+                            // Show dates - only show dates that have trimmed videos
+                    const dates = document.getElementById('dashboard-dates');
+                    dates.innerHTML = '';
+                    
+                    Object.keys(data.dashboard_data).forEach(dateKey => {
+                        const dateData = data.dashboard_data[dateKey];
+                        // Only show dates that have trimmed videos
+                        const hasTrimmedVideos = dateData.videos.some(video => 
+                            video.folder && video.folder !== 'root'
+                        );
+                        
+                        if (hasTrimmedVideos) {
+                            const dateCard = createDateCard(dateKey, dateData);
+                            dates.appendChild(dateCard);
+                        }
+                    });
+    }
+    
+                    function createDateCard(dateKey, dateData) {
+                    const dateCard = document.createElement('div');
+                    dateCard.className = 'date-card';
+                    dateCard.onclick = () => toggleVideosGrid(dateKey, dateData);
+                    
+                    // Count only trimmed videos for this date
+                    const trimmedCount = dateData.videos.filter(video => 
+                        video.folder && video.folder !== 'root'
+                    ).length;
+                    
+                    dateCard.innerHTML = `
+                        <div class="date-header">
+                            <div class="date-info">
+                                <h4>${dateData.date}</h4>
+                                <p class="day-name">${dateData.day_name}</p>
+                            </div>
+                            <div class="date-count">${dateKey === getTodayKey() ? 'Today' : trimmedCount + ' clips'}</div>
+                        </div>
+                        <div id="videos-grid-${dateKey}" class="videos-grid" style="display: none;"></div>
+                    `;
+                    
+                    return dateCard;
+                }
+    
+    function getTodayKey() {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    }
+    
+                    function toggleVideosGrid(dateKey, dateData) {
+                    const videosGrid = document.getElementById(`videos-grid-${dateKey}`);
+                    const isVisible = videosGrid.style.display !== 'none';
+                    
+                    if (isVisible) {
+                        videosGrid.style.display = 'none';
+                    } else {
+                        videosGrid.style.display = 'grid';
+                        if (videosGrid.children.length === 0) {
+                            // Only show trimmed videos from this specific date
+                            const trimmedVideos = dateData.videos.filter(video => 
+                                video.folder && video.folder !== 'root' && 
+                                video.folder.startsWith(dateKey.replace(/-/g, ''))
+                            );
+                            
+                            if (trimmedVideos.length === 0) {
+                                videosGrid.innerHTML = `
+                                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--dark-gray);">
+                                        <i class="fas fa-info-circle" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 1rem; display: block;"></i>
+                                        <p>No trimmed videos found for this date</p>
+                                        <small>Use the "Clip Video" button to create new clips</small>
+                                    </div>
+                                `;
+                            } else {
+                                // Populate videos grid with only trimmed videos from this date
+                                trimmedVideos.forEach(video => {
+                                    const videoCard = createVideoCard(video);
+                                    videosGrid.appendChild(videoCard);
+                                    // Attach saved caption for this card
+                                    try { attachSavedCaptionToCard(videoCard); } catch (_) {}
+                                });
+                            }
+                        }
+                    }
+                }
+    
+                    function createVideoCard(video) {
+                    const videoCard = document.createElement('div');
+                    videoCard.className = 'video-card';
+                    videoCard.setAttribute('data-video-path', video.path);
+                    videoCard.setAttribute('data-video-type', 'trimmed');
+                    
+                    videoCard.innerHTML = `
+                        <div class="video-header">
+                            <h3>${video.filename.length > 30 ? video.filename.substring(0, 30) + '...' : video.filename}</h3>
+                        </div>
+                        
+                        <video controls class="video-el">
+                            <source src="${video.path}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <!-- time bar removed per request -->
+                        
+                        <!-- Social Media Logos -->
+                        <div class="social-logos">
+                            <div class="timer-btn" onclick="openSchedulingModal('${video.filename}', 'trimmed')" title="Schedule Post">
+                                ⏰
+                            </div>
+                            <div class="social-buttons-group">
+                                <div class="social-btn youtube" onclick="postToSocial('youtube', '${video.filename}')" title="Post to YouTube">
+                                    <i class="fab fa-youtube"></i>
+                                </div>
+                                <div class="social-btn tiktok" onclick="postToSocial('tiktok', '${video.filename}')" title="Post to TikTok">
+                                    <i class="fab fa-tiktok"></i>
+                                </div>
+                                <div class="social-btn linkedin" onclick="postToSocial('linkedin', '${video.filename}')" title="Post to LinkedIn">
+                                    <i class="fas fa-linkedin"></i>
+                                </div>
+                                <div class="social-btn facebook" onclick="postToSocial('facebook', '${video.filename}')" title="Post to Facebook">
+                                    <i class="fab fa-facebook"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="caption-btn" type="button" onclick="generateCaption('${video.filename}')">
+                                <i class="fas fa-comment-dots"></i> Generate Caption
+                            </button>
+                            <button class="delete-btn" type="button" title="Delete Video" onclick="deleteVideo('${video.filename}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                                    <line x1="10" y1="11" x2="10" y2="17"/>
+                                    <line x1="14" y1="11" x2="14" y2="17"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Video Info -->
+                        <!-- video info time removed per request -->
+                        
+                        <!-- Improved Caption Display -->
+                        <div class="caption-container" style="display: none;">
+                            <div class="caption-content">
+                                <div class="caption-text"></div>
+                                <div class="caption-hashtags"></div>
+                            </div>
+                            <div class="caption-actions">
+                                <button class="see-more-btn">
+                                    <i class="fas fa-chevron-down"></i> See more
+                                </button>
+                                <button class="caption-eye-btn" title="View Full Caption">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="caption-edit-btn" title="Edit Caption">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Initialize video time display
+                    const videoElement = videoCard.querySelector('.video-el');
+                    if (videoElement) {
+                        videoElement.addEventListener('loadedmetadata', function() {
+                            const duration = videoElement.duration;
+                            if (duration && !isNaN(duration)) {
+                                const mins = Math.floor(duration / 60);
+                                const secs = Math.floor(duration % 60).toString().padStart(2, '0');
+                                const durStr = mins + ':' + secs;
+                                const timeBar = videoElement.parentElement.querySelector('.video-time-bar');
+                                if (timeBar) {
+                                    timeBar.querySelector('.total-time').textContent = durStr;
+                                }
+                            }
+                        });
+                        
+                        videoElement.addEventListener('timeupdate', function() {
+                            const currentTime = videoElement.currentTime;
+                            const mins = Math.floor(currentTime / 60);
+                            const secs = Math.floor(currentTime % 60).toString().padStart(2, '0');
+                            const curStr = mins + ':' + secs;
+                            const timeBar = videoElement.parentElement.querySelector('.video-time-bar');
+                            if (timeBar) {
+                                timeBar.querySelector('.current-time').textContent = curStr;
+                            }
+                        });
+                    }
+                    
+                    return videoCard;
+                }
+    
+    function showDashboardEmpty() {
+        const loading = document.getElementById('dashboard-loading');
+        const content = document.getElementById('dashboard-content');
+        const empty = document.getElementById('dashboard-empty');
+        
+        loading.style.display = 'none';
+        content.style.display = 'none';
+        empty.style.display = 'block';
+    }
+    
+function goToCaptionPage(videoPath, filename) {
+    // Navigate to caption generation page
+    window.location.href = `/edit?video=${encodeURIComponent(videoPath)}&action=caption`;
+}
+    
+    function schedulePost(videoPath, filename) {
+        // Navigate to scheduling page
+        window.location.href = `/edit?video=${encodeURIComponent(videoPath)}&action=schedule`;
+    }
+    
+    function postNow(videoPath, filename) {
+        // Navigate to posting page
+        window.location.href = `/edit?video=${encodeURIComponent(videoPath)}&action=post`;
+    }
+</script>
+</body>
+</html>
