@@ -2771,13 +2771,30 @@ def youtube_upload():
         if not video_path:
             return jsonify({'success': False, 'error': 'Video path is required'}), 400
         
-        # Resolve full path
+        # Resolve full path - handle different path formats
         if video_path.startswith('trimmed/'):
             full_path = os.path.join('static/trimmed', video_path[9:])
         elif video_path.startswith('videos/'):
             full_path = os.path.join('static/videos', video_path[7:])
-        else:
+        elif video_path.startswith('static/'):
             full_path = video_path
+        elif os.path.exists(video_path):
+            full_path = video_path
+        else:
+            # Try common locations
+            possible_paths = [
+                os.path.join('static/trimmed', video_path),
+                os.path.join('static/videos', video_path),
+                os.path.join('static', video_path),
+                video_path
+            ]
+            
+            for path in possible_paths:
+                if os.path.exists(path):
+                    full_path = path
+                    break
+            else:
+                full_path = video_path
         
         logging.info(f"Resolved video path: {full_path}")
         
@@ -2874,6 +2891,39 @@ def save_upload_record(video_path: str, upload_result: dict):
         
     except Exception as e:
         logging.error(f"Error saving upload record: {e}")
+
+@app.route('/api/load-credentials', methods=['GET'])
+def load_credentials():
+    """Load credentials for a specific platform"""
+    try:
+        platform = request.args.get('platform', '').lower()
+        
+        if platform == 'youtube':
+            # Check if client secrets file exists
+            client_secrets_exists = os.path.exists('client_secrets.json')
+            
+            if client_secrets_exists:
+                return jsonify({
+                    'success': True,
+                    'message': 'YouTube credentials found',
+                    'configured': True
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'YouTube client_secrets.json not found',
+                    'configured': False
+                })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Platform {platform} not supported',
+                'configured': False
+            })
+            
+    except Exception as e:
+        logging.error(f"Error loading credentials: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Main execution
 if __name__ == '__main__':
