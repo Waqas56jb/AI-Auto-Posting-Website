@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Generation Test - Multiple Formats</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .format-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .format-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .format-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .format-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .format-btn.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .custom-prompt-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .custom-prompt-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .custom-prompt-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .custom-prompt-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .result-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .story-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .story-content:empty {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ffcdd2;
+            margin-top: 15px;
+        }
+
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #c8e6c9;
+            margin-top: 15px;
+        }
+
+        .format-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .format-info h4 {
+            color: #1976D2;
+            margin-bottom: 8px;
+        }
+
+        .format-info p {
+            color: #424242;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .format-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 Story Generation Studio</h1>
+            <p>Create compelling stories with multiple format options and AI-powered generation</p>
+        </div>
+
+        <div class="content">
+            <!-- Story Format Selection -->
+            <div class="format-section">
+                <h2 class="section-title">📝 Choose Your Story Format</h2>
+                <div class="format-buttons">
+                    <button class="format-btn active" onclick="selectFormat('lucy')">
+                        🎬 Lucy Voiceover Script
+                    </button>
+                    <button class="format-btn" onclick="selectFormat('narrative')">
+                        📖 Narrative Story
+                    </button>
+                    <button class="format-btn" onclick="selectFormat('business')">
+                        💼 Business Case Study
+                    </button>
+            </div>
+
+                <!-- Format Information -->
+                <div id="format-info" class="format-info">
+                    <h4>🎬 Lucy Voiceover Script Format</h4>
+                    <p>Professional 4-part voiceover script with Lucy's authentic British tone. Perfect for video content, social media, and engaging storytelling with structured segments, hooks, and call-to-action.</p>
+            </div>
+        </div>
+        
+            <!-- Custom Prompt Section -->
+            <div class="custom-prompt-section">
+                <h3>🎯 Custom Prompt Input</h3>
+                <p style="margin-bottom: 15px; color: #666;">Want to use your own prompt? Enter it below, or leave empty to use the default format prompts.</p>
+            <textarea 
+                    id="customPrompt" 
+                    class="custom-prompt-textarea" 
+                    placeholder="Enter your custom prompt here... (optional)"
+            ></textarea>
+                <button class="btn btn-info" onclick="toggleCustomPrompt()">
+                    📝 Use Custom Prompt
+            </button>
+        </div>
+
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2 class="section-title">✍️ Story Input</h2>
+                <div class="input-group">
+                    <label for="storyInput">Enter your story content or prompt:</label>
+                    <textarea 
+                        id="storyInput" 
+                        placeholder="Enter your story content, transcript, or prompt here..."
+                        rows="6"
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="generateStory()">
+                    🚀 Generate Story
+                </button>
+                <button class="btn btn-success" onclick="copyStory()" id="copyBtn" disabled>
+                    📋 Copy Story
+                </button>
+                <button class="btn btn-warning" onclick="editStory()" id="editBtn" disabled>
+                    ✏️ Edit Story
+                </button>
+                <button class="btn btn-info" onclick="clearAll()">
+                    🗑️ Clear All
+                </button>
+            </div>
+
+            <!-- Result Section -->
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h3>📖 Generated Story</h3>
+                <div id="storyContent" class="story-content"></div>
+                <div id="loading" class="loading" style="display: none;">Generating your story...</div>
+                <div id="error" class="error" style="display: none;"></div>
+                <div id="success" class="success" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFormat = 'lucy';
+        let generatedStory = '';
+        let useCustomPrompt = false;
+
+        // Format selection
+        function selectFormat(format) {
+            currentFormat = format;
+            
+            // Update button states
+            document.querySelectorAll('.format-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update format info
+            updateFormatInfo(format);
+        }
+
+        function updateFormatInfo(format) {
+            const formatInfo = document.getElementById('format-info');
+            const info = {
+                lucy: {
+                    title: '🎬 Lucy Voiceover Script Format',
+                    description: 'Professional 4-part voiceover script with Lucy\'s authentic British tone. Perfect for video content, social media, and engaging storytelling with structured segments, hooks, and call-to-action.'
+                },
+                narrative: {
+                    title: '📖 Narrative Story Format',
+                    description: 'Traditional narrative storytelling with character development, plot structure, and emotional arcs. Ideal for creative writing, fiction, and immersive storytelling experiences.'
+                },
+                business: {
+                    title: '💼 Business Case Study Format',
+                    description: 'Professional business case study with problem analysis, solution implementation, and measurable results. Perfect for business content, marketing materials, and professional presentations.'
+                }
+            };
+
+            formatInfo.innerHTML = `
+                <h4>${info[format].title}</h4>
+                <p>${info[format].description}</p>
+            `;
+        }
+
+        // Custom prompt toggle
+        function toggleCustomPrompt() {
+            useCustomPrompt = !useCustomPrompt;
+            const btn = event.target;
+            const textarea = document.getElementById('customPrompt');
+            
+            if (useCustomPrompt) {
+                btn.textContent = '📝 Use Default Prompts';
+                btn.classList.remove('btn-info');
+                btn.classList.add('btn-warning');
+                textarea.style.borderColor = '#667eea';
+                textarea.style.backgroundColor = '#f0f4ff';
+            } else {
+                btn.textContent = '📝 Use Custom Prompt';
+                btn.classList.remove('btn-warning');
+                btn.classList.add('btn-info');
+                textarea.style.borderColor = '#ddd';
+                textarea.style.backgroundColor = 'white';
+            }
+        }
+
+        // Generate story
+        async function generateStory() {
+            const storyInput = document.getElementById('storyInput').value.trim();
+            const customPrompt = document.getElementById('customPrompt').value.trim();
+            
+            if (!storyInput) {
+                showError('Please enter some content to generate a story.');
+                return;
+            }
+
+            // Show loading
+            showLoading();
+            
+            try {
+                const requestData = {
+                    text: storyInput,
+                    format: currentFormat,
+                    useCustomPrompt: useCustomPrompt,
+                    customPrompt: customPrompt
+                };
+
+                const response = await fetch('/api/generate_story', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    generatedStory = data.raw_response || data.story.content || 'Story generated successfully!';
+                    displayStory(generatedStory);
+                    enableActionButtons();
+                    showSuccess('Story generated successfully!');
+                } else {
+                    showError(data.error || 'Failed to generate story');
+                }
+            } catch (error) {
+                showError('Error generating story: ' + error.message);
+            }
+        }
+
+        // Display story
+        function displayStory(story) {
+            const storyContent = document.getElementById('storyContent');
+            const resultSection = document.getElementById('resultSection');
+            
+            storyContent.textContent = story;
+            resultSection.style.display = 'block';
+            hideLoading();
+        }
+
+        // Copy story
+        async function copyStory() {
+            if (!generatedStory) {
+                showError('No story to copy');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(generatedStory);
+                showSuccess('Story copied to clipboard!');
+                
+                // Visual feedback
+                const copyBtn = document.getElementById('copyBtn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            } catch (error) {
+                showError('Failed to copy story: ' + error.message);
+            }
+        }
+
+        // Edit story
+        function editStory() {
+            if (!generatedStory) {
+                showError('No story to edit');
+                return;
+            }
+
+            const storyContent = document.getElementById('storyContent');
+            const currentContent = storyContent.textContent;
+            
+            // Create editable textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = currentContent;
+            textarea.className = 'custom-prompt-textarea';
+            textarea.style.height = '300px';
+            
+            // Replace content with textarea
+            storyContent.innerHTML = '';
+            storyContent.appendChild(textarea);
+            
+            // Add save button
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn btn-success';
+            saveBtn.textContent = '💾 Save Changes';
+            saveBtn.onclick = () => saveStoryChanges(textarea);
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-warning';
+            cancelBtn.textContent = '❌ Cancel';
+            cancelBtn.onclick = () => cancelEdit();
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.marginTop = '15px';
+            buttonContainer.appendChild(saveBtn);
+            buttonContainer.appendChild(cancelBtn);
+            
+            storyContent.appendChild(buttonContainer);
+            
+            // Focus on textarea
+            textarea.focus();
+        }
+
+        function saveStoryChanges(textarea) {
+            generatedStory = textarea.value;
+            displayStory(generatedStory);
+            showSuccess('Story updated successfully!');
+        }
+
+        function cancelEdit() {
+            displayStory(generatedStory);
+        }
+
+        // Clear all
+        function clearAll() {
+            document.getElementById('storyInput').value = '';
+            document.getElementById('customPrompt').value = '';
+            document.getElementById('storyContent').textContent = '';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+            generatedStory = '';
+            disableActionButtons();
+        }
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('storyContent').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('storyContent').style.display = 'block';
+        }
+
+        function showError(message) {
+            hideLoading();
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('success').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            
+            // Auto-hide success message
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function enableActionButtons() {
+            document.getElementById('copyBtn').disabled = false;
+            document.getElementById('editBtn').disabled = false;
+        }
+
+        function disableActionButtons() {
+            document.getElementById('copyBtn').disabled = true;
+            document.getElementById('editBtn').disabled = true;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFormatInfo('lucy');
+        });
+    </script>
+</body>
+</html>

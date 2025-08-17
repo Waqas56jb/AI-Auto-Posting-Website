@@ -1164,6 +1164,97 @@
                 gap: 0.5rem;
             }
         }
+
+        /* Story Generation Format Styles */
+        .story-format-section {
+            margin-bottom: 2rem;
+        }
+
+        .format-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .format-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .format-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .format-btn.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .format-info {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid #2196F3;
+        }
+
+        .format-info h4 {
+            color: #1976D2;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .format-info p {
+            color: #424242;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .custom-prompt-section {
+            margin-bottom: 2rem;
+        }
+
+        .custom-prompt-section .input-field {
+            margin-bottom: 1rem;
+        }
+
+        .custom-prompt-section .secondary-action {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .custom-prompt-section .secondary-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .custom-prompt-section .secondary-action.active {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
     </style>
 </head>
 <body>
@@ -1252,6 +1343,42 @@
                     <label for="story-text" class="input-label">Your Story Content</label>
                     <textarea id="story-text" class="input-field" placeholder="Type or paste your story here..." autocomplete="off" autocorrect="off" spellcheck="true"></textarea>
                 </div>
+
+                <!-- Story Generation Format Options -->
+                <div class="story-format-section">
+                    <label class="input-label">🎭 Story Generation Format</label>
+                    <div class="format-buttons">
+                        <button class="format-btn active" onclick="selectStoryFormat('lucy')">
+                            🎬 Lucy Voiceover Script
+                        </button>
+                        <button class="format-btn" onclick="selectStoryFormat('narrative')">
+                            📖 Narrative Story
+                        </button>
+                        <button class="format-btn" onclick="selectStoryFormat('business')">
+                            💼 Business Case Study
+                        </button>
+                    </div>
+                    
+                    <!-- Format Information -->
+                    <div id="format-info" class="format-info">
+                        <h4>🎬 Lucy Voiceover Script Format</h4>
+                        <p>Professional 4-part voiceover script with Lucy's authentic British tone. Perfect for video content, social media, and engaging storytelling with structured segments, hooks, and call-to-action.</p>
+                    </div>
+                </div>
+
+                <!-- Custom Prompt Section -->
+                <div class="custom-prompt-section">
+                    <label class="input-label">🎯 Custom Prompt Instructions (Optional)</label>
+                    <textarea 
+                        id="customPrompt" 
+                        class="input-field" 
+                        placeholder="Enter your custom prompt instructions here... (leave empty to use default format prompts)"
+                        rows="3"
+                    ></textarea>
+                    <button class="secondary-action" onclick="toggleCustomPrompt()">
+                        📝 Use Custom Prompt
+                    </button>
+                </div>
                 <div class="input-group">
                     <label class="input-label">Or Upload Media</label>
                     <div class="file-upload" id="file-upload-area">
@@ -1273,6 +1400,12 @@
                     </button>
                     <button class="secondary-action" id="trimming-button">
                         <i class="fas fa-cut"></i> Intelligent Trimming
+                    </button>
+                    <button class="secondary-action" id="copy-story-button" style="display: none;">
+                        <i class="fas fa-copy"></i> Copy Story
+                    </button>
+                    <button class="secondary-action" id="edit-story-button" style="display: none;">
+                        <i class="fas fa-edit"></i> Edit Story
                     </button>
                 </div>
                 
@@ -1816,7 +1949,7 @@
                         });
                         const data = await resp.json();
                         if (data.story) {
-                            resultText.textContent = data.story;
+                            resultText.textContent = data.story.content || data.story;
                             resultMessage.textContent = 'Story generated successfully!';
                             resultMessage.style.display = 'block';
                         } else {
@@ -1862,7 +1995,7 @@
                         });
                         const data = await response.json();
                         if (data.story) {
-                            if (resultText) resultText.textContent = data.story;
+                            if (resultText) resultText.textContent = data.story.content || data.story;
                         } else if (data.error) {
                             if (errorMessage) {
                                 errorMessage.textContent = data.error;
@@ -1879,6 +2012,222 @@
                     }
                 });
             }
+
+            // Story Generation Format Functions
+            let currentStoryFormat = 'lucy';
+            let useCustomPrompt = false;
+            let generatedStory = '';
+
+            // Format selection
+            function selectStoryFormat(format) {
+                currentStoryFormat = format;
+                
+                // Update button states
+                document.querySelectorAll('.format-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                // Update format info
+                updateFormatInfo(format);
+            }
+
+            function updateFormatInfo(format) {
+                const formatInfo = document.getElementById('format-info');
+                const info = {
+                    lucy: {
+                        title: '🎬 Lucy Voiceover Script Format',
+                        description: 'Professional 4-part voiceover script with Lucy\'s authentic British tone. Perfect for video content, social media, and engaging storytelling with structured segments, hooks, and call-to-action.'
+                    },
+                    narrative: {
+                        title: '📖 Narrative Story Format',
+                        description: 'Traditional narrative storytelling with character development, plot structure, and emotional arcs. Ideal for creative writing, fiction, and immersive storytelling experiences.'
+                    },
+                    business: {
+                        title: '💼 Business Case Study Format',
+                        description: 'Professional business case study with problem analysis, solution implementation, and measurable results. Perfect for business content, marketing materials, and professional presentations.'
+                    }
+                };
+
+                formatInfo.innerHTML = `
+                    <h4>${info[format].title}</h4>
+                    <p>${info[format].description}</p>
+                `;
+            }
+
+            // Custom prompt toggle
+            function toggleCustomPrompt() {
+                useCustomPrompt = !useCustomPrompt;
+                const btn = event.target;
+                const textarea = document.getElementById('customPrompt');
+                
+                if (useCustomPrompt) {
+                    btn.textContent = '📝 Use Default Prompts';
+                    btn.classList.add('active');
+                    textarea.style.borderColor = '#667eea';
+                    textarea.style.backgroundColor = '#f0f4ff';
+                } else {
+                    btn.textContent = '📝 Use Custom Prompt';
+                    btn.classList.remove('active');
+                    textarea.style.borderColor = '';
+                    textarea.style.backgroundColor = '';
+                }
+            }
+
+            // Enhanced story generation
+            if (generateBtn) {
+                generateBtn.addEventListener('click', async function() {
+                    errorMessage.style.display = 'none';
+                    resultMessage.style.display = 'none';
+                    resultSection.style.display = 'block';
+                    
+                    let text = storyTextArea.value.trim();
+                    if (!text) {
+                        resultText.textContent = '';
+                        errorMessage.textContent = 'Please enter or transcribe story text.';
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+
+                    showLoader('Generating story...');
+                    
+                    // Prepare request data with format and custom prompt
+                    let payload = {
+                        text: text,
+                        format: currentStoryFormat,
+                        useCustomPrompt: useCustomPrompt,
+                        customPrompt: document.getElementById('customPrompt').value.trim()
+                    };
+
+                    try {
+                        const resp = await fetch('/api/generate_story', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        const data = await resp.json();
+                        
+                        if (data.success) {
+                            generatedStory = data.raw_response || data.story.content || 'Story generated successfully!';
+                            resultText.textContent = generatedStory;
+                            resultMessage.textContent = 'Story generated successfully!';
+                            resultMessage.style.display = 'block';
+                            
+                            // Show copy and edit buttons
+                            document.getElementById('copy-story-button').style.display = 'inline-flex';
+                            document.getElementById('edit-story-button').style.display = 'inline-flex';
+                        } else {
+                            throw new Error(data.error || 'No story returned.');
+                        }
+                    } catch (err) {
+                        resultText.textContent = '';
+                        errorMessage.textContent = 'Error: ' + err.message;
+                        errorMessage.style.display = 'block';
+                    }
+                    
+                    hideLoader();
+                });
+            }
+
+            // Copy story functionality
+            const copyStoryBtn = document.getElementById('copy-story-button');
+            if (copyStoryBtn) {
+                copyStoryBtn.addEventListener('click', async function() {
+                    if (!generatedStory) {
+                        alert('No story to copy');
+                        return;
+                    }
+
+                    try {
+                        await navigator.clipboard.writeText(generatedStory);
+                        
+                        // Visual feedback
+                        const originalText = copyStoryBtn.innerHTML;
+                        copyStoryBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                        setTimeout(() => {
+                            copyStoryBtn.innerHTML = originalText;
+                        }, 2000);
+                        
+                        resultMessage.textContent = 'Story copied to clipboard!';
+                        resultMessage.style.display = 'block';
+                    } catch (error) {
+                        errorMessage.textContent = 'Failed to copy story: ' + error.message;
+                        errorMessage.style.display = 'block';
+                    }
+                });
+            }
+
+            // Edit story functionality
+            const editStoryBtn = document.getElementById('edit-story-button');
+            if (editStoryBtn) {
+                editStoryBtn.addEventListener('click', function() {
+                    if (!generatedStory) {
+                        alert('No story to edit');
+                        return;
+                    }
+
+                    const resultText = document.getElementById('result-text');
+                    const currentContent = resultText.textContent;
+                    
+                    // Create editable textarea
+                    const textarea = document.createElement('textarea');
+                    textarea.value = currentContent;
+                    textarea.style.width = '100%';
+                    textarea.style.minHeight = '300px';
+                    textarea.style.padding = '1rem';
+                    textarea.style.border = '2px solid #667eea';
+                    textarea.style.borderRadius = '8px';
+                    textarea.style.fontFamily = 'inherit';
+                    textarea.style.fontSize = '1rem';
+                    textarea.style.resize = 'vertical';
+                    
+                    // Replace content with textarea
+                    resultText.innerHTML = '';
+                    resultText.appendChild(textarea);
+                    
+                    // Add save and cancel buttons
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.style.marginTop = '1rem';
+                    buttonContainer.style.display = 'flex';
+                    buttonContainer.style.gap = '1rem';
+                    
+                    const saveBtn = document.createElement('button');
+                    saveBtn.className = 'secondary-action';
+                    saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+                    saveBtn.onclick = () => saveStoryChanges(textarea);
+                    
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'secondary-action';
+                    cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                    cancelBtn.onclick = () => cancelEdit();
+                    
+                    buttonContainer.appendChild(saveBtn);
+                    buttonContainer.appendChild(cancelBtn);
+                    resultText.appendChild(buttonContainer);
+                    
+                    // Focus on textarea
+                    textarea.focus();
+                });
+            }
+
+            function saveStoryChanges(textarea) {
+                generatedStory = textarea.value;
+                const resultText = document.getElementById('result-text');
+                resultText.textContent = generatedStory;
+                resultMessage.textContent = 'Story updated successfully!';
+                resultMessage.style.display = 'block';
+            }
+
+            function cancelEdit() {
+                const resultText = document.getElementById('result-text');
+                resultText.textContent = generatedStory;
+            }
+
+            // Initialize format info
+            document.addEventListener('DOMContentLoaded', function() {
+                updateFormatInfo('lucy');
+            });
         });
         
 

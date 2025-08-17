@@ -1621,7 +1621,9 @@
       const generatedStory = document.getElementById('generatedStory');
       const storyText = document.getElementById('storyText');
       
-      storyText.innerHTML = story.replace(/\n/g, '<br>');
+      // Handle both string and object responses
+      const storyContent = typeof story === 'string' ? story : (story.content || JSON.stringify(story));
+      storyText.innerHTML = storyContent.replace(/\n/g, '<br>');
       generatedStory.style.display = 'block';
       
       // Scroll to generated story

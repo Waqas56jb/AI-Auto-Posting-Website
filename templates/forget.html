@@ -234,7 +234,7 @@
         <div id="email-form">
             <div class="input-group">
                 <span class="input-icon"><i class="fa fa-envelope"></i></span>
-                <input type="email" id="email" placeholder="Enter your email" required>
+                <input type="email" id="email" placeholder="Enter your email" required oninput="clearMessages()">
             </div>
             <button onclick="verifyEmail()" class="forgot-button">Verify Email</button>
         </div>
@@ -263,11 +263,39 @@
     <script>
         let verifiedEmail = '';
 
+        function clearMessages() {
+            // Clear error and success messages when user starts typing
+            const errorElement = document.getElementById('error-message');
+            const successElement = document.getElementById('success-message');
+            const emailInput = document.getElementById('email');
+            
+            errorElement.style.display = 'none';
+            successElement.style.display = 'none';
+            emailInput.style.borderColor = '';
+        }
+
         function showMessage(message, isSuccess, elementId) {
+            // Clear both message elements first
+            const errorElement = document.getElementById('error-message');
+            const successElement = document.getElementById('success-message');
+            
+            errorElement.style.display = 'none';
+            successElement.style.display = 'none';
+            
+            // Show the appropriate message
             const messageElement = document.getElementById(elementId);
             messageElement.textContent = message;
             messageElement.style.display = 'block';
-            messageElement.className = `error-message${isSuccess ? ' success-message' : ''}`;
+            
+            if (isSuccess) {
+                messageElement.className = 'success-message';
+                // Clear error styling from input field
+                document.getElementById('email').style.borderColor = '';
+            } else {
+                messageElement.className = 'error-message';
+                // Add error styling to input field
+                document.getElementById('email').style.borderColor = '#ef4444';
+            }
         }
 
         async function verifyEmail() {
@@ -277,8 +305,12 @@
                 return;
             }
 
+            // Clear any previous error messages
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+
             try {
-                const response = await fetch('/api/verify-email', {
+                const response = await fetch('/api/forgot', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
@@ -295,7 +327,7 @@
                     showMessage(data.message, false, 'error-message');
                 }
             } catch (error) {
-                console.error('Navigation error in verifyEmail:', error);
+                console.error('Error in verifyEmail:', error);
                 showMessage('Error: Unable to verify email. Please try again.', false, 'error-message');
             }
         }

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper AI Test - AI Auto-Posting</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-section {
+            border: 2px dashed #ddd;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+        .upload-section.dragover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .file-input {
+            display: none;
+        }
+        .upload-btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .upload-btn:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .file-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Whisper AI Transcript Generation Test</h1>
+        <p>Upload an audio or video file to test the Whisper AI transcription service.</p>
+        
+        <div class="upload-section" id="uploadSection">
+            <h3>📁 Upload Audio/Video File</h3>
+            <p>Drag and drop files here or click to select</p>
+            <input type="file" id="fileInput" class="file-input" accept="audio/*,video/*">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Choose File
+            </button>
+            <p><small>Supported formats: MP3, WAV, MP4, MOV, AVI, MKV, WEBM, FLAC, AAC, OGG</small></p>
+        </div>
+
+        <div id="fileInfo" class="file-info" style="display: none;">
+            <strong>Selected File:</strong> <span id="fileName"></span><br>
+            <strong>Size:</strong> <span id="fileSize"></span><br>
+            <strong>Type:</strong> <span id="fileType"></span>
+            <div id="autoStartMessage" style="margin-top: 10px; color: #007bff; font-weight: bold;">
+                🚀 Transcription starting automatically...
+            </div>
+        </div>
+
+        <div id="progress" class="progress" style="display: none;">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div id="result"></div>
+
+        <div style="margin-top: 30px;">
+            <h3>🧪 Test Results</h3>
+            <p>This page tests the following functionality:</p>
+            <ul>
+                <li><strong>File Upload:</strong> Drag & drop or click to select audio/video files</li>
+                <li><strong>Whisper AI:</strong> Automatic transcription using OpenAI's Whisper model</li>
+                <li><strong>Video Support:</strong> Extracts audio from video files before transcription</li>
+                <li><strong>Real-time Progress:</strong> Shows transcription progress</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileType = document.getElementById('fileType');
+        const progress = document.getElementById('progress');
+        const progressBar = document.getElementById('progressBar');
+        const result = document.getElementById('result');
+
+        // Drag and drop functionality
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileType.textContent = file.type || 'Unknown';
+            fileInfo.style.display = 'block';
+
+            // Show auto-start message
+            const autoStartMessage = document.getElementById('autoStartMessage');
+            autoStartMessage.style.display = 'block';
+            autoStartMessage.innerHTML = '🚀 Transcription starting automatically in 0.5 seconds...';
+
+            // Countdown and auto-start
+            let countdown = 0.5;
+            const countdownInterval = setInterval(() => {
+                countdown -= 0.1;
+                if (countdown > 0) {
+                    autoStartMessage.innerHTML = `🚀 Transcription starting automatically in ${countdown.toFixed(1)} seconds...`;
+                } else {
+                    clearInterval(countdownInterval);
+                    autoStartMessage.innerHTML = '🎤 Starting transcription now...';
+                    transcribeFile(file);
+                }
+            }, 100);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getMethodDisplayName(method) {
+            const methodNames = {
+                'whisper_ai': '🎤 Whisper AI (Offline)',
+                'google_speech': '🌐 Google Speech Recognition (Online)',
+                'simple_analysis': '📊 Simple File Analysis (Fallback)',
+                'sample_placeholder': '📝 Sample Placeholder',
+                'error': '❌ Error'
+            };
+            return methodNames[method] || method;
+        }
+
+        function transcribeFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show progress
+            progress.style.display = 'block';
+            result.innerHTML = '<div class="loading">🔄 Processing file with Whisper AI...</div>';
+
+            // Simulate progress (since we can't track actual Whisper progress)
+            let progressValue = 0;
+            const progressInterval = setInterval(() => {
+                progressValue += Math.random() * 15;
+                if (progressValue > 90) progressValue = 90;
+                progressBar.style.width = progressValue + '%';
+            }, 500);
+
+            fetch('/api/transcribe', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    progress.style.display = 'none';
+                    if (data.success) {
+                        const methodInfo = data.method ? `<br><strong>Method:</strong> ${getMethodDisplayName(data.method)}` : '';
+                        result.innerHTML = `
+                            <div class="success">
+                                <h4>✅ Transcription Successful!</h4>
+                                <strong>Transcript:</strong><br>
+                                ${data.transcript}<br><br>
+                                <strong>Word Count:</strong> ${data.word_count}<br>
+                                <strong>Duration:</strong> ${data.duration}<br>
+                                <strong>Language:</strong> ${data.language || 'Unknown'}${methodInfo}
+                            </div>
+                        `;
+                    } else {
+                        result.innerHTML = `
+                            <div class="error">
+                                <h4>❌ Transcription Failed</h4>
+                                <strong>Error:</strong> ${data.error}
+                            </div>
+                        `;
+                    }
+                }, 1000);
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                progress.style.display = 'none';
+                result.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Request Failed</h4>
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>

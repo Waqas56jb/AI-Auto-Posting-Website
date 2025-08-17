@@ -121,7 +121,7 @@ ipython_config.py
 #   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
 #pixi.lock
 #   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
+#   in the .pixi directory. It is recommended not to include this directory in version control.
 .pixi
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
@@ -257,9 +257,12 @@ chromedriver.exe
 # Environment template (not the actual .env)
 env_template.txt
 
-# Deployment scripts (optional - you can include these if you want)
-# deploy.sh
-# deploy.bat
+# Old deployment files (removed)
+# Procfile
+# railway.json
+# runtime.txt
+# server_production.py
+# DEPLOYMENT_GUIDE.md
 
 # Log files
 *.log
@@ -273,3 +276,7 @@ app.log
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Fly.io specific
+.fly/
+fly.toml.bak

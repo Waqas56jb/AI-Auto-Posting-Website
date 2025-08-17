@@ -2,7 +2,7 @@ Flask>=2.2
 Flask-Session>=0.4
 flask-cors
 python-dotenv>=1.0
-mysql-connector-python>=8.0
+psycopg2-binary>=2.9.0
 werkzeug>=2.2
 
 # AI and ML dependencies
