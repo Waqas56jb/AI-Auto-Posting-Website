@@ -1274,6 +1274,13 @@ body {
         
         .social-btn.youtube {
             background: #ff0000;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .social-btn.youtube.uploaded {
+            background: #10b981 !important;
+            color: white !important;
         }
         
         .social-btn.tiktok {
@@ -1291,6 +1298,32 @@ body {
         .social-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .youtube-link {
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        .youtube-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .youtube-link-btn:hover {
+            background: #059669;
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
         }
         
 
@@ -2907,6 +2940,135 @@ body {
             alert('Error checking credentials. Please try again.');
         });
     }
+    
+    // Upload video to YouTube
+    async function uploadToYouTube(videoPath, filename) {
+        try {
+            console.log(`Uploading to YouTube: ${filename}`);
+            
+            // Get the YouTube button for this video
+            const youtubeBtn = document.querySelector(`#youtube-btn-${filename.replace(/[^a-zA-Z0-9]/g, '_')}`);
+            if (!youtubeBtn) {
+                showNotification('YouTube button not found', 'error');
+                return;
+            }
+            
+            // Show loading state
+            youtubeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            youtubeBtn.style.pointerEvents = 'none';
+            
+            // Check if we have a caption for this video
+            let caption = '';
+            let hashtags = '';
+            
+            try {
+                const captionResponse = await fetch(`/api/load_caption?filename=${encodeURIComponent(filename)}`);
+                if (captionResponse.ok) {
+                    const captionData = await captionResponse.json();
+                    if (captionData.success) {
+                        caption = captionData.caption || '';
+                        hashtags = captionData.hashtags || '';
+                    }
+                }
+            } catch (e) {
+                console.log('No caption found, proceeding without caption');
+            }
+            
+            // Prepare upload data
+            const uploadData = {
+                video_path: videoPath,
+                title: filename.replace(/\.[^/.]+$/, ''), // Remove file extension
+                description: caption + '\n\n' + hashtags,
+                tags: extractHashtags(hashtags),
+                privacy: 'public'
+            };
+            
+            // Upload to YouTube
+            const response = await fetch('/api/youtube/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(uploadData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Show success state - green background
+                youtubeBtn.innerHTML = '<i class="fas fa-check"></i>';
+                youtubeBtn.style.background = '#10b981';
+                youtubeBtn.style.color = 'white';
+                youtubeBtn.title = 'Uploaded to YouTube';
+                
+                // Show success notification
+                showNotification(`Video uploaded to YouTube successfully!`, 'success');
+                
+                // Add YouTube link to the video card
+                addYouTubeLink(videoPath, result.youtube_url, filename);
+                
+            } else {
+                if (result.error && result.error.includes('Client secrets file not found')) {
+                    throw new Error('YouTube client_secrets.json file not found. Please ensure it is in the project root directory.');
+                } else if (result.error && result.error.includes('Failed to authenticate')) {
+                    throw new Error('YouTube authentication failed. Please check your credentials and try again.');
+                } else if (result.error && result.error.includes('Video file not found')) {
+                    throw new Error('Video file not found. Please ensure the video exists and try again.');
+                } else if (result.error && result.error.includes('YouTube API error')) {
+                    throw new Error(`YouTube API error: ${result.error}`);
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+            }
+            
+        } catch (error) {
+            console.error('YouTube upload error:', error);
+            
+            // Restore button state
+            youtubeBtn.innerHTML = '<i class="fab fa-youtube"></i>';
+            youtubeBtn.style.pointerEvents = 'auto';
+            
+            showNotification(`YouTube upload failed: ${error.message}`, 'error');
+        }
+    }
+    
+    // Extract hashtags from text
+    function extractHashtags(text) {
+        if (!text) return [];
+        const hashtagRegex = /#\w+/g;
+        return text.match(hashtagRegex) || [];
+    }
+    
+    // Add YouTube link to video card
+    function addYouTubeLink(videoPath, youtubeUrl, filename) {
+        try {
+            // Find the video card
+            const videoCard = document.querySelector(`[data-video-path="${videoPath}"]`);
+            if (!videoCard) return;
+            
+            // Check if YouTube link already exists
+            if (videoCard.querySelector('.youtube-link')) return;
+            
+            // Create YouTube link element
+            const youtubeLink = document.createElement('div');
+            youtubeLink.className = 'youtube-link';
+            youtubeLink.innerHTML = `
+                <a href="${youtubeUrl}" target="_blank" class="youtube-link-btn">
+                    <i class="fab fa-youtube"></i>
+                    View on YouTube
+                </a>
+            `;
+            
+            // Add to video card (after social logos)
+            const socialLogos = videoCard.querySelector('.social-logos');
+            if (socialLogos) {
+                socialLogos.appendChild(youtubeLink);
+            }
+            
+        } catch (error) {
+            console.error('Error adding YouTube link:', error);
+        }
+    }
+    
+
 
 
     
@@ -3267,6 +3429,8 @@ body {
         
         // Load saved captions
         loadSavedCaptions();
+        
+
         
         // Handle automatic caption generation if action=caption is specified
         if (action === 'caption' && videoParam) {
@@ -3655,9 +3819,9 @@ body {
                     ⏰
                 </div>
                 <div class="social-buttons-group">
-                    <div class="social-btn youtube" onclick="postToSocial('youtube', '${video.name}')" title="Post to YouTube">
-                        <i class="fab fa-youtube"></i>
-                    </div>
+                                                <div class="social-btn youtube" onclick="uploadToYouTube('${video.path}', '${video.name}')" title="Upload to YouTube" id="youtube-btn-${video.name.replace(/[^a-zA-Z0-9]/g, '_')}">
+                                <i class="fab fa-youtube"></i>
+                            </div>
                     <div class="social-btn tiktok" onclick="postToSocial('tiktok', '${video.name}')" title="Post to TikTok">
                         <i class="fab fa-tiktok"></i>
                     </div>
@@ -4322,7 +4486,7 @@ body {
                     const summary = document.getElementById('dashboard-summary');
                     const actualTrimmedCount = Object.values(data.dashboard_data).reduce((total, dateData) => {
                         return total + dateData.videos.filter(video => 
-                            video.folder && video.folder !== 'root'
+                            video.folder === 'trimmed'
                         ).length;
                     }, 0);
                     
@@ -4345,7 +4509,7 @@ body {
                         const dateData = data.dashboard_data[dateKey];
                         // Only show dates that have trimmed videos
                         const hasTrimmedVideos = dateData.videos.some(video => 
-                            video.folder && video.folder !== 'root'
+                            video.folder === 'trimmed'
                         );
                         
                         if (hasTrimmedVideos) {
@@ -4362,7 +4526,7 @@ body {
                     
                     // Count only trimmed videos for this date
                     const trimmedCount = dateData.videos.filter(video => 
-                        video.folder && video.folder !== 'root'
+                        video.folder === 'trimmed'
                     ).length;
                     
                     dateCard.innerHTML = `
@@ -4395,8 +4559,7 @@ body {
                         if (videosGrid.children.length === 0) {
                             // Only show trimmed videos from this specific date
                             const trimmedVideos = dateData.videos.filter(video => 
-                                video.folder && video.folder !== 'root' && 
-                                video.folder.startsWith(dateKey.replace(/-/g, ''))
+                                video.folder === 'trimmed' && video.created_date === dateKey
                             );
                             
                             if (trimmedVideos.length === 0) {

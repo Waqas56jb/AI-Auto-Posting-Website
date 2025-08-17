@@ -26,10 +26,214 @@ import concurrent.futures
 from flask_cors import CORS
 import csv
 
+# YouTube API imports
+import google_auth_httplib2
+import google_auth_oauthlib
+import googleapiclient.discovery
+import googleapiclient.errors
+import googleapiclient.http
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# YouTube Service Class
+class YouTubeService:
+    """Simplified YouTube API service for direct uploads"""
+    
+    def __init__(self):
+        self.SCOPES = [
+            "https://www.googleapis.com/auth/youtube.upload",
+            "https://www.googleapis.com/auth/youtube.readonly"
+        ]
+        self.TOKEN_FILE = 'youtube_token.json'
+        self.CLIENT_SECRETS_FILE = 'client_secrets.json'
+        self.youtube = None
+        
+    def authenticate(self) -> bool:
+        """Authenticate with YouTube API using OAuth2"""
+        try:
+            # Set environment variable for OAuth
+            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+            
+            # Check if client secrets file exists
+            if not os.path.exists(self.CLIENT_SECRETS_FILE):
+                logger.error(f"Client secrets file not found: {self.CLIENT_SECRETS_FILE}")
+                return False
+            
+            # Remove existing token file to force re-authentication
+            if os.path.exists(self.TOKEN_FILE):
+                try:
+                    os.remove(self.TOKEN_FILE)
+                    logger.info("Removed existing token file for fresh authentication")
+                except Exception as e:
+                    logger.warning(f"Could not remove token file: {e}")
+            
+            # Load client secrets and create flow
+            logger.info("Loading client secrets and creating OAuth flow...")
+            flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+                self.CLIENT_SECRETS_FILE, self.SCOPES)
+            
+            # Run local server for authentication
+            logger.info("Starting OAuth authentication flow...")
+            credentials = flow.run_local_server(port=8080)
+            
+            # Build YouTube service
+            logger.info("Building YouTube API service...")
+            self.youtube = googleapiclient.discovery.build(
+                "youtube", "v3", credentials=credentials)
+            
+            logger.info("YouTube API authenticated successfully")
+            return True
+            
+        except google_auth_oauthlib.flow.FlowError as e:
+            logger.error(f"OAuth flow error: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Authentication error: {e}")
+            return False
+    
+    def upload_video(self, video_path: str, title: str, description: str, 
+                     tags: list = None, category_id: str = "22", 
+                     privacy_status: str = "public") -> dict:
+        """Upload video to YouTube with metadata"""
+        try:
+            # Ensure authentication
+            if not self.youtube:
+                logger.info("YouTube service not authenticated, attempting authentication...")
+                if not self.authenticate():
+                    return {"success": False, "error": "Failed to authenticate with YouTube API"}
+            
+            # Check if video file exists
+            if not os.path.exists(video_path):
+                return {"success": False, "error": f"Video file not found: {video_path}"}
+            
+            # Validate file size (YouTube has limits)
+            file_size = os.path.getsize(video_path)
+            if file_size > 128 * 1024 * 1024 * 1024:  # 128GB limit
+                return {"success": False, "error": "Video file too large (max 128GB)"}
+            
+            logger.info(f"Preparing to upload video: {video_path} (size: {file_size / (1024*1024):.2f} MB)")
+            
+            # Prepare request body
+            request_body = {
+                "snippet": {
+                    "categoryId": category_id,
+                    "title": title[:100],  # YouTube title limit
+                    "description": description[:5000],  # YouTube description limit
+                    "tags": tags or []
+                },
+                "status": {
+                    "privacyStatus": privacy_status
+                }
+            }
+            
+            logger.info(f"Upload metadata - Title: {title}, Description length: {len(description)}")
+            
+            # Create media upload object
+            media_file = googleapiclient.http.MediaFileUpload(
+                video_path, 
+                chunksize=1024*1024,  # 1MB chunks
+                resumable=True
+            )
+            
+            # Create upload request
+            request = self.youtube.videos().insert(
+                part="snippet,status",
+                body=request_body,
+                media_body=media_file
+            )
+            
+            # Upload video with progress tracking
+            logger.info(f"Starting video upload: {video_path}")
+            response = None
+            
+            while response is None:
+                try:
+                    status, response = request.next_chunk()
+                    if status:
+                        progress = int(status.progress() * 100)
+                        logger.info(f"Upload progress: {progress}%")
+                except googleapiclient.errors.HttpError as e:
+                    error_details = json.loads(e.content.decode())
+                    logger.error(f"Upload HTTP error: {error_details}")
+                    return {"success": False, "error": f"YouTube API error: {error_details.get('error', {}).get('message', 'Unknown error')}"}
+            
+            # Extract video information
+            video_id = response['id']
+            video_url = f"https://www.youtube.com/watch?v={video_id}"
+            
+            logger.info(f"Video uploaded successfully: {video_url}")
+            
+            return {
+                "success": True,
+                "video_id": video_id,
+                "video_url": video_url,
+                "youtube_url": video_url,  # For frontend compatibility
+                "title": title,
+                "upload_time": datetime.now().isoformat()
+            }
+            
+        except googleapiclient.errors.HttpError as e:
+            error_details = json.loads(e.content.decode())
+            logger.error(f"YouTube API error: {error_details}")
+            return {"success": False, "error": f"YouTube API error: {error_details.get('error', {}).get('message', 'Unknown error')}"}
+            
+        except Exception as e:
+            logger.error(f"Video upload error: {e}")
+            return {"success": False, "error": str(e)}
+    
+    def get_channel_info(self) -> dict:
+        """Get current channel information"""
+        try:
+            # Ensure authentication
+            if not self.youtube:
+                if not self.authenticate():
+                    return {"success": False, "error": "Failed to authenticate with YouTube"}
+            
+            # Get channel info
+            channels_response = self.youtube.channels().list(
+                part='snippet,statistics',
+                mine=True
+            ).execute()
+            
+            if channels_response['items']:
+                channel = channels_response['items'][0]
+                return {
+                    "success": True,
+                    "channel_id": channel['id'],
+                    "channel_title": channel['snippet']['title'],
+                    "subscriber_count": channel['statistics'].get('subscriberCount', 'Unknown'),
+                    "video_count": channel['statistics'].get('videoCount', 'Unknown'),
+                    "view_count": channel['statistics'].get('viewCount', 'Unknown')
+                }
+            else:
+                return {"success": False, "error": "No channel found"}
+                
+        except Exception as e:
+            logger.error(f"Error getting channel info: {e}")
+            return {"success": False, "error": str(e)}
+    
+    def check_quota(self) -> dict:
+        """Check YouTube API quota usage"""
+        try:
+            # Ensure authentication
+            if not self.youtube:
+                if not self.authenticate():
+                    return {"success": False, "error": "Failed to authenticate with YouTube"}
+            
+            return {
+                "success": True,
+                "message": "YouTube API quota status checked",
+                "note": "YouTube doesn't provide exact quota information via API"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error checking quota: {e}")
+            return {"success": False, "error": str(e)}
+
+# Global YouTube service instance
+youtube_service = YouTubeService()
 
 # Import configuration
 from config import *
@@ -644,6 +848,10 @@ def create_video_clip():
         if file.filename == '':
             return jsonify({'success': False, 'message': 'No file selected'}), 400
         
+        # Validate file type
+        if not file.filename.lower().endswith(('.mp4', '.mov', '.avi', '.mkv', '.webm')):
+            return jsonify({'success': False, 'message': 'Invalid file type. Please upload MP4, MOV, AVI, MKV, or WEBM files.'}), 400
+        
         start_time = float(request.form.get('start_time', 0))
         end_time = float(request.form.get('end_time', 0))
         
@@ -665,9 +873,13 @@ def create_video_clip():
         file.save(temp_path)
         
         try:
-            # Use ffmpeg to create the clip
-            import subprocess
+            # Check if ffmpeg is available
+            try:
+                subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                return jsonify({'success': False, 'message': 'FFmpeg is not available. Please install FFmpeg to use this feature.'}), 500
             
+            # Use ffmpeg to create the clip
             cmd = [
                 'ffmpeg', '-i', temp_path,
                 '-ss', str(start_time),
@@ -682,7 +894,11 @@ def create_video_clip():
             
             if result.returncode != 0:
                 logging.error(f"FFmpeg error: {result.stderr}")
-                return jsonify({'success': False, 'message': 'Failed to create video clip'}), 500
+                return jsonify({'success': False, 'message': 'Failed to create video clip. Please check if the video file is valid.'}), 500
+            
+            # Verify the output file was created
+            if not os.path.exists(clip_path):
+                return jsonify({'success': False, 'message': 'Failed to create video clip file'}), 500
             
             # Get clip duration
             duration = end_time - start_time
@@ -708,10 +924,10 @@ def create_video_clip():
             })
             
         except subprocess.TimeoutExpired:
-            return jsonify({'success': False, 'message': 'Video processing timed out'}), 500
+            return jsonify({'success': False, 'message': 'Video processing timed out. Please try with a shorter clip duration.'}), 500
         except Exception as e:
             logging.error(f"Error creating video clip: {e}")
-            return jsonify({'success': False, 'message': 'Failed to create video clip'}), 500
+            return jsonify({'success': False, 'message': 'Failed to create video clip. Please try again.'}), 500
         finally:
             # Clean up temp file if it still exists
             if os.path.exists(temp_path):
@@ -720,6 +936,145 @@ def create_video_clip():
     except Exception as e:
         logging.error(f"Error in create_video_clip: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/trim_video', methods=['POST'])
+def trim_video():
+    """Trim video from existing videos folder"""
+    try:
+        data = request.get_json()
+        if not data or 'file' not in data or 'clips' not in data:
+            return jsonify({'success': False, 'error': 'Invalid request data'}), 400
+        
+        file_path = data['file']
+        clips = data['clips']
+        
+        if not clips or len(clips) == 0:
+            return jsonify({'success': False, 'error': 'No clips specified'}), 400
+        
+        # Validate clips data
+        for i, clip in enumerate(clips):
+            if 'start' not in clip or 'end' not in clip:
+                return jsonify({'success': False, 'error': f'Invalid clip data at index {i}'}), 400
+            
+            start_time = float(clip.get('start', 0))
+            end_time = float(clip.get('end', 30))
+            
+            if start_time < 0 or end_time <= start_time:
+                return jsonify({'success': False, 'error': f'Invalid time range for clip {i}: start={start_time}, end={end_time}'}), 400
+        
+        # Determine the source folder based on file path
+        if file_path.startswith('videos/'):
+            source_folder = 'static/videos'
+            relative_path = file_path[7:]  # Remove 'videos/' prefix
+        elif file_path.startswith('trimmed/'):
+            source_folder = 'static/trimmed'
+            relative_path = file_path[9:]  # Remove 'trimmed/' prefix
+        else:
+            return jsonify({'success': False, 'error': 'Invalid file path'}), 400
+        
+        source_file_path = os.path.join(source_folder, relative_path)
+        
+        if not os.path.exists(source_file_path):
+            return jsonify({'success': False, 'error': 'Source video not found'}), 404
+        
+        # Check if ffmpeg is available
+        try:
+            subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return jsonify({'success': False, 'error': 'FFmpeg is not available. Please install FFmpeg to use this feature.'}), 500
+        
+        # Create trimmed folder if it doesn't exist
+        trimmed_folder = 'static/trimmed'
+        os.makedirs(trimmed_folder, exist_ok=True)
+        
+        created_clips = []
+        
+        for i, clip in enumerate(clips):
+            start_time = float(clip.get('start', 0))
+            end_time = float(clip.get('end', 30))
+            
+            if start_time < 0 or end_time <= start_time:
+                continue
+            
+            # Generate unique filename for the clip
+            base_name = os.path.splitext(os.path.basename(source_file_path))[0]
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            clip_filename = f"{base_name}_trim_{start_time:.1f}-{end_time:.1f}_{timestamp}.mp4"
+            clip_path = os.path.join(trimmed_folder, clip_filename)
+            
+            try:
+                # Use ffmpeg to create the clip
+                cmd = [
+                    'ffmpeg', '-i', source_file_path,
+                    '-ss', str(start_time),
+                    '-t', str(end_time - start_time),
+                    '-c:v', 'libx264',
+                    '-c:a', 'aac',
+                    '-y',  # Overwrite output file
+                    clip_path
+                ]
+                
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                
+                if result.returncode == 0:
+                    # Verify the output file was created
+                    if os.path.exists(clip_path):
+                        created_clips.append({
+                            'name': clip_filename,
+                            'url': f'trimmed/{clip_filename}',
+                            'start_time': start_time,
+                            'end_time': end_time,
+                            'duration': end_time - start_time
+                        })
+                    else:
+                        logging.error(f"Clip file was not created for clip {i}")
+                else:
+                    logging.error(f"FFmpeg error for clip {i}: {result.stderr}")
+                    
+            except subprocess.TimeoutExpired:
+                logging.error(f"FFmpeg timeout for clip {i}")
+            except Exception as e:
+                logging.error(f"Error creating clip {i}: {e}")
+        
+        if created_clips:
+            return jsonify({
+                'success': True,
+                'clips': created_clips,
+                'message': f'Successfully created {len(created_clips)} clip(s)'
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Failed to create any clips'}), 500
+            
+    except Exception as e:
+        logging.error(f"Error in trim_video: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/trimmed/<filename>')
+def serve_trimmed_video(filename):
+    """Serve trimmed video files"""
+    try:
+        return send_from_directory('static/trimmed', filename)
+    except Exception as e:
+        logging.error(f"Error serving trimmed video {filename}: {e}")
+        return jsonify({'error': 'Video not found'}), 404
+
+@app.route('/videos/<path:filename>')
+def serve_video(filename):
+    """Serve video files from videos folder"""
+    try:
+        return send_from_directory('static/videos', filename)
+    except Exception as e:
+        logging.error(f"Error serving video {filename}: {e}")
+        return jsonify({'error': 'Video not found'}), 404
+
+@app.route('/uploads/<path:filename>')
+def serve_uploaded_video(filename):
+    """Serve uploaded video files for preview"""
+    try:
+        return send_from_directory('static/uploads', filename)
+    except Exception as e:
+        logging.error(f"Error serving uploaded video {filename}: {e}")
+        return jsonify({'error': 'Video not found'}), 404
 
 @app.route('/api/trimmed-videos-dashboard')
 def get_trimmed_videos_dashboard():
@@ -748,15 +1103,30 @@ def get_trimmed_videos_dashboard():
                         'created_time': created_date.strftime('%H:%M:%S'),
                         'day_name': created_date.strftime('%A'),
                         'size_mb': size_mb,
-                        'full_path': file_path
+                        'full_path': file_path,
+                        'type': 'trimmed',
+                        'folder': 'trimmed'  # Add folder info for frontend compatibility
                     })
             
             # Sort by creation date (newest first)
             videos.sort(key=lambda x: x['created_date'], reverse=True)
         
+        # Group videos by date for dashboard display
+        dashboard_data = {}
+        for video in videos:
+            date_key = video['created_date']
+            if date_key not in dashboard_data:
+                dashboard_data[date_key] = {
+                    'date': date_key,
+                    'day_name': video['day_name'],
+                    'videos': []
+                }
+            dashboard_data[date_key]['videos'].append(video)
+        
         return jsonify({
             'success': True,
             'videos': videos,
+            'dashboard_data': dashboard_data,
             'total_count': len(videos)
         })
         
@@ -831,6 +1201,11 @@ def test_whisper():
 def test_story():
     """Story generation test page"""
     return render_template('test_story.html')
+
+@app.route('/chatbot')
+def chatbot():
+    """AI Chatbot page"""
+    return render_template('chatbot.html')
 
 @app.route('/api/test-gemini')
 def test_gemini():
@@ -1374,16 +1749,16 @@ def generate_story():
         
         # Fallback to old prompt format if text is not provided
         if not transcript:
-        prompt = None
-        if isinstance(data, dict):
+            prompt = None
+            if isinstance(data, dict):
                 prompt = data.get('prompt') or data.get('message')
-        elif isinstance(data, str):
-            prompt = data
-        
-        if not prompt:
+            elif isinstance(data, str):
+                prompt = data
+            
+            if not prompt:
                 logger.warning(f"Story generation attempt with missing content. Data received: {data}")
                 return jsonify({'success': False, 'error': 'No content provided. Please send text or prompt in the request.'}), 400
-        
+            
             transcript = prompt
             logger.info(f"Story generation request received with prompt: {transcript[:100]}...")
         else:
@@ -1667,6 +2042,92 @@ Company X's digital transformation demonstrates that traditional businesses can 
 **CRITICAL: Ensure proper line breaks and spacing throughout the entire case study. Do not compress the text together.**
 """
 
+                elif story_format == 'motivational':
+                    prompt = f"""
+You are a motivational speaker and life coach creating inspiring, action-oriented content.
+
+Input:
+- Framing: "{framing}"
+- Story: "{story}"
+
+Task: Create a powerful motivational speech with emotional impact and practical steps.
+
+EXACT FORMAT EXAMPLE - Copy this structure precisely:
+
+The Unstoppable Force Within You
+
+Opening Hook
+
+"Have you ever felt like giving up?"
+"Like the world is against you?"
+"Like success is impossible?"
+
+"Today, I'm going to share a story that will change everything you believe about your potential."
+
+The Wake-Up Call
+
+"Life has a way of hitting us when we're down."
+"Just when we think we can't take another step, it throws another obstacle in our path."
+"But here's what I discovered: those moments are not setbacks—they're setups."
+
+"Every challenge you face is preparing you for something greater. Every failure is teaching you what not to do. Every rejection is redirecting you to your true path."
+
+The Transformation
+
+"Three years ago, I was at rock bottom."
+"I had lost my job, my relationship, and my sense of purpose."
+"But instead of staying down, I made a decision that changed everything."
+
+"I decided to become unstoppable."
+
+The Formula
+
+"Here's what I learned about becoming unstoppable:"
+
+"1. **Embrace the Struggle** - Your challenges are your greatest teachers"
+"2. **Find Your Why** - Purpose is more powerful than motivation"
+"3. **Take Massive Action** - Small steps lead to massive results"
+"4. **Build Unshakeable Belief** - Your mind is your most powerful weapon"
+
+The Breakthrough
+
+"Within six months, I had rebuilt my life from the ground up."
+"I found a new career that I loved, built stronger relationships, and discovered a purpose that drives me every day."
+
+"The same transformation is available to you."
+
+Your Call to Action
+
+"Right now, you have a choice."
+"You can stay where you are, or you can become unstoppable."
+"You can accept your current circumstances, or you can create the life you deserve."
+
+"What will you choose?"
+
+"Remember: You are not defined by your past. You are defined by your next decision."
+"Make that decision today. Choose to become unstoppable."
+
+---
+
+**STRUCTURE REQUIREMENTS:**
+- Powerful opening hook with questions
+- Personal story or example
+- Clear transformation journey
+- Actionable formula or steps
+- Emotional breakthrough moment
+- Strong call to action
+- Clean formatting without markdown symbols
+
+**TONE REQUIREMENTS:**
+- Inspiring and motivational
+- Emotional and passionate
+- Action-oriented
+- Empowering and uplifting
+- Direct and engaging
+
+**CRITICAL: Ensure proper line breaks and spacing throughout the entire speech. Do not compress the text together.**
+"""
+
                 else:
                     # Default to Lucy format
                     prompt = f"""
@@ -1828,6 +2289,591 @@ def upload_file():
     except Exception as e:
         logger.error(f"Error in upload_file endpoint: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/gemini_chat', methods=['POST'])
+def gemini_chat():
+    """Chat endpoint using Google Gemini AI"""
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({'success': False, 'error': 'No query provided'}), 400
+        
+        query = data['query']
+        logger.info(f"Chat request received: {query[:100]}...")
+        
+        # Check if model is available
+        if not model:
+            logger.error("Google Gemini AI model not available")
+            return jsonify({'success': False, 'error': 'AI model not available. Please check GOOGLE_API_KEY configuration.'}), 500
+        
+        try:
+            # Create context-aware prompt for better responses
+            context_prompt = f"""
+You are an AI assistant for StoryVerse, a content creation platform. You help users with:
+
+1. **Story Generation**: Help users create compelling stories, scripts, and content
+2. **Video Creation**: Guide users on video production, editing, and optimization
+3. **Content Strategy**: Provide tips on content planning, audience engagement, and platform optimization
+4. **Technical Support**: Help with using the platform's features and tools
+
+User Query: {query}
+
+Please provide a helpful, concise response in 2-4 sentences. Be friendly, knowledgeable, and specific to content creation and storytelling. If the user asks about features, mention that they can use the story generation tools, video clipping features, or other platform capabilities.
+"""
+            
+            # Generate response using Gemini
+            response = model.generate_content(context_prompt)
+            
+            if response and hasattr(response, 'text') and response.text:
+                bot_response = response.text.strip()
+                logger.info(f"Chat response generated successfully: {len(bot_response)} characters")
+                
+                return jsonify({
+                    'success': True,
+                    'response': bot_response
+                })
+            else:
+                logger.warning("Gemini chat response is empty or invalid")
+                return jsonify({'success': False, 'error': 'No response from AI model'}), 500
+                
+        except Exception as e:
+            logger.error(f"Error generating chat response with Gemini: {str(e)}")
+            return jsonify({'success': False, 'error': f'AI generation failed: {str(e)}'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error in gemini_chat endpoint: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint to verify server and ffmpeg availability"""
+    try:
+        # Check if ffmpeg is available
+        ffmpeg_available = False
+        try:
+            subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True, timeout=10)
+            ffmpeg_available = True
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+            ffmpeg_available = False
+        
+        # Check if required directories exist
+        directories = {
+            'static/trimmed': os.path.exists('static/trimmed'),
+            'static/videos': os.path.exists('static/videos'),
+            'static/uploads': os.path.exists('static/uploads')
+        }
+        
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'ffmpeg_available': ffmpeg_available,
+            'directories': directories,
+            'message': 'Server is running'
+        })
+        
+    except Exception as e:
+        logging.error(f"Health check error: {e}")
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.now().isoformat(),
+            'error': str(e)
+        }), 500
+
+@app.route('/api/generate_caption', methods=['POST'])
+def generate_caption():
+    """Generate caption for a video using Gemini AI"""
+    try:
+        data = request.get_json()
+        if not data or 'filename' not in data:
+            return jsonify({'success': False, 'error': 'Filename is required'}), 400
+        
+        filename = data['filename']
+        
+        # Extract video information from filename
+        video_name = os.path.splitext(filename)[0]
+        
+        # Analyze filename for context clues
+        context_keywords = analyze_filename_for_context(video_name)
+        
+        # Generate engaging caption using Gemini AI
+        prompt = f"""
+        Generate a compelling, story-focused social media caption for a video titled "{video_name}".
+        
+        Context clues from filename: {', '.join(context_keywords) if context_keywords else 'No specific context detected'}
+        
+        Requirements:
+        1. Create a captivating caption that tells a story and makes people want to watch
+        2. Make it emotional, relatable, and engaging
+        3. Include 8-12 highly relevant hashtags that are:
+           - Specific to the video content/theme
+           - Trending in social media
+           - Relevant to the target audience
+           - Mix of popular and niche hashtags
+        4. Keep the main caption under 200 characters for better engagement
+        5. Make it suitable for platforms like Instagram, TikTok, YouTube, LinkedIn, and Facebook
+        6. Include a clear call-to-action
+        7. Use emojis strategically to enhance engagement
+        
+        Format the response exactly as:
+        Caption: [your engaging story caption here]
+        Hashtags: [relevant hashtags here]
+        
+        Make the caption feel personal and authentic, like it's coming from a real person sharing a meaningful story.
+        Use the context clues to make the caption more relevant and specific.
+        """
+        
+        try:
+            response = model.generate_content(prompt)
+            content = response.text
+            
+            # Parse the response to extract caption and hashtags
+            lines = content.split('\n')
+            caption = ""
+            hashtags = ""
+            
+            for line in lines:
+                if line.startswith('Caption:'):
+                    caption = line.replace('Caption:', '').strip()
+                elif line.startswith('Hashtags:'):
+                    hashtags = line.replace('Hashtags:', '').strip()
+            
+            # If parsing failed, create a fallback
+            if not caption:
+                caption = f"🎬 This moment changed everything... {video_name} is the story you need to see right now! 💫 What's your take on this? 👇"
+            
+            if not hashtags:
+                hashtags = "#storytime #viral #trending #mustwatch #amazing #inspiration #life #motivation #viralvideo #trendingnow #amazing #inspiring #story #viralcontent #trendingvideo"
+            
+            return jsonify({
+                'success': True,
+                'caption': caption,
+                'hashtags': hashtags,
+                'filename': filename
+            })
+            
+        except Exception as e:
+            logging.error(f"Gemini AI error: {e}")
+            # Fallback caption generation
+            fallback_caption = f"🎬 This moment changed everything... {video_name} is the story you need to see right now! 💫 What's your take on this? 👇"
+            fallback_hashtags = "#storytime #viral #trending #mustwatch #amazing #inspiration #life #motivation #viralvideo #trendingnow #amazing #inspiring #story #viralcontent #trendingvideo"
+            
+            return jsonify({
+                'success': True,
+                'caption': fallback_caption,
+                'hashtags': fallback_hashtags,
+                'filename': filename
+            })
+            
+    except Exception as e:
+        logging.error(f"Error generating caption: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+def analyze_filename_for_context(filename):
+    """Analyze filename to extract context clues for better caption generation"""
+    context_keywords = []
+    
+    # Convert to lowercase for analysis
+    filename_lower = filename.lower()
+    
+    # Common video content indicators
+    content_types = {
+        'tutorial': ['tutorial', 'howto', 'guide', 'learn', 'education', 'teaching'],
+        'story': ['story', 'narrative', 'tale', 'journey', 'experience'],
+        'funny': ['funny', 'humor', 'comedy', 'laugh', 'joke', 'hilarious'],
+        'inspirational': ['inspiration', 'motivation', 'success', 'achievement', 'goal'],
+        'behind_scenes': ['behind', 'scenes', 'making', 'process', 'workflow'],
+        'review': ['review', 'analysis', 'opinion', 'thoughts', 'feedback'],
+        'challenge': ['challenge', 'dare', 'test', 'trial', 'experiment'],
+        'transformation': ['transformation', 'change', 'before', 'after', 'progress'],
+        'travel': ['travel', 'adventure', 'explore', 'journey', 'trip'],
+        'food': ['food', 'cooking', 'recipe', 'meal', 'cuisine'],
+        'fitness': ['fitness', 'workout', 'exercise', 'health', 'training'],
+        'music': ['music', 'song', 'performance', 'concert', 'band'],
+        'art': ['art', 'creative', 'design', 'painting', 'drawing'],
+        'tech': ['tech', 'technology', 'gadget', 'app', 'software'],
+        'business': ['business', 'entrepreneur', 'startup', 'success', 'money']
+    }
+    
+    # Check for content type matches
+    for content_type, keywords in content_types.items():
+        if any(keyword in filename_lower for keyword in keywords):
+            context_keywords.append(content_type)
+    
+    # Check for emotional indicators
+    emotional_words = ['amazing', 'incredible', 'unbelievable', 'shocking', 'surprising', 'beautiful', 'stunning', 'epic', 'legendary']
+    for word in emotional_words:
+        if word in filename_lower:
+            context_keywords.append(word)
+    
+    # Check for time indicators
+    time_indicators = ['today', 'yesterday', 'morning', 'night', 'weekend', 'holiday', 'birthday', 'anniversary']
+    for word in time_indicators:
+        if word in filename_lower:
+            context_keywords.append(word)
+    
+    # Check for location indicators
+    location_words = ['home', 'office', 'gym', 'park', 'beach', 'city', 'country', 'world']
+    for word in location_words:
+        if word in filename_lower:
+            context_keywords.append(word)
+    
+    return context_keywords[:5]  # Return top 5 most relevant context clues
+
+@app.route('/api/save_caption', methods=['POST'])
+def save_caption():
+    """Save caption to file"""
+    try:
+        data = request.get_json()
+        if not data or 'filename' not in data or 'caption' not in data:
+            return jsonify({'success': False, 'error': 'Filename and caption are required'}), 400
+        
+        filename = data['filename']
+        caption = data.get('caption', '')
+        hashtags = data.get('hashtags', '')
+        
+        # Create captions directory if it doesn't exist
+        captions_dir = 'captions'
+        os.makedirs(captions_dir, exist_ok=True)
+        
+        # Create caption file
+        caption_filename = f"{os.path.splitext(filename)[0]}.txt"
+        caption_path = os.path.join(captions_dir, caption_filename)
+        
+        # Save caption content
+        caption_content = f"Caption: {caption}\n\nHashtags: {hashtags}\n\nGenerated: {datetime.now().isoformat()}"
+        
+        with open(caption_path, 'w', encoding='utf-8') as f:
+            f.write(caption_content)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Caption saved successfully',
+            'filename': caption_filename
+        })
+        
+    except Exception as e:
+        logging.error(f"Error saving caption: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/load_caption')
+def load_caption():
+    """Load caption from file"""
+    try:
+        filename = request.args.get('filename')
+        if not filename:
+            return jsonify({'success': False, 'error': 'Filename is required'}), 400
+        
+        # Look for caption file
+        captions_dir = 'captions'
+        caption_filename = f"{os.path.splitext(filename)[0]}.txt"
+        caption_path = os.path.join(captions_dir, caption_filename)
+        
+        if os.path.exists(caption_path):
+            with open(caption_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Parse caption content
+            lines = content.split('\n')
+            caption = ""
+            hashtags = ""
+            
+            for line in lines:
+                if line.startswith('Caption:'):
+                    caption = line.replace('Caption:', '').strip()
+                elif line.startswith('Hashtags:'):
+                    hashtags = line.replace('Hashtags:', '').strip()
+            
+            return jsonify({
+                'success': True,
+                'caption': caption,
+                'hashtags': hashtags,
+                'filename': filename
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Caption not found'
+            })
+        
+    except Exception as e:
+        logging.error(f"Error loading caption: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/generate_caption_variations', methods=['POST'])
+def generate_caption_variations():
+    """Generate multiple caption variations for a video using Gemini AI"""
+    try:
+        data = request.get_json()
+        if not data or 'filename' not in data:
+            return jsonify({'success': False, 'error': 'Filename is required'}), 400
+        
+        filename = data['filename']
+        
+        # Extract video information from filename
+        video_name = os.path.splitext(filename)[0]
+        
+        # Analyze filename for context clues
+        context_keywords = analyze_filename_for_context(video_name)
+        
+        # Generate multiple caption variations using Gemini AI
+        prompt = f"""
+        Generate 3 different compelling, story-focused social media captions for a video titled "{video_name}".
+        
+        Context clues from filename: {', '.join(context_keywords) if context_keywords else 'No specific context detected'}
+        
+        Requirements for each caption:
+        1. Create captivating captions that tell a story and make people want to watch
+        2. Make them emotional, relatable, and engaging
+        3. Each caption should have a different tone/style:
+           - Caption 1: Emotional and personal
+           - Caption 2: Humorous and entertaining
+           - Caption 3: Inspirational and motivational
+        4. Keep each caption under 200 characters for better engagement
+        5. Include 8-12 highly relevant hashtags for each
+        6. Use emojis strategically to enhance engagement
+        
+        Format the response exactly as:
+        Caption 1 (Emotional): [emotional caption here]
+        Hashtags 1: [relevant hashtags here]
+        
+        Caption 2 (Humorous): [humorous caption here]
+        Hashtags 2: [relevant hashtags here]
+        
+        Caption 3 (Inspirational): [inspirational caption here]
+        Hashtags 3: [relevant hashtags here]
+        
+        Make each caption feel personal and authentic, like it's coming from a real person sharing a meaningful story.
+        Use the context clues to make the captions more relevant and specific.
+        """
+        
+        try:
+            response = model.generate_content(prompt)
+            content = response.text
+            
+            # Parse the response to extract multiple captions and hashtags
+            variations = []
+            current_caption = ""
+            current_hashtags = ""
+            
+            lines = content.split('\n')
+            for line in lines:
+                line = line.strip()
+                if line.startswith('Caption 1 (Emotional):'):
+                    current_caption = line.replace('Caption 1 (Emotional):', '').strip()
+                elif line.startswith('Hashtags 1:'):
+                    current_hashtags = line.replace('Hashtags 1:', '').strip()
+                    if current_caption and current_hashtags:
+                        variations.append({
+                            'type': 'Emotional',
+                            'caption': current_caption,
+                            'hashtags': current_hashtags
+                        })
+                        current_caption = ""
+                        current_hashtags = ""
+                elif line.startswith('Caption 2 (Humorous):'):
+                    current_caption = line.replace('Caption 2 (Humorous):', '').strip()
+                elif line.startswith('Hashtags 2:'):
+                    current_hashtags = line.replace('Hashtags 2:', '').strip()
+                    if current_caption and current_hashtags:
+                        variations.append({
+                            'type': 'Humorous',
+                            'caption': current_caption,
+                            'hashtags': current_hashtags
+                        })
+                        current_caption = ""
+                        current_hashtags = ""
+                elif line.startswith('Caption 3 (Inspirational):'):
+                    current_caption = line.replace('Caption 3 (Inspirational):', '').strip()
+                elif line.startswith('Hashtags 3:'):
+                    current_hashtags = line.replace('Hashtags 3:', '').strip()
+                    if current_caption and current_hashtags:
+                        variations.append({
+                            'type': 'Inspirational',
+                            'caption': current_caption,
+                            'hashtags': current_hashtags
+                        })
+                        current_caption = ""
+                        current_hashtags = ""
+            
+            # If parsing failed, create fallback variations
+            if not variations:
+                variations = [
+                    {
+                        'type': 'Emotional',
+                        'caption': f"🎬 This moment changed everything... {video_name} is the story you need to see right now! 💫 What's your take on this? 👇",
+                        'hashtags': "#storytime #viral #trending #mustwatch #amazing #inspiration #life #motivation #viralvideo #trendingnow #amazing #inspiring #story #viralcontent #trendingvideo"
+                    },
+                    {
+                        'type': 'Humorous',
+                        'caption': f"😂 You won't believe what happened in {video_name}! This is absolutely priceless! 🤣 Watch till the end! 👀",
+                        'hashtags': "#funny #humor #comedy #laugh #hilarious #viral #trending #funnyvideo #comedy #laughoutloud #viralcontent #trendingnow #funny #humor"
+                    },
+                    {
+                        'type': 'Inspirational',
+                        'caption': f"🌟 Sometimes the smallest moments create the biggest impact. {video_name} taught me this today. 💪 What inspires you? ✨",
+                        'hashtags': "#inspiration #motivation #success #life #goals #dreams #inspirational #motivational #success #life #goals #dreams #inspirational #motivational"
+                    }
+                ]
+            
+            return jsonify({
+                'success': True,
+                'variations': variations,
+                'filename': filename
+            })
+            
+        except Exception as e:
+            logging.error(f"Gemini AI error: {e}")
+            # Fallback variations
+            fallback_variations = [
+                {
+                    'type': 'Emotional',
+                    'caption': f"🎬 This moment changed everything... {video_name} is the story you need to see right now! 💫 What's your take on this? 👇",
+                    'hashtags': "#storytime #viral #trending #mustwatch #amazing #inspiration #life #motivation #viralvideo #trendingnow #amazing #inspiring #story #viralcontent #trendingvideo"
+                },
+                {
+                    'type': 'Humorous',
+                    'caption': f"😂 You won't believe what happened in {video_name}! This is absolutely priceless! 🤣 Watch till the end! 👀",
+                    'hashtags': "#funny #humor #comedy #laugh #hilarious #viral #trending #funnyvideo #comedy #laughoutloud #viralcontent #trendingnow #funny #humor"
+                },
+                {
+                    'type': 'Inspirational',
+                    'caption': f"🌟 Sometimes the smallest moments create the biggest impact. {video_name} taught me this today. 💪 What inspires you? ✨",
+                    'hashtags': "#inspiration #motivation #success #life #goals #dreams #inspirational #motivational #success #life #goals #dreams #inspirational #motivational"
+                }
+            ]
+            
+            return jsonify({
+                'success': True,
+                'variations': fallback_variations,
+                'filename': filename
+            })
+            
+    except Exception as e:
+        logging.error(f"Error generating caption variations: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
+@app.route('/api/youtube/upload', methods=['POST'])
+def youtube_upload():
+    """Upload video to YouTube"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        video_path = data.get('video_path')
+        title = data.get('title', 'Untitled Video')
+        description = data.get('description', '')
+        tags = data.get('tags', [])
+        privacy = data.get('privacy', 'public')
+        
+        if not video_path:
+            return jsonify({'success': False, 'error': 'Video path is required'}), 400
+        
+        # Resolve full path
+        if video_path.startswith('trimmed/'):
+            full_path = os.path.join('static/trimmed', video_path[9:])
+        elif video_path.startswith('videos/'):
+            full_path = os.path.join('static/videos', video_path[7:])
+        else:
+            full_path = video_path
+        
+        logging.info(f"Resolved video path: {full_path}")
+        
+        if not os.path.exists(full_path):
+            logging.error(f"Video file not found: {full_path}")
+            return jsonify({'success': False, 'error': f'Video file not found: {video_path}'}), 404
+        
+        # Check file size
+        file_size = os.path.getsize(full_path)
+        logging.info(f"Video file size: {file_size / (1024*1024):.2f} MB")
+        
+        # Upload video (authentication handled automatically)
+        logging.info(f"Starting YouTube upload for: {title}")
+        result = youtube_service.upload_video(
+            video_path=full_path,
+            title=title,
+            description=description,
+            tags=tags,
+            privacy_status=privacy
+        )
+        
+        if result['success']:
+            logging.info(f"YouTube upload successful: {result.get('video_url', 'No URL')}")
+            # Save upload record to database or file
+            save_upload_record(video_path, result)
+        else:
+            logging.error(f"YouTube upload failed: {result.get('error', 'Unknown error')}")
+            
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"YouTube upload error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/youtube/channel', methods=['GET'])
+def youtube_channel_info():
+    """Get YouTube channel information"""
+    try:
+        # Get channel info (authentication handled automatically)
+        result = youtube_service.get_channel_info()
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"YouTube channel info error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/youtube/status', methods=['GET'])
+def youtube_status():
+    """Get YouTube service status"""
+    try:
+
+        
+        # Check if client secrets file exists
+        client_secrets_exists = os.path.exists('client_secrets.json')
+        
+        return jsonify({
+            'available': True,
+            'client_secrets_exists': client_secrets_exists,
+            'message': 'YouTube service is available' if client_secrets_exists else 'YouTube service available but client_secrets.json not found'
+        })
+        
+    except Exception as e:
+        logging.error(f"YouTube status error: {e}")
+        return jsonify({'available': False, 'error': str(e)})
+
+def save_upload_record(video_path: str, upload_result: dict):
+    """Save YouTube upload record"""
+    try:
+        uploads_file = 'youtube_uploads.json'
+        uploads = []
+        
+        # Load existing uploads
+        if os.path.exists(uploads_file):
+            with open(uploads_file, 'r') as f:
+                uploads = json.load(f)
+        
+        # Add new upload record
+        upload_record = {
+            'video_path': video_path,
+            'youtube_id': upload_result.get('video_id'),
+            'youtube_url': upload_result.get('video_url'),
+            'title': upload_result.get('title'),
+            'upload_time': upload_result.get('upload_time'),
+            'status': 'uploaded'
+        }
+        
+        uploads.append(upload_record)
+        
+        # Save back to file
+        with open(uploads_file, 'w') as f:
+            json.dump(uploads, f, indent=2)
+            
+        logging.info(f"YouTube upload record saved: {upload_result.get('video_id')}")
+        
+    except Exception as e:
+        logging.error(f"Error saving upload record: {e}")
 
 # Main execution
 if __name__ == '__main__':

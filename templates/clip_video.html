@@ -394,6 +394,196 @@ body {
     display: block;
 }
 
+.caption-section {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+}
+
+.caption-section h3 {
+    font-family: 'Poppins', sans-serif;
+    color: var(--deep-blue);
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.caption-content {
+    background: var(--off-white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.caption-text {
+    font-size: 1.1rem;
+    color: var(--dark-gray);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.caption-hashtags {
+    font-size: 1rem;
+    color: var(--primary-blue);
+    font-weight: 600;
+    text-align: center;
+}
+
+.caption-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.variations-section {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+}
+
+.variations-section h3 {
+    font-family: 'Poppins', sans-serif;
+    color: var(--deep-blue);
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.variations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.variation-card {
+    background: var(--off-white);
+    border: 2px solid var(--light-gray);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.variation-card:hover {
+    border-color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(26, 86, 219, 0.1);
+}
+
+.variation-card.selected {
+    border-color: var(--success-green);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.variation-type {
+    display: inline-block;
+    background: var(--primary-blue);
+    color: var(--white);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.variation-caption {
+    font-size: 1rem;
+    color: var(--dark-gray);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.variation-hashtags {
+    font-size: 0.9rem;
+    color: var(--primary-blue);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.variation-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.variation-btn {
+    background: var(--white);
+    color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.variation-btn:hover {
+    background: var(--primary-blue);
+    color: var(--white);
+}
+
+.variation-btn.primary {
+    background: var(--success-green);
+    color: var(--white);
+    border-color: var(--success-green);
+}
+
+.variation-btn.primary:hover {
+    background: #059669;
+}
+
+.status-indicator {
+    background: var(--off-white);
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-around;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+}
+
+.status-item i {
+    font-size: 1.2rem;
+    color: var(--primary-blue);
+}
+
+.status-item span {
+    font-size: 0.9rem;
+    color: var(--dark-gray);
+    font-weight: 600;
+}
+
+.status-item span.status-ok {
+    color: var(--success-green);
+}
+
+.status-item span.status-warning {
+    color: var(--warning-orange);
+}
+
+.status-item span.status-error {
+    color: var(--danger-red);
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 0 1rem;
@@ -414,6 +604,14 @@ body {
     .clip-actions {
         flex-direction: column;
         align-items: center;
+    }
+    .status-indicator {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .status-item {
+        justify-content: center;
     }
 }
 </style>
@@ -437,6 +635,17 @@ body {
                 <i class="fas fa-upload"></i>
                 Upload Video
             </h2>
+            
+            <div class="status-indicator" id="statusIndicator" style="display: none;">
+                <div class="status-item">
+                    <i class="fas fa-server"></i>
+                    <span>Server Status: <span id="serverStatus">Checking...</span></span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-video"></i>
+                    <span>FFmpeg: <span id="ffmpegStatus">Checking...</span></span>
+                </div>
+            </div>
             
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">
@@ -522,6 +731,37 @@ body {
                     <i class="fas fa-plus"></i>
                     Create Another Clip
                 </button>
+                <button class="action-btn" onclick="generateCaptionForClip()" id="captionBtn" style="display: none;">
+                    <i class="fas fa-comment-dots"></i>
+                    Generate Caption
+                </button>
+                <button class="action-btn secondary" onclick="generateCaptionVariations()" id="variationsBtn" style="display: none;">
+                    <i class="fas fa-magic"></i>
+                    Get Variations
+                </button>
+            </div>
+            
+            <div class="caption-section" id="captionSection" style="display: none;">
+                <h3>Generated Caption</h3>
+                <div class="caption-content">
+                    <div class="caption-text" id="captionText"></div>
+                    <div class="caption-hashtags" id="captionHashtags"></div>
+                </div>
+                <div class="caption-actions">
+                    <button class="action-btn secondary" onclick="copyCaption()">
+                        <i class="fas fa-copy"></i>
+                        Copy Caption
+                    </button>
+                    <button class="action-btn secondary" onclick="editCaption()">
+                        <i class="fas fa-edit"></i>
+                        Edit Caption
+                    </button>
+                </div>
+            </div>
+            
+            <div class="variations-section" id="variationsSection" style="display: none;">
+                <h3>Caption Variations</h3>
+                <div class="variations-grid" id="variationsGrid"></div>
             </div>
         </div>
     </div>
@@ -534,6 +774,7 @@ body {
         document.addEventListener('DOMContentLoaded', function() {
             initializeUploadArea();
             initializeTimeInputs();
+            checkServerStatus();
         });
         
         function initializeUploadArea() {
@@ -699,6 +940,11 @@ body {
                 return;
             }
             
+            if (endTime > videoDuration) {
+                showError(`End time cannot exceed video duration (${videoDuration.toFixed(1)}s).`);
+                return;
+            }
+            
             // Show loading
             const loading = document.getElementById('loading');
             const clipButton = document.getElementById('clipButton');
@@ -748,6 +994,8 @@ body {
             const resultSection = document.getElementById('resultSection');
             const successMessage = document.getElementById('successMessage');
             const clipDetails = document.getElementById('clipDetails');
+            const captionBtn = document.getElementById('captionBtn');
+            const variationsBtn = document.getElementById('variationsBtn');
             
             successMessage.textContent = data.message;
             
@@ -771,10 +1019,247 @@ body {
                         <div class="info-value">${data.day_name}</div>
                     </div>
                 </div>
+                <div style="text-align: center; margin-top: 1rem; padding: 1rem; background: var(--off-white); border-radius: 8px;">
+                    <p style="margin: 0; color: var(--success-green); font-weight: 600;">
+                        <i class="fas fa-check-circle"></i>
+                        Your clip has been added to the trimmed videos dashboard!
+                    </p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: var(--dark-gray);">
+                        Go to the main dashboard to view and manage your clips.
+                    </p>
+                </div>
             `;
             
             resultSection.classList.add('show');
             resultSection.scrollIntoView({ behavior: 'smooth' });
+            
+            // Show caption generation buttons
+            captionBtn.style.display = 'inline-flex';
+            variationsBtn.style.display = 'inline-flex';
+            
+            // Try to refresh the dashboard if we're on the edit page
+            try {
+                if (typeof loadDashboard === 'function') {
+                    loadDashboard();
+                }
+            } catch (e) {
+                console.log('Dashboard refresh not available on this page');
+            }
+        }
+        
+        async function generateCaptionForClip() {
+            if (!selectedFile) {
+                showError('Please create a clip first.');
+                return;
+            }
+            
+            const captionBtn = document.getElementById('captionBtn');
+            const captionSection = document.getElementById('captionSection');
+            const captionText = document.getElementById('captionText');
+            const captionHashtags = document.getElementById('captionHashtags');
+            
+            // Show loading state
+            captionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            captionBtn.disabled = true;
+            captionSection.style.display = 'block';
+            
+            if (captionText) captionText.innerHTML = '<span style="color: var(--primary-blue);"><i class="fas fa-spinner fa-spin"></i> Generating professional caption with Gemini AI...</span>';
+            if (captionHashtags) captionHashtags.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/generate_caption', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        filename: selectedFile.name 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (captionText) captionText.innerHTML = data.caption;
+                    if (captionHashtags) captionHashtags.innerHTML = data.hashtags;
+                    
+                    // Save caption
+                    await saveCaption(data.caption, data.hashtags);
+                    
+                    showNotification('Caption generated successfully!', 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to generate caption');
+                }
+                
+            } catch (error) {
+                console.error('Caption generation error:', error);
+                if (captionText) captionText.innerHTML = `<span style="color: var(--danger-red);"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</span>`;
+                showError(`Error generating caption: ${error.message}`);
+            } finally {
+                // Restore button state
+                captionBtn.innerHTML = '<i class="fas fa-comment-dots"></i> Generate Caption';
+                captionBtn.disabled = false;
+            }
+        }
+        
+        async function saveCaption(caption, hashtags) {
+            try {
+                const response = await fetch('/api/save_caption', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: selectedFile.name,
+                        caption: caption,
+                        hashtags: hashtags
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Caption saved successfully');
+                } else {
+                    console.error('Failed to save caption');
+                }
+            } catch (error) {
+                console.error('Error saving caption:', error);
+            }
+        }
+        
+        function copyCaption() {
+            const captionText = document.getElementById('captionText');
+            const captionHashtags = document.getElementById('captionHashtags');
+            
+            if (captionText && captionHashtags) {
+                const fullCaption = captionText.innerText + '\n\n' + captionHashtags.innerText;
+                navigator.clipboard.writeText(fullCaption).then(() => {
+                    showNotification('Caption copied to clipboard!', 'success');
+                }).catch(() => {
+                    showNotification('Failed to copy caption', 'error');
+                });
+            }
+        }
+        
+        function editCaption() {
+            const captionText = document.getElementById('captionText');
+            const captionHashtags = document.getElementById('captionHashtags');
+            
+            if (captionText && captionHashtags) {
+                const newCaption = prompt('Edit caption:', captionText.innerText);
+                if (newCaption !== null) {
+                    captionText.innerHTML = newCaption;
+                    showNotification('Caption updated!', 'success');
+                }
+            }
+        }
+        
+        async function generateCaptionVariations() {
+            if (!selectedFile) {
+                showError('Please create a clip first.');
+                return;
+            }
+            
+            const variationsBtn = document.getElementById('variationsBtn');
+            const variationsSection = document.getElementById('variationsSection');
+            const variationsGrid = document.getElementById('variationsGrid');
+            
+            // Show loading state
+            variationsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            variationsBtn.disabled = true;
+            variationsSection.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/generate_caption_variations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        filename: selectedFile.name 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayCaptionVariations(data.variations);
+                    showNotification('Caption variations generated successfully!', 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to generate variations');
+                }
+                
+            } catch (error) {
+                console.error('Caption variations error:', error);
+                showError(`Error generating variations: ${error.message}`);
+            } finally {
+                // Restore button state
+                variationsBtn.innerHTML = '<i class="fas fa-magic"></i> Get Variations';
+                variationsBtn.disabled = false;
+            }
+        }
+        
+        function displayCaptionVariations(variations) {
+            const variationsGrid = document.getElementById('variationsGrid');
+            variationsGrid.innerHTML = '';
+            
+            variations.forEach((variation, index) => {
+                const variationCard = document.createElement('div');
+                variationCard.className = 'variation-card';
+                variationCard.onclick = () => selectVariation(index, variation);
+                
+                variationCard.innerHTML = `
+                    <div class="variation-type">${variation.type}</div>
+                    <div class="variation-caption">${variation.caption}</div>
+                    <div class="variation-hashtags">${variation.hashtags}</div>
+                    <div class="variation-actions">
+                        <button class="variation-btn" onclick="event.stopPropagation(); copyVariation('${variation.caption}', '${variation.hashtags}')">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <button class="variation-btn primary" onclick="event.stopPropagation(); useVariation('${variation.caption}', '${variation.hashtags}')">
+                            <i class="fas fa-check"></i> Use This
+                        </button>
+                    </div>
+                `;
+                
+                variationsGrid.appendChild(variationCard);
+            });
+        }
+        
+        function selectVariation(index, variation) {
+            // Remove previous selection
+            document.querySelectorAll('.variation-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select current variation
+            event.currentTarget.classList.add('selected');
+            
+            // Show notification
+            showNotification(`Selected ${variation.type} variation!`, 'success');
+        }
+        
+        function copyVariation(caption, hashtags) {
+            const fullCaption = caption + '\n\n' + hashtags;
+            navigator.clipboard.writeText(fullCaption).then(() => {
+                showNotification('Variation copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy variation', 'error');
+            });
+        }
+        
+        function useVariation(caption, hashtags) {
+            // Update the main caption section
+            const captionSection = document.getElementById('captionSection');
+            const captionText = document.getElementById('captionText');
+            const captionHashtags = document.getElementById('captionHashtags');
+            
+            if (captionText && captionHashtags) {
+                captionText.innerHTML = caption;
+                captionHashtags.innerHTML = hashtags;
+                
+                // Show caption section
+                captionSection.style.display = 'block';
+                
+                // Save caption
+                saveCaption(caption, hashtags);
+                
+                showNotification('Variation applied successfully!', 'success');
+            }
         }
         
         function createAnotherClip() {
@@ -791,6 +1276,51 @@ body {
         function hideError() {
             const errorMessage = document.getElementById('errorMessage');
             errorMessage.classList.remove('show');
+        }
+
+        async function checkServerStatus() {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const serverStatus = document.getElementById('serverStatus');
+            const ffmpegStatus = document.getElementById('ffmpegStatus');
+
+            try {
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    statusIndicator.style.display = 'flex';
+                    
+                    // Server status
+                    serverStatus.textContent = 'OK';
+                    serverStatus.classList.add('status-ok');
+                    serverStatus.classList.remove('status-warning', 'status-error');
+
+                    // FFmpeg status
+                    if (data.ffmpeg_available) {
+                        ffmpegStatus.textContent = 'Available';
+                        ffmpegStatus.classList.add('status-ok');
+                        ffmpegStatus.classList.remove('status-warning', 'status-error');
+                    } else {
+                        ffmpegStatus.textContent = 'Not Available';
+                        ffmpegStatus.classList.add('status-error');
+                        ffmpegStatus.classList.remove('status-ok', 'status-warning');
+                    }
+                } else {
+                    serverStatus.textContent = 'Error';
+                    serverStatus.classList.add('status-error');
+                    serverStatus.classList.remove('status-ok', 'status-warning');
+                    ffmpegStatus.textContent = 'N/A';
+                    ffmpegStatus.classList.add('status-error');
+                    ffmpegStatus.classList.remove('status-ok', 'status-warning');
+                }
+            } catch (error) {
+                console.error('Server status check error:', error);
+                serverStatus.textContent = 'Error';
+                serverStatus.classList.add('status-error');
+                serverStatus.classList.remove('status-ok', 'status-warning');
+                ffmpegStatus.textContent = 'N/A';
+                ffmpegStatus.classList.add('status-error');
+                ffmpegStatus.classList.remove('status-ok', 'status-warning');
+            }
         }
     </script>
 </body>
