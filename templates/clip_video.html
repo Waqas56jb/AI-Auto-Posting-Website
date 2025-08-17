@@ -1063,7 +1063,7 @@ body {
             captionBtn.disabled = true;
             captionSection.style.display = 'block';
             
-            if (captionText) captionText.innerHTML = '<span style="color: var(--primary-blue);"><i class="fas fa-spinner fa-spin"></i> Generating professional caption with Gemini AI...</span>';
+            if (captionText) captionText.innerHTML = '<span style="color: var(--primary-blue);"><i class="fas fa-spinner fa-spin"></i> Generating professional caption and title with Gemini AI...</span>';
             if (captionHashtags) captionHashtags.innerHTML = '';
             
             try {
@@ -1081,10 +1081,10 @@ body {
                     if (captionText) captionText.innerHTML = data.caption;
                     if (captionHashtags) captionHashtags.innerHTML = data.hashtags;
                     
-                    // Save caption
-                    await saveCaption(data.caption, data.hashtags);
+                    // Save caption and title
+                    await saveCaption(data.caption, data.hashtags, data.title);
                     
-                    showNotification('Caption generated successfully!', 'success');
+                    showNotification('Caption and title generated successfully!', 'success');
                 } else {
                     throw new Error(data.error || 'Failed to generate caption');
                 }
@@ -1100,7 +1100,7 @@ body {
             }
         }
         
-        async function saveCaption(caption, hashtags) {
+        async function saveCaption(caption, hashtags, title = '') {
             try {
                 const response = await fetch('/api/save_caption', {
                     method: 'POST',
@@ -1108,18 +1108,19 @@ body {
                     body: JSON.stringify({
                         filename: selectedFile.name,
                         caption: caption,
-                        hashtags: hashtags
+                        hashtags: hashtags,
+                        title: title
                     })
                 });
                 
                 const data = await response.json();
                 if (data.success) {
-                    console.log('Caption saved successfully');
+                    console.log('Caption and title saved successfully');
                 } else {
-                    console.error('Failed to save caption');
+                    console.error('Failed to save caption and title');
                 }
             } catch (error) {
-                console.error('Error saving caption:', error);
+                console.error('Error saving caption and title:', error);
             }
         }
         

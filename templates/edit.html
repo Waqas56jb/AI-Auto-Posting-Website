@@ -1171,11 +1171,40 @@ body {
             border-bottom: 1px solid #e5e7eb;
         }
         
+        .video-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        
         .video-header h3 {
             margin: 0;
             font-size: 1.1rem;
             color: #374151;
             font-weight: 600;
+            flex: 1;
+        }
+        
+        .regenerate-title-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.4rem 0.6rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .regenerate-title-btn:hover {
+            background: #e5e7eb;
+            color: #374151;
+            transform: translateY(-1px);
+        }
+        
+        .regenerate-title-btn:active {
+            transform: translateY(0);
         }
         
         .video-type-badge {
@@ -2599,34 +2628,88 @@ body {
                 const filename = (videoPath || '').split('/').pop().split('?')[0];
 
                 const doYoutubeUpload = (cap, tags) => {
-                    fetch('/api/youtube/upload', {
+                    // Combine caption and hashtags for description
+                    const description = (cap || '') + (tags ? '\n\n' + tags : '');
+                    // Extract hashtags as tags array
+                    const tagsArray = tags ? tags.match(/#\w+/g) || [] : [];
+                    
+                    // Generate professional title first
+                    fetch('/api/generate_title', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            video_path: videoPath,
-                            title: '',
-                            caption: cap || '',
-                            hashtags: tags || '',
-                            privacyStatus: 'public'
+                            filename: filename
                         })
                     })
                     .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            console.log('YouTube upload success:', data);
-                            showNotification('Uploaded to YouTube successfully', 'success');
-                        } else {
-                            console.warn('YouTube upload failed:', data);
-                            showNotification(`YouTube upload failed: ${data.message || 'Unknown error'}`, 'error');
-                        }
+                    .then(titleData => {
+                        const title = titleData.success ? titleData.title : filename.replace(/\.[^/.]+$/, '');
+                        
+                        // Now upload to YouTube with generated title
+                        fetch('/api/youtube/upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                video_path: videoPath,
+                                title: title,
+                                description: description,
+                                tags: tagsArray,
+                                privacy: 'public'
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log('YouTube upload success:', data);
+                                showNotification('Uploaded to YouTube successfully', 'success');
+                            } else {
+                                console.warn('YouTube upload failed:', data);
+                                showNotification(`YouTube upload failed: ${data.message || 'Unknown error'}`, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('YouTube upload error:', err);
+                            showNotification('YouTube upload error. Check logs.', 'error');
+                        })
+                        .finally(() => {
+                            btn.innerHTML = originalHTML;
+                            btn.disabled = false;
+                        });
                     })
                     .catch(err => {
-                        console.error('YouTube upload error:', err);
-                        showNotification('YouTube upload error. Check logs.', 'error');
-                    })
-                    .finally(() => {
-                        btn.innerHTML = originalHTML;
-                        btn.disabled = false;
+                        console.error('Title generation error:', err);
+                        // Fallback to filename if title generation fails
+                        const title = filename.replace(/\.[^/.]+$/, '');
+                        
+                        fetch('/api/youtube/upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                video_path: videoPath,
+                                title: title,
+                                description: description,
+                                tags: tagsArray,
+                                privacy: 'public'
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log('YouTube upload success:', data);
+                                showNotification('Uploaded to YouTube successfully', 'success');
+                            } else {
+                                console.warn('YouTube upload failed:', data);
+                                showNotification(`YouTube upload failed: ${data.message || 'Unknown error'}`, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('YouTube upload error:', err);
+                            showNotification('YouTube upload error. Check logs.', 'error');
+                        })
+                        .finally(() => {
+                            btn.innerHTML = originalHTML;
+                            btn.disabled = false;
+                        });
                     });
                 };
 
@@ -2918,6 +3001,7 @@ body {
                 const captionContainer = videoCard ? videoCard.querySelector('.caption-container') : null;
                 let caption = '';
                 let hashtags = '';
+                let title = '';
                 
                 if (captionContainer && captionContainer.style.display !== 'none') {
                     const captionText = captionContainer.querySelector('.caption-text');
@@ -2926,8 +3010,26 @@ body {
                     hashtags = captionHashtags ? captionHashtags.innerText : '';
                 }
                 
-                // Simulate posting to social media
-                postToSocialMedia(platform, filename, caption, hashtags);
+                // Try to get title from saved caption data
+                fetch(`/api/load_caption?filename=${encodeURIComponent(filename)}`)
+                .then(res => res.json())
+                .then(captionData => {
+                    if (captionData.success && captionData.title) {
+                        title = captionData.title;
+                    }
+                    
+                    // Include title in the caption if available
+                    if (title && !caption.includes(title)) {
+                        caption = `${title}\n\n${caption}`;
+                    }
+                    
+                    // Simulate posting to social media
+                    postToSocialMedia(platform, filename, caption, hashtags);
+                })
+                .catch(() => {
+                    // If caption loading fails, proceed without title
+                    postToSocialMedia(platform, filename, caption, hashtags);
+                });
             } else {
                 // No credentials, redirect to settings
                 if (confirm(`${platform.charAt(0).toUpperCase() + platform.slice(1)} credentials not configured. Would you like to go to settings to configure them?`)) {
@@ -2960,6 +3062,7 @@ body {
             // Check if we have a caption for this video
             let caption = '';
             let hashtags = '';
+            let title = '';
             
             try {
                 const captionResponse = await fetch(`/api/load_caption?filename=${encodeURIComponent(filename)}`);
@@ -2968,16 +3071,41 @@ body {
                     if (captionData.success) {
                         caption = captionData.caption || '';
                         hashtags = captionData.hashtags || '';
+                        title = captionData.title || '';
                     }
                 }
             } catch (e) {
                 console.log('No caption found, proceeding without caption');
             }
             
+            // Use saved title or generate one if not available
+            if (!title) {
+                title = filename.replace(/\.[^/.]+$/, ''); // Fallback to filename
+                
+                try {
+                    const titleResponse = await fetch('/api/generate_title', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            filename: filename
+                        })
+                    });
+                    
+                    if (titleResponse.ok) {
+                        const titleData = await titleResponse.json();
+                        if (titleData.success) {
+                            title = titleData.title;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Title generation failed, using filename as fallback');
+                }
+            }
+            
             // Prepare upload data
             const uploadData = {
                 video_path: videoPath,
-                title: filename.replace(/\.[^/.]+$/, ''), // Remove file extension
+                title: title,
                 description: caption + '\n\n' + hashtags,
                 tags: extractHashtags(hashtags),
                 privacy: 'public'
@@ -3139,7 +3267,10 @@ body {
         
         videoCard.innerHTML = `
             <div class="video-header">
-                <h3>${trimmedFileName.length > 30 ? trimmedFileName.substring(0, 30) + '...' : trimmedFileName}</h3>
+                <h3 title="${trimmedFileName}" class="video-title">${trimmedFileName.length > 30 ? trimmedFileName.substring(0, 30) + '...' : trimmedFileName}</h3>
+                <button class="regenerate-title-btn" onclick="regenerateTitle('${fileNameFromPath}')" title="Generate New Title">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
             
             <video controls class="video-el">
@@ -3235,26 +3366,27 @@ body {
     }
 
     // Save caption to file for persistence
-    function saveCaptionToFile(filename, caption, hashtags) {
+    function saveCaptionToFile(filename, caption, hashtags, title = '') {
         fetch('/api/save_caption', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 filename: filename,
                 caption: caption,
-                hashtags: hashtags
+                hashtags: hashtags,
+                title: title
             })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                console.log('Caption saved successfully');
+                console.log('Caption and title saved successfully');
             } else {
-                console.error('Failed to save caption');
+                console.error('Failed to save caption and title');
             }
         })
         .catch(error => {
-            console.error('Error saving caption:', error);
+            console.error('Error saving caption and title:', error);
         });
     }
     
@@ -3280,6 +3412,15 @@ body {
                         if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${data.hashtags}</span>`;
                         captionContainer.style.display = 'block';
                     }
+                    
+                    // Update video card title if available
+                    if (data.title) {
+                        const videoHeader = card.querySelector('.video-title');
+                        if (videoHeader) {
+                            videoHeader.textContent = data.title.length > 30 ? data.title.substring(0, 30) + '...' : data.title;
+                            videoHeader.title = data.title; // Full title on hover
+                        }
+                    }
                 } else {
                     // Fallback to localStorage
                     try {
@@ -3293,6 +3434,15 @@ body {
                                 if (captionText) captionText.innerHTML = parsed.caption || '';
                                 if (captionHashtags) captionHashtags.innerHTML = `<span style='color:#64748b; font-size:0.98rem; margin-top:0.2rem; font-weight:bold;'>${parsed.hashtags || ''}</span>`;
                                 captionContainer.style.display = 'block';
+                            }
+                            
+                            // Update video card title from localStorage if available
+                            if (parsed.title) {
+                                const videoHeader = card.querySelector('.video-title');
+                                if (videoHeader) {
+                                    videoHeader.textContent = parsed.title.length > 30 ? parsed.title.substring(0, 30) + '...' : parsed.title;
+                                    videoHeader.title = parsed.title; // Full title on hover
+                                }
                             }
                         }
                     } catch (_) {}
@@ -3370,7 +3520,7 @@ body {
         }
         
         // Save to file
-        saveCaptionToFile(filename, newCaption, newHashtags);
+                            saveCaptionToFile(filename, newCaption, newHashtags, '');
         
         // Close modal
         const modal = document.querySelector('.modal');
@@ -3804,7 +3954,7 @@ body {
         
         videoCard.innerHTML = `
             <div class="video-header">
-                <h3>${video.name.length > 30 ? video.name.substring(0, 30) + '...' : video.name}</h3>
+                <h3 title="${video.name}">${video.name.length > 30 ? video.name.substring(0, 30) + '...' : video.name}</h3>
             </div>
             
             <video controls class="video-el">
@@ -3988,18 +4138,28 @@ body {
                 if (captionEyeBtn) captionEyeBtn.style.display = 'flex';
                 if (captionEditBtn) captionEditBtn.style.display = 'flex';
                 
-                // Save caption to file for persistence
-                saveCaptionToFile(filename, data.caption, data.hashtags);
+                // Update video card title if available
+                if (data.title) {
+                    const videoHeader = videoCard.querySelector('.video-title');
+                    if (videoHeader) {
+                        videoHeader.textContent = data.title.length > 30 ? data.title.substring(0, 30) + '...' : data.title;
+                        videoHeader.title = data.title; // Full title on hover
+                    }
+                }
+                
+                // Save caption and title to file for persistence
+                saveCaptionToFile(filename, data.caption, data.hashtags, data.title);
                 // Persist UI via localStorage as an extra safeguard
                 try {
                     localStorage.setItem(`caption:${filename}`, JSON.stringify({
                         caption: data.caption,
-                        hashtags: data.hashtags
+                        hashtags: data.hashtags,
+                        title: data.title
                     }));
                 } catch (_) {}
                 
                 // Show success notification
-                showNotification('Professional caption generated successfully!', 'success');
+                showNotification('Professional caption and title generated successfully!', 'success');
                 
                 // AI trim suggestion removed per request
             } else {
@@ -4230,7 +4390,7 @@ body {
                 console.log('Headless caption generation response:', data);
                 if (data?.success) {
                     // Save to file immediately
-                    saveCaptionToFile(filename, data.caption, data.hashtags);
+                    saveCaptionToFile(filename, data.caption, data.hashtags, '');
                     showNotification(`Caption generated and saved for: ${filename}`, 'success');
                 }
             })
@@ -4591,7 +4751,10 @@ body {
                     
                     videoCard.innerHTML = `
                         <div class="video-header">
-                            <h3>${video.filename.length > 30 ? video.filename.substring(0, 30) + '...' : video.filename}</h3>
+                            <h3 title="${video.filename}" class="video-title">${video.filename.length > 30 ? video.filename.substring(0, 30) + '...' : video.filename}</h3>
+                            <button class="regenerate-title-btn" onclick="regenerateTitle('${video.filename}')" title="Generate New Title">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
                         </div>
                         
                         <video controls class="video-el">
@@ -4713,6 +4876,84 @@ function goToCaptionPage(videoPath, filename) {
     function postNow(videoPath, filename) {
         // Navigate to posting page
         window.location.href = `/edit?video=${encodeURIComponent(videoPath)}&action=post`;
+    }
+    
+    // Regenerate title function
+    function regenerateTitle(filename) {
+        // Find the video card
+        let videoCard = document.querySelector(`[data-video-path*="${filename}"]`);
+        if (!videoCard) {
+            videoCard = document.querySelector(`.video-name:contains("${filename}")`)?.closest('.video-card');
+        }
+        if (!videoCard) {
+            videoCard = document.querySelector(`.video-filename:contains("${filename}")`)?.closest('.video-card');
+        }
+        
+        if (!videoCard) {
+            showNotification('Video card not found', 'error');
+            return;
+        }
+        
+        const titleElement = videoCard.querySelector('.video-title');
+        const regenerateBtn = videoCard.querySelector('.regenerate-title-btn');
+        
+        if (!titleElement) {
+            showNotification('Title element not found', 'error');
+            return;
+        }
+        
+        // Show loading state
+        const originalText = titleElement.textContent;
+        const originalBtnText = regenerateBtn.innerHTML;
+        
+        titleElement.innerHTML = '<span style="color:#1a56db;"><i class="fas fa-spinner fa-spin"></i> Generating new title...</span>';
+        regenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        regenerateBtn.disabled = true;
+        
+        showNotification('Generating new title with Gemini AI...', 'info');
+        
+        fetch('/api/regenerate_title', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename })
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('Title regeneration response:', data);
+            
+            if (data.success) {
+                const newTitle = data.title;
+                titleElement.textContent = newTitle.length > 30 ? newTitle.substring(0, 30) + '...' : newTitle;
+                titleElement.title = newTitle; // Full title on hover
+                
+                // Save the new title
+                try {
+                    const existingData = JSON.parse(localStorage.getItem(`caption:${filename}`) || '{}');
+                    existingData.title = newTitle;
+                    localStorage.setItem(`caption:${filename}`, JSON.stringify(existingData));
+                } catch (_) {}
+                
+                showNotification('New title generated successfully!', 'success');
+            } else {
+                titleElement.textContent = originalText;
+                showNotification(`Failed to generate new title: ${data.error || 'Unknown error'}`, 'error');
+            }
+        })
+        .catch((error) => {
+            console.error('Error regenerating title:', error);
+            titleElement.textContent = originalText;
+            showNotification('Error generating new title. Please try again.', 'error');
+        })
+        .finally(() => {
+            // Restore button state
+            regenerateBtn.innerHTML = originalBtnText;
+            regenerateBtn.disabled = false;
+        });
     }
 </script>
 </body>

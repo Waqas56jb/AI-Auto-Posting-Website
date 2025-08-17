@@ -37,203 +37,95 @@ import googleapiclient.http
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# YouTube Service Class
-class YouTubeService:
-    """Simplified YouTube API service for direct uploads"""
-    
-    def __init__(self):
-        self.SCOPES = [
-            "https://www.googleapis.com/auth/youtube.upload",
-            "https://www.googleapis.com/auth/youtube.readonly"
-        ]
-        self.TOKEN_FILE = 'youtube_token.json'
-        self.CLIENT_SECRETS_FILE = 'client_secrets.json'
-        self.youtube = None
+# YouTube Upload Functions (Simplified)
+def authenticate_youtube():
+    """Authenticate with YouTube API using OAuth2"""
+    try:
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
         
-    def authenticate(self) -> bool:
-        """Authenticate with YouTube API using OAuth2"""
-        try:
-            # Set environment variable for OAuth
-            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-            
-            # Check if client secrets file exists
-            if not os.path.exists(self.CLIENT_SECRETS_FILE):
-                logger.error(f"Client secrets file not found: {self.CLIENT_SECRETS_FILE}")
-                return False
-            
-            # Remove existing token file to force re-authentication
-            if os.path.exists(self.TOKEN_FILE):
-                try:
-                    os.remove(self.TOKEN_FILE)
-                    logger.info("Removed existing token file for fresh authentication")
-                except Exception as e:
-                    logger.warning(f"Could not remove token file: {e}")
-            
-            # Load client secrets and create flow
-            logger.info("Loading client secrets and creating OAuth flow...")
-            flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-                self.CLIENT_SECRETS_FILE, self.SCOPES)
-            
-            # Run local server for authentication
-            logger.info("Starting OAuth authentication flow...")
-            credentials = flow.run_local_server(port=8080)
-            
-            # Build YouTube service
-            logger.info("Building YouTube API service...")
-            self.youtube = googleapiclient.discovery.build(
-                "youtube", "v3", credentials=credentials)
-            
-            logger.info("YouTube API authenticated successfully")
-            return True
-            
-        except google_auth_oauthlib.flow.FlowError as e:
-            logger.error(f"OAuth flow error: {e}")
-            return False
-        except Exception as e:
-            logger.error(f"Authentication error: {e}")
-            return False
-    
-    def upload_video(self, video_path: str, title: str, description: str, 
-                     tags: list = None, category_id: str = "22", 
-                     privacy_status: str = "public") -> dict:
-        """Upload video to YouTube with metadata"""
-        try:
-            # Ensure authentication
-            if not self.youtube:
-                logger.info("YouTube service not authenticated, attempting authentication...")
-                if not self.authenticate():
-                    return {"success": False, "error": "Failed to authenticate with YouTube API"}
-            
-            # Check if video file exists
-            if not os.path.exists(video_path):
-                return {"success": False, "error": f"Video file not found: {video_path}"}
-            
-            # Validate file size (YouTube has limits)
-            file_size = os.path.getsize(video_path)
-            if file_size > 128 * 1024 * 1024 * 1024:  # 128GB limit
-                return {"success": False, "error": "Video file too large (max 128GB)"}
-            
-            logger.info(f"Preparing to upload video: {video_path} (size: {file_size / (1024*1024):.2f} MB)")
-            
-            # Prepare request body
-            request_body = {
-                "snippet": {
-                    "categoryId": category_id,
-                    "title": title[:100],  # YouTube title limit
-                    "description": description[:5000],  # YouTube description limit
-                    "tags": tags or []
-                },
-                "status": {
-                    "privacyStatus": privacy_status
-                }
-            }
-            
-            logger.info(f"Upload metadata - Title: {title}, Description length: {len(description)}")
-            
-            # Create media upload object
-            media_file = googleapiclient.http.MediaFileUpload(
-                video_path, 
-                chunksize=1024*1024,  # 1MB chunks
-                resumable=True
-            )
-            
-            # Create upload request
-            request = self.youtube.videos().insert(
-                part="snippet,status",
-                body=request_body,
-                media_body=media_file
-            )
-            
-            # Upload video with progress tracking
-            logger.info(f"Starting video upload: {video_path}")
-            response = None
-            
-            while response is None:
-                try:
-                    status, response = request.next_chunk()
-                    if status:
-                        progress = int(status.progress() * 100)
-                        logger.info(f"Upload progress: {progress}%")
-                except googleapiclient.errors.HttpError as e:
-                    error_details = json.loads(e.content.decode())
-                    logger.error(f"Upload HTTP error: {error_details}")
-                    return {"success": False, "error": f"YouTube API error: {error_details.get('error', {}).get('message', 'Unknown error')}"}
-            
-            # Extract video information
-            video_id = response['id']
-            video_url = f"https://www.youtube.com/watch?v={video_id}"
-            
-            logger.info(f"Video uploaded successfully: {video_url}")
-            
-            return {
-                "success": True,
-                "video_id": video_id,
-                "video_url": video_url,
-                "youtube_url": video_url,  # For frontend compatibility
-                "title": title,
-                "upload_time": datetime.now().isoformat()
-            }
-            
-        except googleapiclient.errors.HttpError as e:
-            error_details = json.loads(e.content.decode())
-            logger.error(f"YouTube API error: {error_details}")
-            return {"success": False, "error": f"YouTube API error: {error_details.get('error', {}).get('message', 'Unknown error')}"}
-            
-        except Exception as e:
-            logger.error(f"Video upload error: {e}")
-            return {"success": False, "error": str(e)}
-    
-    def get_channel_info(self) -> dict:
-        """Get current channel information"""
-        try:
-            # Ensure authentication
-            if not self.youtube:
-                if not self.authenticate():
-                    return {"success": False, "error": "Failed to authenticate with YouTube"}
-            
-            # Get channel info
-            channels_response = self.youtube.channels().list(
-                part='snippet,statistics',
-                mine=True
-            ).execute()
-            
-            if channels_response['items']:
-                channel = channels_response['items'][0]
-                return {
-                    "success": True,
-                    "channel_id": channel['id'],
-                    "channel_title": channel['snippet']['title'],
-                    "subscriber_count": channel['statistics'].get('subscriberCount', 'Unknown'),
-                    "video_count": channel['statistics'].get('videoCount', 'Unknown'),
-                    "view_count": channel['statistics'].get('viewCount', 'Unknown')
-                }
-            else:
-                return {"success": False, "error": "No channel found"}
-                
-        except Exception as e:
-            logger.error(f"Error getting channel info: {e}")
-            return {"success": False, "error": str(e)}
-    
-    def check_quota(self) -> dict:
-        """Check YouTube API quota usage"""
-        try:
-            # Ensure authentication
-            if not self.youtube:
-                if not self.authenticate():
-                    return {"success": False, "error": "Failed to authenticate with YouTube"}
-            
-            return {
-                "success": True,
-                "message": "YouTube API quota status checked",
-                "note": "YouTube doesn't provide exact quota information via API"
-            }
-            
-        except Exception as e:
-            logger.error(f"Error checking quota: {e}")
-            return {"success": False, "error": str(e)}
+        # Remove existing token to force fresh authentication
+        token_file = 'youtube_token.json'
+        if os.path.exists(token_file):
+            os.remove(token_file)
+            logger.info("Removed existing token file for fresh authentication")
+        
+        client_secrets_file = "client_secrets.json"
+        
+        if not os.path.exists(client_secrets_file):
+            logger.error(f"Client secrets file not found: {client_secrets_file}")
+            return None
+        
+        flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+            client_secrets_file, ["https://www.googleapis.com/auth/youtube.upload"])
+        credentials = flow.run_local_server(port=8080)
+        
+        youtube = googleapiclient.discovery.build("youtube", "v3", credentials=credentials)
+        logger.info("YouTube API authenticated successfully")
+        return youtube
+        
+    except Exception as e:
+        logger.error(f"YouTube authentication error: {e}")
+        return None
 
-# Global YouTube service instance
-youtube_service = YouTubeService()
+def upload_video_simple(video_path, title, description, tags, privacy="private"):
+    """Upload video to YouTube with simplified approach"""
+    try:
+        logger.info(f"Starting YouTube upload for: {title}")
+        logger.info(f"Video path: {video_path}")
+        
+        youtube = authenticate_youtube()
+        if not youtube:
+            return {"success": False, "error": "Failed to authenticate with YouTube API"}
+        
+        request_body = {
+            "snippet": {
+                "categoryId": "22",
+                "title": title[:100],  # YouTube title limit
+                "description": description[:5000],  # YouTube description limit
+                "tags": tags or []
+            },
+            "status": {
+                "privacyStatus": privacy
+            }
+        }
+        
+        logger.info(f"Upload metadata - Title: {title}, Description length: {len(description)}")
+        
+        media_file = googleapiclient.http.MediaFileUpload(
+            video_path, chunksize=1024*1024, resumable=True)
+        
+        request = youtube.videos().insert(
+            part="snippet,status",
+            body=request_body,
+            media_body=media_file
+        )
+        
+        response = None
+        while response is None:
+            status, response = request.next_chunk()
+            if status:
+                progress = int(status.progress() * 100)
+                logger.info(f"Upload progress: {progress}%")
+        
+        video_id = response['id']
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        
+        logger.info(f"Video uploaded successfully: {video_url}")
+        
+        return {
+            "success": True,
+            "video_id": video_id,
+            "video_url": video_url,
+            "youtube_url": video_url,  # For frontend compatibility
+            "title": title,
+            "upload_time": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Video upload error: {e}")
+        return {"success": False, "error": str(e)}
+
+# Global YouTube service instance (using simplified functions)
 
 # Import configuration
 from config import *
@@ -2381,7 +2273,7 @@ def health_check():
 
 @app.route('/api/generate_caption', methods=['POST'])
 def generate_caption():
-    """Generate caption for a video using Gemini AI"""
+    """Generate caption and title for a video using Gemini AI"""
     try:
         data = request.get_json()
         if not data or 'filename' not in data:
@@ -2395,31 +2287,39 @@ def generate_caption():
         # Analyze filename for context clues
         context_keywords = analyze_filename_for_context(video_name)
         
+        # Generate professional title first
+        title = generate_professional_title(video_name)
+        
         # Generate engaging caption using Gemini AI
         prompt = f"""
-        Generate a compelling, story-focused social media caption for a video titled "{video_name}".
+        Generate a professional, comprehensive social media caption for a video titled "{title}".
         
         Context clues from filename: {', '.join(context_keywords) if context_keywords else 'No specific context detected'}
         
-        Requirements:
-        1. Create a captivating caption that tells a story and makes people want to watch
-        2. Make it emotional, relatable, and engaging
-        3. Include 8-12 highly relevant hashtags that are:
-           - Specific to the video content/theme
-           - Trending in social media
-           - Relevant to the target audience
-           - Mix of popular and niche hashtags
-        4. Keep the main caption under 200 characters for better engagement
-        5. Make it suitable for platforms like Instagram, TikTok, YouTube, LinkedIn, and Facebook
-        6. Include a clear call-to-action
-        7. Use emojis strategically to enhance engagement
+        CRITICAL REQUIREMENTS:
+        1. Create a professional, complete caption that tells a compelling story (500-800 characters)
+        2. Make it engaging, informative, and valuable to the audience
+        3. REMOVE any video filename references - focus on content value only
+        4. Include 15-20 famous, trending hashtags that are:
+           - Currently viral and popular on social media
+           - Relevant to the video content/theme
+           - Mix of broad and specific hashtags
+           - Include famous hashtags like #viral, #trending, #fyp, #foryou, #shorts, #reels
+        5. Make the caption lengthy and comprehensive (500-800 characters minimum)
+        6. Make it suitable for platforms like Instagram, TikTok, YouTube, LinkedIn, and Facebook
+        7. Include a clear, professional call-to-action
+        8. Use emojis strategically but professionally
+        9. Focus on providing value and insights
+        10. Avoid generic phrases and be specific to the content
+        11. Do NOT mention the video filename or technical details
+        12. Make it feel like a professional influencer post
         
         Format the response exactly as:
-        Caption: [your engaging story caption here]
-        Hashtags: [relevant hashtags here]
+        Caption: [your professional, comprehensive caption here]
+        Hashtags: [famous and relevant hashtags here]
         
-        Make the caption feel personal and authentic, like it's coming from a real person sharing a meaningful story.
-        Use the context clues to make the caption more relevant and specific.
+        Make the caption professional, complete, and valuable - something that would be used in a real social media post.
+        Use the context clues to make the caption more relevant and specific to the actual content.
         """
         
         try:
@@ -2439,34 +2339,161 @@ def generate_caption():
             
             # If parsing failed, create a fallback
             if not caption:
-                caption = f"🎬 This moment changed everything... {video_name} is the story you need to see right now! 💫 What's your take on this? 👇"
+                caption = "🎬 This moment changed everything... The story you need to see right now! 💫 This is the kind of content that goes viral because it's authentic, powerful, and speaks to everyone. What's your take on this incredible journey? Drop your thoughts below and let's start a conversation! 👇✨"
             
             if not hashtags:
-                hashtags = "#storytime #viral #trending #mustwatch #amazing #inspiration #life #motivation #viralvideo #trendingnow #amazing #inspiring #story #viralcontent #trendingvideo"
+                hashtags = "#viral #trending #fyp #foryou #shorts #reels #viralvideo #trendingnow #mustwatch #amazing #inspiration #life #motivation #storytime #inspiring #viralcontent #trendingvideo #fypシ #viralpost #trendingpost"
             
             return jsonify({
                 'success': True,
                 'caption': caption,
                 'hashtags': hashtags,
+                'title': title,
                 'filename': filename
             })
             
         except Exception as e:
             logging.error(f"Gemini AI error: {e}")
             # Fallback caption generation
-            fallback_caption = f"🎬 This moment changed everything... {video_name} is the story you need to see right now! 💫 What's your take on this? 👇"
-            fallback_hashtags = "#storytime #viral #trending #mustwatch #amazing #inspiration #life #motivation #viralvideo #trendingnow #amazing #inspiring #story #viralcontent #trendingvideo"
+            fallback_caption = "🎬 This moment changed everything... The story you need to see right now! 💫 This is the kind of content that goes viral because it's authentic, powerful, and speaks to everyone. What's your take on this incredible journey? Drop your thoughts below and let's start a conversation! 👇✨"
+            fallback_hashtags = "#viral #trending #fyp #foryou #shorts #reels #viralvideo #trendingnow #mustwatch #amazing #inspiration #life #motivation #storytime #inspiring #viralcontent #trendingvideo #fypシ #viralpost #trendingpost"
             
             return jsonify({
                 'success': True,
                 'caption': fallback_caption,
                 'hashtags': fallback_hashtags,
+                'title': title,
                 'filename': filename
             })
             
     except Exception as e:
         logging.error(f"Error generating caption: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/generate_title', methods=['POST'])
+def generate_title():
+    """Generate professional title for a video using Gemini AI"""
+    try:
+        data = request.get_json()
+        if not data or 'filename' not in data:
+            return jsonify({'success': False, 'error': 'Filename is required'}), 400
+        
+        filename = data['filename']
+        
+        # Extract video information from filename
+        video_name = os.path.splitext(filename)[0]
+        
+        # Generate professional title using Gemini AI
+        title = generate_professional_title(video_name)
+        
+        return jsonify({
+            'success': True,
+            'title': title,
+            'filename': filename
+        })
+        
+    except Exception as e:
+        logging.error(f"Error generating title: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/regenerate_title', methods=['POST'])
+def regenerate_title():
+    """Regenerate a different title for a video using Gemini AI"""
+    try:
+        data = request.get_json()
+        if not data or 'filename' not in data:
+            return jsonify({'success': False, 'error': 'Filename is required'}), 400
+        
+        filename = data['filename']
+        
+        # Extract video information from filename
+        video_name = os.path.splitext(filename)[0]
+        
+        # Generate a different professional title using Gemini AI
+        title = generate_professional_title(video_name)
+        
+        return jsonify({
+            'success': True,
+            'title': title,
+            'filename': filename
+        })
+        
+    except Exception as e:
+        logging.error(f"Error regenerating title: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+def generate_professional_title(video_name):
+    """Generate a professional title for YouTube using Gemini AI - 5-6 words, different each time"""
+    try:
+        # Analyze filename for context clues
+        context_keywords = analyze_filename_for_context(video_name)
+        
+        # Add random seed for variety
+        import random
+        random_seed = random.randint(1, 1000)
+        
+        prompt = f"""
+        Generate a professional, engaging YouTube video title for a video with filename "{video_name}".
+        
+        Context clues from filename: {', '.join(context_keywords) if context_keywords else 'No specific context detected'}
+        Random seed for variety: {random_seed}
+        
+        CRITICAL REQUIREMENTS:
+        1. Create EXACTLY 5-6 words (no more, no less)
+        2. Make it compelling and professional
+        3. Use power words that create curiosity and engagement
+        4. Make it SEO-friendly and searchable
+        5. Avoid clickbait but make it compelling
+        6. Make it suitable for YouTube's algorithm
+        7. Include relevant keywords naturally
+        8. Each generation should be different and unique
+        9. Remove any video filename references from the title
+        10. Focus on the content value, not the technical details
+        
+        Format the response exactly as:
+        Title: [your 5-6 word professional title here]
+        
+        Examples of good 5-6 word titles:
+        - "The Secret to Viral Success"
+        - "How I Built My Empire"
+        - "This Changed Everything Forever"
+        - "The Ultimate Guide to Growth"
+        - "What Nobody Tells You About"
+        
+        Make the title feel professional and authentic, optimized for YouTube's platform.
+        """
+        
+        response = model.generate_content(prompt)
+        content = response.text
+        
+        # Parse the response to extract title
+        lines = content.split('\n')
+        title = ""
+        
+        for line in lines:
+            if line.startswith('Title:'):
+                title = line.replace('Title:', '').strip()
+                break
+        
+        # If parsing failed, create a fallback
+        if not title:
+            title = "Amazing Content You Need to See"
+        
+        # Ensure title is 5-6 words
+        words = title.split()
+        if len(words) > 6:
+            title = ' '.join(words[:6])
+        elif len(words) < 5:
+            # Add words to make it 5-6 words
+            fallback_words = ["Amazing", "Content", "You", "Need", "To", "See"]
+            title = ' '.join(words + fallback_words[:5-len(words)])
+        
+        return title
+        
+    except Exception as e:
+        logging.error(f"Title generation error: {e}")
+        # Fallback title
+        return "Amazing Content You Need to See"
 
 def analyze_filename_for_context(filename):
     """Analyze filename to extract context clues for better caption generation"""
@@ -2521,7 +2548,7 @@ def analyze_filename_for_context(filename):
 
 @app.route('/api/save_caption', methods=['POST'])
 def save_caption():
-    """Save caption to file"""
+    """Save caption and title to file"""
     try:
         data = request.get_json()
         if not data or 'filename' not in data or 'caption' not in data:
@@ -2530,6 +2557,7 @@ def save_caption():
         filename = data['filename']
         caption = data.get('caption', '')
         hashtags = data.get('hashtags', '')
+        title = data.get('title', '')
         
         # Create captions directory if it doesn't exist
         captions_dir = 'captions'
@@ -2539,15 +2567,15 @@ def save_caption():
         caption_filename = f"{os.path.splitext(filename)[0]}.txt"
         caption_path = os.path.join(captions_dir, caption_filename)
         
-        # Save caption content
-        caption_content = f"Caption: {caption}\n\nHashtags: {hashtags}\n\nGenerated: {datetime.now().isoformat()}"
+        # Save caption content with title
+        caption_content = f"Title: {title}\n\nCaption: {caption}\n\nHashtags: {hashtags}\n\nGenerated: {datetime.now().isoformat()}"
         
         with open(caption_path, 'w', encoding='utf-8') as f:
             f.write(caption_content)
         
         return jsonify({
             'success': True,
-            'message': 'Caption saved successfully',
+            'message': 'Caption and title saved successfully',
             'filename': caption_filename
         })
         
@@ -2574,17 +2602,21 @@ def load_caption():
             
             # Parse caption content
             lines = content.split('\n')
+            title = ""
             caption = ""
             hashtags = ""
             
             for line in lines:
-                if line.startswith('Caption:'):
+                if line.startswith('Title:'):
+                    title = line.replace('Title:', '').strip()
+                elif line.startswith('Caption:'):
                     caption = line.replace('Caption:', '').strip()
                 elif line.startswith('Hashtags:'):
                     hashtags = line.replace('Hashtags:', '').strip()
             
             return jsonify({
                 'success': True,
+                'title': title,
                 'caption': caption,
                 'hashtags': hashtags,
                 'filename': filename
@@ -2629,7 +2661,10 @@ def generate_caption_variations():
            - Caption 2: Humorous and entertaining
            - Caption 3: Inspirational and motivational
         4. Keep each caption under 200 characters for better engagement
-        5. Include 8-12 highly relevant hashtags for each
+        5. Include 8-12 highly relevant hashtags for each that are:
+           - Specific to the video content/theme
+           - Trending in social media
+           - Relevant to the target audience
         6. Use emojis strategically to enhance engagement
         
         Format the response exactly as:
@@ -2759,6 +2794,8 @@ def youtube_upload():
     """Upload video to YouTube"""
     try:
         data = request.get_json()
+        logging.info(f"Received upload request: {data}")  # Debug logging
+        
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
         
@@ -2766,55 +2803,43 @@ def youtube_upload():
         title = data.get('title', 'Untitled Video')
         description = data.get('description', '')
         tags = data.get('tags', [])
-        privacy = data.get('privacy', 'public')
+        privacy = data.get('privacy', 'private')  # Default to private for safety
+        
+        logging.info(f"Original video path: {video_path}")  # Debug logging
         
         if not video_path:
             return jsonify({'success': False, 'error': 'Video path is required'}), 400
         
-        # Resolve full path - handle different path formats
-        if video_path.startswith('trimmed/'):
-            full_path = os.path.join('static/trimmed', video_path[9:])
-        elif video_path.startswith('videos/'):
-            full_path = os.path.join('static/videos', video_path[7:])
-        elif video_path.startswith('static/'):
-            full_path = video_path
-        elif os.path.exists(video_path):
-            full_path = video_path
-        else:
-            # Try common locations
-            possible_paths = [
-                os.path.join('static/trimmed', video_path),
-                os.path.join('static/videos', video_path),
-                os.path.join('static', video_path),
-                video_path
-            ]
-            
-            for path in possible_paths:
-                if os.path.exists(path):
-                    full_path = path
-                    break
-            else:
-                full_path = video_path
+        # Better path resolution - try multiple approaches
+        full_path = None
+        possible_paths = [
+            video_path,  # Try original path first
+            os.path.join('static/trimmed', os.path.basename(video_path)),
+            os.path.join('static/videos', os.path.basename(video_path)),
+            os.path.join('static', os.path.basename(video_path)),
+            os.path.join('static/trimmed', video_path),
+            os.path.join('static/videos', video_path)
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                full_path = path
+                break
         
         logging.info(f"Resolved video path: {full_path}")
         
-        if not os.path.exists(full_path):
-            logging.error(f"Video file not found: {full_path}")
+        if not full_path or not os.path.exists(full_path):
+            logging.error(f"Video file not found: {video_path}")
+            logging.error(f"Tried paths: {possible_paths}")
             return jsonify({'success': False, 'error': f'Video file not found: {video_path}'}), 404
         
         # Check file size
         file_size = os.path.getsize(full_path)
         logging.info(f"Video file size: {file_size / (1024*1024):.2f} MB")
         
-        # Upload video (authentication handled automatically)
+        # Use the simplified upload function
         logging.info(f"Starting YouTube upload for: {title}")
-        result = youtube_service.upload_video(
-            video_path=full_path,
-            title=title,
-            description=description,
-            tags=tags,
-            privacy_status=privacy
-        )
+        result = upload_video_simple(full_path, title, description, tags, privacy)
         
         if result['success']:
             logging.info(f"YouTube upload successful: {result.get('video_url', 'No URL')}")
@@ -2833,10 +2858,29 @@ def youtube_upload():
 def youtube_channel_info():
     """Get YouTube channel information"""
     try:
-        # Get channel info (authentication handled automatically)
-        result = youtube_service.get_channel_info()
-        return jsonify(result)
+        youtube = authenticate_youtube()
+        if not youtube:
+            return jsonify({'success': False, 'error': 'Failed to authenticate with YouTube'}), 500
         
+        # Get channel info
+        channels_response = youtube.channels().list(
+            part='snippet,statistics',
+            mine=True
+        ).execute()
+        
+        if channels_response['items']:
+            channel = channels_response['items'][0]
+            return jsonify({
+                "success": True,
+                "channel_id": channel['id'],
+                "channel_title": channel['snippet']['title'],
+                "subscriber_count": channel['statistics'].get('subscriberCount', 'Unknown'),
+                "video_count": channel['statistics'].get('videoCount', 'Unknown'),
+                "view_count": channel['statistics'].get('viewCount', 'Unknown')
+            })
+        else:
+            return jsonify({"success": False, "error": "No channel found"}), 404
+            
     except Exception as e:
         logging.error(f"YouTube channel info error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -2892,6 +2936,16 @@ def save_upload_record(video_path: str, upload_result: dict):
     except Exception as e:
         logging.error(f"Error saving upload record: {e}")
 
+@app.route('/youtube-test')
+def youtube_test_page():
+    """Serve YouTube upload test page"""
+    return render_template('youtube_test.html')
+
+@app.route('/test-caption')
+def test_caption_page():
+    """Serve caption upload test page"""
+    return send_file('test_caption_upload.html')
+
 @app.route('/api/load-credentials', methods=['GET'])
 def load_credentials():
     """Load credentials for a specific platform"""
@@ -2936,9 +2990,9 @@ if __name__ == '__main__':
             logger.warning(f"Database connection warning on startup: {db_status_result['message']}")
         
         # Start the Flask application
-        port = PORT
+        port = int(os.environ.get('PORT', PORT))
         logger.info(f"Starting AI Auto-Posting application on port {port}")
-        app.run(host='0.0.0.0', port=port, debug=FLASK_DEBUG, threaded=True)
+        app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
         
     except Exception as e:
         logger.error(f"Failed to start application: {e}")

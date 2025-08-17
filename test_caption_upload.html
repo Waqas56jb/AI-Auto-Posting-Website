@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Caption Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .video-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .caption-container {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8fafc;
+            border: 1px solid #dbeafe;
+            border-radius: 4px;
+        }
+        .caption-text {
+            margin-bottom: 5px;
+        }
+        .caption-hashtags {
+            color: #1a56db;
+            font-size: 0.9em;
+        }
+        .social-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+        }
+        .youtube {
+            background: #ff0000;
+        }
+        .youtube:hover {
+            background: #cc0000;
+        }
+        .success {
+            background: #10b981;
+        }
+        .error {
+            background: #ef4444;
+        }
+        .notification {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: white;
+        }
+        .success-notification {
+            background: #10b981;
+        }
+        .error-notification {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Caption Upload to YouTube</h1>
+    
+    <div class="video-card" data-video-path="static/trimmed/Update_clip_20250817_183049.mp4">
+        <h3>Test Video</h3>
+        <p>Video: Update_clip_20250817_183049.mp4</p>
+        
+        <div class="caption-container" style="display: block;">
+            <div class="caption-text">This is a test caption that should appear as the video description on YouTube! 🎥✨</div>
+            <div class="caption-hashtags">#test #youtube #upload #caption #automation</div>
+        </div>
+        
+        <div class="social-logos">
+            <button class="social-btn youtube" onclick="testYoutubeUpload()" id="youtube-btn">
+                <i class="fab fa-youtube"></i> Upload to YouTube
+            </button>
+        </div>
+    </div>
+    
+    <div id="notifications"></div>
+    
+    <script>
+        function showNotification(message, type = 'success') {
+            const notifications = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}-notification`;
+            notification.textContent = message;
+            notifications.appendChild(notification);
+            
+            // Remove notification after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        function testYoutubeUpload() {
+            const btn = document.getElementById('youtube-btn');
+            const originalHTML = btn.innerHTML;
+            
+            // Show loading state
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            btn.disabled = true;
+            
+            // Get video card
+            const card = document.querySelector('.video-card');
+            const videoPath = card.getAttribute('data-video-path');
+            
+            // Get caption and hashtags
+            const captionContainer = card.querySelector('.caption-container');
+            const captionText = captionContainer.querySelector('.caption-text').innerText.trim();
+            const hashtags = captionContainer.querySelector('.caption-hashtags').innerText.trim();
+            
+            console.log('Caption:', captionText);
+            console.log('Hashtags:', hashtags);
+            
+            // Combine caption and hashtags for description
+            const description = captionText + (hashtags ? '\n\n' + hashtags : '');
+            // Extract hashtags as tags array
+            const tagsArray = hashtags ? hashtags.match(/#\w+/g) || [] : [];
+            
+            const uploadData = {
+                video_path: videoPath,
+                title: 'Test Video with Caption',
+                description: description,
+                tags: tagsArray,
+                privacy: 'private'
+            };
+            
+            console.log('Upload data:', uploadData);
+            
+            fetch('/api/youtube/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(uploadData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('YouTube upload success:', data);
+                    showNotification('Uploaded to YouTube successfully! Video URL: ' + data.video_url, 'success');
+                    btn.innerHTML = '<i class="fas fa-check"></i> Uploaded!';
+                    btn.className = 'social-btn success';
+                } else {
+                    console.warn('YouTube upload failed:', data);
+                    showNotification(`YouTube upload failed: ${data.error || 'Unknown error'}`, 'error');
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error('YouTube upload error:', err);
+                showNotification('YouTube upload error. Check console for details.', 'error');
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            });
+        }
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</body>
+</html>
