@@ -197,6 +197,47 @@ def check_db_connection():
         logger.error(f"Database connection failed: {str(e)}")
         return {'status': 'error', 'message': f'Database connection failed: {str(e)}'}
 
+# Ensure required tables exist
+def initialize_database_schema():
+    try:
+        conn = psycopg2.connect(**db_config)
+        conn.autocommit = True
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) NOT NULL,
+                token VARCHAR(255) UNIQUE NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """
+        )
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_password_resets_email ON password_resets (email);")
+
+        cursor.close()
+        conn.close()
+        logger.info("Database schema ensured (users, password_resets)")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to initialize database schema: {e}")
+        return False
+
 # Configure Google Gemini AI
 google_api_key = GOOGLE_API_KEY
 if not google_api_key:
@@ -3006,6 +3047,8 @@ if __name__ == '__main__':
             logger.info("Database connection successful on startup")
         else:
             logger.warning(f"Database connection warning on startup: {db_status_result['message']}")
+        # Ensure schema exists
+        initialize_database_schema()
         
         # Start the Flask application
         port = int(os.environ.get('PORT', PORT))
