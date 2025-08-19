@@ -279,7 +279,8 @@ translator = None # Removed googletrans import, so translator is no longer avail
 def generate_transcript_from_video(video_path):
     """Generate transcript from video using Whisper AI"""
     try:
-        if not whisper_model:
+        model = get_whisper_model()
+        if not model:
             return {
                 'success': False,
                 'error': 'Whisper AI model not available. Please install openai-whisper library.'
