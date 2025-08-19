@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+pip-wheel-metadata/
+
+# Git
+.git/
+.gitignore
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Large/local data not needed in the image
+downloads/
+output/
+logs/
+captions/
+flask_session/
+database/
+
+# Static user-generated media
+static/uploads/
+static/videos/
+static/trimmed/
+static/audio/
+
+# Credentials and local artifacts (configure via Fly secrets instead)
+credentials/
+client_secrets.json
+token.pickle
+credentials_cache.pkl*
+youtube_uploads.json
+*.csv
+
+# Binaries
+*.exe
+chromedriver.exe
+
+# Tests and local experiments
+tests/
+test_*.py
+*.ipynb
+
+# Misc large media files at repo root
+*.mp4
+*.mp3
+*.wav
+
