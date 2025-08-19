@@ -161,8 +161,24 @@ os.makedirs(TRIMMED_FOLDER_EDIT, exist_ok=True)
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'mp4', 'mov', 'm4a', 'avi', 'mkv', 'webm', 'flac', 'aac', 'ogg'}
 ALLOWED_EXTENSIONS_EDIT = {'mp4', 'mov'}
 
-# Database configuration for PostgreSQL
+# Database configuration for PostgreSQL (prefer DATABASE_URL if provided)
 db_config = DB_CONFIG
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    try:
+        # Parse simple postgres://user:pass@host:port/dbname
+        import urllib.parse as _urlparse
+        parsed = _urlparse.urlparse(database_url)
+        db_config = {
+            'host': parsed.hostname or DB_HOST,
+            'port': parsed.port or DB_PORT,
+            'user': parsed.username or DB_USER,
+            'password': parsed.password or DB_PASSWORD,
+            'database': (parsed.path or '').lstrip('/') or DB_NAME,
+        }
+        logger.info("Using database configuration from DATABASE_URL")
+    except Exception as e:
+        logger.warning(f"Failed to parse DATABASE_URL, falling back to config: {e}")
 logger.info(f"Database config: {db_config}")
 
 # Check database connection
@@ -190,29 +206,30 @@ if not google_api_key:
 genai.configure(api_key=google_api_key)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Initialize Whisper AI model with fallback
+# Initialize Whisper model lazily to reduce memory at boot (especially on Fly)
 whisper_model = None
 whisper_edit_model = None
 
-try:
-    import whisper
-    # Try to load a smaller model first to avoid memory issues
-    whisper_model = whisper.load_model("tiny")  # Use "tiny" for faster loading
-    logger.info("Whisper AI model loaded successfully (tiny model)")
-except ImportError:
-    logger.warning("Whisper library not installed. Install with: pip install openai-whisper")
-except Exception as e:
-    logger.error(f"Failed to load Whisper model: {e}")
-    # Try alternative approach
+def get_whisper_model():
+    """Load Whisper model on first use unless disabled via env var."""
+    global whisper_model
+    if whisper_model is not None:
+        return whisper_model
+    if os.environ.get('WHISPER_DISABLED', 'false').lower() == 'true':
+        logger.warning("Whisper is disabled via WHISPER_DISABLED env var")
+        return None
     try:
         import whisper
-        whisper_model = whisper.load_model("tiny")
-        logger.info("Whisper AI model loaded successfully on second attempt")
-    except Exception as e2:
-        logger.error(f"Second attempt to load Whisper failed: {e2}")
+        whisper_model_local = whisper.load_model("tiny")
+        whisper_model = whisper_model_local
+        logger.info("Whisper AI model loaded successfully (tiny model)")
+    except ImportError:
+        logger.warning("Whisper library not installed. Install with: pip install openai-whisper")
         whisper_model = None
-
-whisper_edit_model = whisper_model  # Use same model for editing
+    except Exception as e:
+        logger.error(f"Failed to load Whisper model: {e}")
+        whisper_model = None
+    return whisper_model
 
 # Initialize translator
 translator = None # Removed googletrans import, so translator is no longer available
@@ -268,10 +285,11 @@ def generate_transcript_from_audio(audio_path):
     """Generate transcript from audio file using Whisper AI or fallback methods"""
     try:
         # Try Whisper AI first
-        if whisper_model:
+        model = get_whisper_model()
+        if model:
             logger.info(f"Using Whisper AI for transcription: {audio_path}")
             try:
-                result = whisper_model.transcribe(audio_path)
+                result = model.transcribe(audio_path)
                 
                 if result and 'text' in result:
                     transcript = result['text'].strip()

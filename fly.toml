@@ -21,16 +21,16 @@ primary_region = "lhr"
   processes = ["app"]
 
 [[http_service.checks]]
-  grace_period = "10s"
+  grace_period = "20s"
   interval = "30s"
   method = "GET"
-  timeout = "5s"
-  path = "/"
+  timeout = "10s"
+  path = "/api/health"
 
 [[vm]]
   cpu_kind = "shared"
   cpus = 1
-  memory_mb = 512
+  memory_mb = 1024
 
 [mounts]
   source = "ai_auto_posting_data"
