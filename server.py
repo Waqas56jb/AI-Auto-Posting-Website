@@ -138,24 +138,36 @@ if not app.secret_key:
     logger.error("SECRET_KEY is not set in configuration")
     raise ValueError("SECRET_KEY must be set in config.py")
 
-# Configure folders
-app.config['UPLOAD_FOLDER'] = 'static/audio'
+# Configure session and base folders
+app.config['UPLOAD_FOLDER'] = 'static/audio'  # legacy; per-user paths used in handlers
 app.config['DOWNLOAD_FOLDER'] = 'downloads'
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
-UPLOAD_FOLDER = 'static/uploads'
-TRIM_FOLDER = 'static/trimmed'
-UPLOAD_FOLDER_EDIT = 'static/videos'
-TRIMMED_FOLDER_EDIT = 'static/trimmed'
 Session(app)
+
+# Per-user storage helpers
+def get_session_user() -> dict:
+    """Return current session user info or None."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return None
+    return {
+        'id': user_id,
+        'username': session.get('username'),
+        'email': session.get('user') or session.get('email')
+    }
+
+def get_user_base_dir(user_id: int) -> str:
+    return os.path.join('static', 'users', str(user_id))
+
+def get_user_subdir(user_id: int, subdir: str) -> str:
+    path = os.path.join(get_user_base_dir(user_id), subdir)
+    os.makedirs(path, exist_ok=True)
+    return path
 
 # Create directories
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['DOWNLOAD_FOLDER'], exist_ok=True)
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(TRIM_FOLDER, exist_ok=True)
-os.makedirs(UPLOAD_FOLDER_EDIT, exist_ok=True)
-os.makedirs(TRIMMED_FOLDER_EDIT, exist_ok=True)
 
 # Expand allowed file extensions
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'mp4', 'mov', 'm4a', 'avi', 'mkv', 'webm', 'flac', 'aac', 'ogg'}
@@ -744,9 +756,10 @@ def get_existing_videos():
     """Get list of existing videos from static folders"""
     try:
         videos = []
-        
-        # Get videos from static/videos folder
-        videos_folder = 'static/videos'
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+        videos_folder = get_user_subdir(user['id'], 'videos')
         if os.path.exists(videos_folder):
             for item in os.listdir(videos_folder):
                 item_path = os.path.join(videos_folder, item)
@@ -768,8 +781,8 @@ def get_existing_videos():
                         'folder': 'root'
                     })
         
-        # Get trimmed videos from static/trimmed folder
-        trimmed_folder = 'static/trimmed'
+        # Get trimmed videos from user folder
+        trimmed_folder = get_user_subdir(user['id'], 'trimmed')
         if os.path.exists(trimmed_folder):
             for file in os.listdir(trimmed_folder):
                 if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
@@ -914,12 +927,16 @@ def trim_video():
             if start_time < 0 or end_time <= start_time:
                 return jsonify({'success': False, 'error': f'Invalid time range for clip {i}: start={start_time}, end={end_time}'}), 400
         
-        # Determine the source folder based on file path
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+        # Determine the source folder based on file path (user-scoped)
         if file_path.startswith('videos/'):
-            source_folder = 'static/videos'
+            source_folder = get_user_subdir(user['id'], 'videos')
             relative_path = file_path[7:]  # Remove 'videos/' prefix
         elif file_path.startswith('trimmed/'):
-            source_folder = 'static/trimmed'
+            source_folder = get_user_subdir(user['id'], 'trimmed')
             relative_path = file_path[9:]  # Remove 'trimmed/' prefix
         else:
             return jsonify({'success': False, 'error': 'Invalid file path'}), 400
@@ -935,9 +952,8 @@ def trim_video():
         except (subprocess.CalledProcessError, FileNotFoundError):
             return jsonify({'success': False, 'error': 'FFmpeg is not available. Please install FFmpeg to use this feature.'}), 500
         
-        # Create trimmed folder if it doesn't exist
-        trimmed_folder = 'static/trimmed'
-        os.makedirs(trimmed_folder, exist_ok=True)
+        # Create user trimmed folder
+        trimmed_folder = get_user_subdir(user['id'], 'trimmed')
         
         created_clips = []
         
@@ -1005,7 +1021,10 @@ def trim_video():
 def serve_trimmed_video(filename):
     """Serve trimmed video files"""
     try:
-        return send_from_directory('static/trimmed', filename)
+        user = get_session_user()
+        if not user:
+            return jsonify({'error': 'Unauthorized'}), 401
+        return send_from_directory(get_user_subdir(user['id'], 'trimmed'), filename)
     except Exception as e:
         logging.error(f"Error serving trimmed video {filename}: {e}")
         return jsonify({'error': 'Video not found'}), 404
@@ -1014,7 +1033,10 @@ def serve_trimmed_video(filename):
 def serve_video(filename):
     """Serve video files from videos folder"""
     try:
-        return send_from_directory('static/videos', filename)
+        user = get_session_user()
+        if not user:
+            return jsonify({'error': 'Unauthorized'}), 401
+        return send_from_directory(get_user_subdir(user['id'], 'videos'), filename)
     except Exception as e:
         logging.error(f"Error serving video {filename}: {e}")
         return jsonify({'error': 'Video not found'}), 404
@@ -1023,7 +1045,10 @@ def serve_video(filename):
 def serve_uploaded_video(filename):
     """Serve uploaded video files for preview"""
     try:
-        return send_from_directory('static/uploads', filename)
+        user = get_session_user()
+        if not user:
+            return jsonify({'error': 'Unauthorized'}), 401
+        return send_from_directory(get_user_subdir(user['id'], 'uploads'), filename)
     except Exception as e:
         logging.error(f"Error serving uploaded video {filename}: {e}")
         return jsonify({'error': 'Video not found'}), 404
@@ -1032,7 +1057,10 @@ def serve_uploaded_video(filename):
 def get_trimmed_videos_dashboard():
     """Get trimmed videos for dashboard display with date information"""
     try:
-        trimmed_folder = 'static/trimmed'
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+        trimmed_folder = get_user_subdir(user['id'], 'trimmed')
         videos = []
         
         if os.path.exists(trimmed_folder):
@@ -1276,6 +1304,13 @@ def forgot_page():
     """Forgot password page"""
     return render_template('forget.html')
 
+@app.route('/api/session')
+def session_info():
+    user = get_session_user()
+    if not user:
+        return jsonify({'authenticated': False})
+    return jsonify({'authenticated': True, 'username': user.get('username'), 'email': user.get('email'), 'id': user.get('id')})
+
 @app.route('/api/db-status')
 def db_status():
     """Database status endpoint"""
@@ -1407,9 +1442,14 @@ def signup():
 
         hashed_password = generate_password_hash(password)
         cursor.execute(
-            "INSERT INTO users (username, email, password, created_at) VALUES (%s, %s, %s, %s)",
+            "INSERT INTO users (username, email, password, created_at) VALUES (%s, %s, %s, %s) RETURNING id",
             (username, email, hashed_password, datetime.now())
         )
+        new_user_id = cursor.fetchone()[0]
+        # Prepare per-user directories
+        get_user_subdir(new_user_id, 'uploads')
+        get_user_subdir(new_user_id, 'videos')
+        get_user_subdir(new_user_id, 'trimmed')
         cursor.close()
         conn.close()
         
@@ -1448,16 +1488,18 @@ def login():
         conn = psycopg2.connect(**db_config)
         conn.autocommit = True
         cursor = conn.cursor()
-        cursor.execute("SELECT password FROM users WHERE email = %s", (email,))
+        cursor.execute("SELECT id, username, password FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
 
-        if not user or not check_password_hash(user[0], password):
+        if not user or not check_password_hash(user[2], password):
             logger.warning(f"Failed login attempt for email: {email}")
             return jsonify({'message': 'Invalid email or password'}), 401
 
         session['user'] = email
+        session['user_id'] = user[0]
+        session['username'] = user[1]
         logger.info(f"Successful login for email: {email}")
         return jsonify({'message': 'Login successful', 'redirect': url_for('navigate', page='index')}), 200
     except psycopg2.Error as e:
@@ -2309,10 +2351,9 @@ def health_check():
             ffmpeg_available = False
         
         # Check if required directories exist
+        # Basic fs checks
         directories = {
-            'static/trimmed': os.path.exists('static/trimmed'),
-            'static/videos': os.path.exists('static/videos'),
-            'static/uploads': os.path.exists('static/uploads')
+            'static': os.path.exists('static'),
         }
         
         return jsonify({

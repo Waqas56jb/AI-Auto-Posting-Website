@@ -1271,9 +1271,11 @@
             <a href="#faq">FAQ</a>
             <a href="/chatbot">AI Chatbot</a>
         </nav>
-        <button class="cta-button">
-            <i class="fas fa-rocket"></i> Get Started
-        </button>
+        <div class="user-area" id="user-area">
+            <button class="cta-button" id="auth-btn">
+                <i class="fas fa-right-to-bracket"></i> Login / Sign up
+            </button>
+        </div>
     </header>
 
     <section class="hero">
@@ -1851,6 +1853,16 @@
         });
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Load session user and update header
+            fetch('/api/session').then(r=>r.json()).then(s => {
+                const ua = document.getElementById('user-area');
+                if (s && s.authenticated) {
+                    ua.innerHTML = `<span style="color:white;margin-right:10px;font-weight:600;">${s.username || s.email}</span>
+                                    <img src="https://www.gravatar.com/avatar/${(s.email||'').trim().toLowerCase()}?d=identicon" alt="avatar" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,0.6);object-fit:cover;" />`;
+                } else {
+                    // keep login button
+                }
+            }).catch(()=>{});
             // File upload logic
             const fileUploadArea = document.getElementById('file-upload-area');
             const fileInput = document.getElementById('file-upload');
