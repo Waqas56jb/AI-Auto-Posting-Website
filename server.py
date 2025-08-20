@@ -971,25 +971,41 @@ def trim_video():
             clip_path = os.path.join(trimmed_folder, clip_filename)
             
             try:
-                # Use ffmpeg to create the clip
-                cmd = [
-                    'ffmpeg', '-i', source_file_path,
-                    '-ss', str(start_time),
-                    '-t', str(end_time - start_time),
-                    '-c:v', 'libx264',
-                    '-c:a', 'aac',
-                    '-y',  # Overwrite output file
-                    clip_path
-                ]
-                
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                # Super-fast: if only one clip, attempt stream copy (no re-encode)
+                result = None
+                if len(clips) == 1:
+                    copy_cmd = [
+                        'ffmpeg',
+                        '-ss', str(start_time),
+                        '-to', str(end_time),
+                        '-i', source_file_path,
+                        '-c', 'copy',
+                        '-movflags', '+faststart',
+                        '-avoid_negative_ts', '1',
+                        '-y',
+                        clip_path
+                    ]
+                    result = subprocess.run(copy_cmd, capture_output=True, text=True, timeout=120)
+
+                # Fallback to precise re-encode if fast path not used or failed
+                if result is None or result.returncode != 0 or not os.path.exists(clip_path):
+                    cmd = [
+                        'ffmpeg', '-i', source_file_path,
+                        '-ss', str(start_time),
+                        '-t', str(end_time - start_time),
+                        '-c:v', 'libx264',
+                        '-c:a', 'aac',
+                        '-y',  # Overwrite output file
+                        clip_path
+                    ]
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
                 
                 if result.returncode == 0:
                     # Verify the output file was created
                     if os.path.exists(clip_path):
                         created_clips.append({
                             'name': clip_filename,
-                            'url': f'trimmed/{clip_filename}',
+                            'url': f'/trimmed/{clip_filename}',
                             'start_time': start_time,
                             'end_time': end_time,
                             'duration': end_time - start_time
