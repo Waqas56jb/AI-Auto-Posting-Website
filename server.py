@@ -746,6 +746,30 @@ def parse_story_to_json(story_text):
         }
 
 # Routes
+
+@app.route('/delete_trimmed', methods=['POST'])
+def delete_trimmed():
+    """Delete a trimmed clip strictly from the logged-in user's folder."""
+    try:
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+        data = request.get_json(silent=True) or {}
+        filename = data.get('filename')
+        if not filename:
+            return jsonify({'success': False, 'message': 'Filename required'}), 400
+
+        user_dir = get_user_subdir(user['id'], 'trimmed')
+        user_path = os.path.join(user_dir, filename)
+        if os.path.exists(user_path):
+            os.remove(user_path)
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'message': 'File not found'}), 404
+    except Exception as e:
+        logging.error(f"Error deleting trimmed file {filename}: {e}")
+        return jsonify({'success': False, 'message': 'Delete failed'}), 500
+
 @app.route('/')
 def indexakkal():
     """Main landing page"""
@@ -759,6 +783,7 @@ def get_existing_videos():
         user = get_session_user()
         if not user:
             return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
         videos_folder = get_user_subdir(user['id'], 'videos')
         if os.path.exists(videos_folder):
             for item in os.listdir(videos_folder):
@@ -769,18 +794,18 @@ def get_existing_videos():
                         if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
                             videos.append({
                                 'name': file,
-                                'path': f'videos/{item}/{file}',
+                                'path': f'/videos/{item}/{file}',
                                 'type': 'original',
                                 'folder': item
                             })
                 elif item.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
                     videos.append({
                         'name': item,
-                        'path': f'videos/{item}',
+                        'path': f'/videos/{item}',
                         'type': 'original',
                         'folder': 'root'
                     })
-        
+
         # Get trimmed videos from user folder
         trimmed_folder = get_user_subdir(user['id'], 'trimmed')
         if os.path.exists(trimmed_folder):
@@ -788,7 +813,7 @@ def get_existing_videos():
                 if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
                     videos.append({
                         'name': file,
-                        'path': f'trimmed/{file}',
+                        'path': f'/trimmed/{file}',
                         'type': 'trimmed',
                         'folder': 'trimmed'
                     })
@@ -806,6 +831,9 @@ def get_existing_videos():
 def create_video_clip():
     """Create a video clip from uploaded video file"""
     try:
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
         if 'file' not in request.files:
             return jsonify({'success': False, 'message': 'No file uploaded'}), 400
         
@@ -823,9 +851,8 @@ def create_video_clip():
         if start_time < 0 or end_time <= start_time:
             return jsonify({'success': False, 'message': 'Invalid time range'}), 400
         
-        # Create trimmed folder if it doesn't exist
-        trimmed_folder = 'static/trimmed'
-        os.makedirs(trimmed_folder, exist_ok=True)
+        # Create per-user trimmed folder
+        trimmed_folder = get_user_subdir(user['id'], 'trimmed')
         
         # Generate unique filename for the clip
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -833,7 +860,7 @@ def create_video_clip():
         clip_filename = f"{base_name}_clip_{timestamp}.mp4"
         clip_path = os.path.join(trimmed_folder, clip_filename)
         
-        # Save uploaded file temporarily
+        # Save uploaded file temporarily (in user trimmed folder)
         temp_path = os.path.join(trimmed_folder, f"temp_{file.filename}")
         file.save(temp_path)
         
@@ -1040,7 +1067,11 @@ def serve_trimmed_video(filename):
         user = get_session_user()
         if not user:
             return jsonify({'error': 'Unauthorized'}), 401
-        return send_from_directory(get_user_subdir(user['id'], 'trimmed'), filename)
+        user_dir = get_user_subdir(user['id'], 'trimmed')
+        user_path = os.path.join(user_dir, filename)
+        if os.path.exists(user_path):
+            return send_from_directory(user_dir, filename)
+        return jsonify({'error': 'Video not found'}), 404
     except Exception as e:
         logging.error(f"Error serving trimmed video {filename}: {e}")
         return jsonify({'error': 'Video not found'}), 404
@@ -1052,7 +1083,11 @@ def serve_video(filename):
         user = get_session_user()
         if not user:
             return jsonify({'error': 'Unauthorized'}), 401
-        return send_from_directory(get_user_subdir(user['id'], 'videos'), filename)
+        user_dir = get_user_subdir(user['id'], 'videos')
+        user_path = os.path.join(user_dir, filename)
+        if os.path.exists(user_path):
+            return send_from_directory(user_dir, filename)
+        return jsonify({'error': 'Video not found'}), 404
     except Exception as e:
         logging.error(f"Error serving video {filename}: {e}")
         return jsonify({'error': 'Video not found'}), 404
@@ -1078,31 +1113,30 @@ def get_trimmed_videos_dashboard():
             return jsonify({'success': False, 'error': 'Unauthorized'}), 401
         trimmed_folder = get_user_subdir(user['id'], 'trimmed')
         videos = []
+        seen_filenames = set()
         
         if os.path.exists(trimmed_folder):
             for file in os.listdir(trimmed_folder):
                 if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
                     file_path = os.path.join(trimmed_folder, file)
                     file_stat = os.stat(file_path)
-                    
-                    # Extract creation date from filename or file stats
                     created_date = datetime.fromtimestamp(file_stat.st_mtime)
-                    
-                    # Get file size
                     file_size = file_stat.st_size
                     size_mb = round(file_size / (1024 * 1024), 2)
-                    
                     videos.append({
                         'filename': file,
-                        'path': f'trimmed/{file}',
+                        'path': f'/trimmed/{file}',
                         'created_date': created_date.strftime('%Y-%m-%d'),
                         'created_time': created_date.strftime('%H:%M:%S'),
                         'day_name': created_date.strftime('%A'),
                         'size_mb': size_mb,
                         'full_path': file_path,
                         'type': 'trimmed',
-                        'folder': 'trimmed'  # Add folder info for frontend compatibility
+                        'folder': 'trimmed'
                     })
+                    seen_filenames.add(file)
+
+        # Per-user only: no legacy/global listing for privacy
             
             # Sort by creation date (newest first)
             videos.sort(key=lambda x: x['created_date'], reverse=True)
@@ -1136,42 +1170,77 @@ def edit_page():
     try:
         # Get existing videos instead of requiring upload
         videos = []
-        
-        # Get videos from static/videos folder
-        videos_folder = 'static/videos'
-        if os.path.exists(videos_folder):
-            for item in os.listdir(videos_folder):
-                item_path = os.path.join(videos_folder, item)
-                if os.path.isdir(item_path):
-                    # Look for video files in subdirectories
-                    for file in os.listdir(item_path):
-                        if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
-                            videos.append({
-                                'name': file,
-                                'path': f'videos/{item}/{file}',
-                                'type': 'original',
-                                'folder': item
-                            })
-                elif item.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
-                    videos.append({
-                        'name': file,
-                        'path': f'videos/{item}',
-                        'type': 'original',
-                        'folder': 'root'
-                    })
-        
-        # Get trimmed videos from static/trimmed folder
-        trimmed_folder = 'static/trimmed'
-        if os.path.exists(trimmed_folder):
-            for file in os.listdir(trimmed_folder):
-                if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
-                    videos.append({
-                        'name': file,
-                        'path': f'trimmed/{file}',
-                        'type': 'trimmed',
-                        'folder': 'trimmed'
-                    })
-        
+
+        # Prefer per-user directories when logged in
+        user = get_session_user()
+        if user:
+            user_videos_folder = get_user_subdir(user['id'], 'videos')
+            if os.path.exists(user_videos_folder):
+                for item in os.listdir(user_videos_folder):
+                    item_path = os.path.join(user_videos_folder, item)
+                    if os.path.isdir(item_path):
+                        # Look for video files in subdirectories
+                        for file in os.listdir(item_path):
+                            if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+                                videos.append({
+                                    'name': file,
+                                    'path': f'videos/{item}/{file}',
+                                    'type': 'original',
+                                    'folder': item
+                                })
+                    elif item.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+                        videos.append({
+                            'name': item,
+                            'path': f'videos/{item}',
+                            'type': 'original',
+                            'folder': 'root'
+                        })
+
+            user_trimmed_folder = get_user_subdir(user['id'], 'trimmed')
+            if os.path.exists(user_trimmed_folder):
+                for file in os.listdir(user_trimmed_folder):
+                    if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+                        videos.append({
+                            'name': file,
+                            'path': f'trimmed/{file}',
+                            'type': 'trimmed',
+                            'folder': 'trimmed'
+                        })
+        else:
+            # Legacy global static directories fallback
+            videos_folder = 'static/videos'
+            if os.path.exists(videos_folder):
+                for item in os.listdir(videos_folder):
+                    item_path = os.path.join(videos_folder, item)
+                    if os.path.isdir(item_path):
+                        # Look for video files in subdirectories
+                        for file in os.listdir(item_path):
+                            if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+                                videos.append({
+                                    'name': file,
+                                    'path': f'videos/{item}/{file}',
+                                    'type': 'original',
+                                    'folder': item
+                                })
+                    elif item.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+                        videos.append({
+                            'name': item,
+                            'path': f'videos/{item}',
+                            'type': 'original',
+                            'folder': 'root'
+                        })
+
+            trimmed_folder = 'static/trimmed'
+            if os.path.exists(trimmed_folder):
+                for file in os.listdir(trimmed_folder):
+                    if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+                        videos.append({
+                            'name': file,
+                            'path': f'trimmed/{file}',
+                            'type': 'trimmed',
+                            'folder': 'trimmed'
+                        })
+
         return render_template('edit.html', videos=videos)
         
     except Exception as e:
@@ -2927,16 +2996,20 @@ def youtube_upload():
         if not video_path:
             return jsonify({'success': False, 'error': 'Video path is required'}), 400
         
-        # Better path resolution - try multiple approaches
+        # Better path resolution - per-user only to prevent cross-user access
         full_path = None
-        possible_paths = [
-            video_path,  # Try original path first
-            os.path.join('static/trimmed', os.path.basename(video_path)),
-            os.path.join('static/videos', os.path.basename(video_path)),
-            os.path.join('static', os.path.basename(video_path)),
-            os.path.join('static/trimmed', video_path),
-            os.path.join('static/videos', video_path)
-        ]
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+        possible_paths = []
+        user_trimmed = get_user_subdir(user['id'], 'trimmed')
+        user_videos = get_user_subdir(user['id'], 'videos')
+        possible_paths.extend([
+            os.path.join(user_trimmed, os.path.basename(video_path)),
+            os.path.join(user_videos, os.path.basename(video_path)),
+            os.path.join(user_trimmed, video_path),
+            os.path.join(user_videos, video_path)
+        ])
         
         for path in possible_paths:
             if os.path.exists(path):
