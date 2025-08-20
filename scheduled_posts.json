@@ -1,0 +1,46 @@
+[
+  {
+    "id": "da83f9cd-0080-4f2c-a7c7-d4bd17286673",
+    "user_id": 15,
+    "platform": "youtube",
+    "video_path": "trimmed/1986002b4db856fce7b068da85b9cfe9_clip_20250819_122643_clip_20250820_164911.mp4",
+    "filename": "1986002b4db856fce7b068da85b9cfe9_clip_20250819_122643_clip_20250820_164911.mp4",
+    "title": "",
+    "description": "",
+    "tags": [],
+    "privacy": "public",
+    "run_at_iso": "2025-08-20T17:54:00",
+    "status": "pending",
+    "created_at": "2025-08-20T11:53:34.838761"
+  },
+  {
+    "id": "b6f6a195-3721-469c-89d2-8c1d47f8d8e9",
+    "user_id": 15,
+    "platform": "youtube",
+    "video_path": "trimmed/1986002b4db856fce7b068da85b9cfe9_clip_20250819_122643_clip_20250820_165657.mp4",
+    "filename": "1986002b4db856fce7b068da85b9cfe9_clip_20250819_122643_clip_20250820_165657.mp4",
+    "title": "",
+    "description": "",
+    "tags": [],
+    "privacy": "public",
+    "run_at_iso": "2025-08-20T16:58:00",
+    "status": "failed",
+    "created_at": "2025-08-20T11:57:38.942187",
+    "error": "YouTube HTTP error: <HttpError 400 when requesting None returned \"The user has exceeded the number of videos they may upload.\". Details: \"[{'message': 'The user has exceeded the number of videos they may upload.', 'domain': 'youtube.video', 'reason': 'uploadLimitExceeded'}]\">"
+  },
+  {
+    "id": "318921d7-4d7e-4416-a8f3-3b7754e57a45",
+    "user_id": 15,
+    "platform": "youtube",
+    "video_path": "trimmed/1986002b4db856fce7b068da85b9cfe9_clip_20250819_122643_clip_20250820_165657.mp4",
+    "filename": "1986002b4db856fce7b068da85b9cfe9_clip_20250819_122643_clip_20250820_165657.mp4",
+    "title": "",
+    "description": "",
+    "tags": [],
+    "privacy": "public",
+    "run_at_iso": "2025-08-20T17:01:00",
+    "status": "failed",
+    "created_at": "2025-08-20T12:00:09.958879",
+    "error": "YouTube HTTP error: <HttpError 400 when requesting None returned \"The user has exceeded the number of videos they may upload.\". Details: \"[{'message': 'The user has exceeded the number of videos they may upload.', 'domain': 'youtube.video', 'reason': 'uploadLimitExceeded'}]\">"
+  }
+]

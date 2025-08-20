@@ -1234,6 +1234,16 @@ body {
             gap: 1.5rem;
             margin-top: 1rem;
         }
+
+        /* Uploaded/Not uploaded visual states */
+        .video-card.uploaded {
+            border: 2px solid #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+        .video-card.not-uploaded {
+            border: 2px solid #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
         
         /* No Videos Message */
         .no-videos-message {
@@ -2145,6 +2155,23 @@ body {
      .dashboard-empty small {
          opacity: 0.7;
      }
+
+        .video-card.uploaded {
+            border: 2px solid #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+        .upload-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #34d399;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
 </style>
 </head>
 <body>
@@ -2660,6 +2687,7 @@ body {
                             if (data.success) {
                                 console.log('YouTube upload success:', data);
                                 showNotification('Uploaded to YouTube successfully', 'success');
+                                try { markVideoAsUploaded(filename); } catch (_) {}
                             } else {
                                 console.warn('YouTube upload failed:', data);
                                 const msg = data.error || data.message || 'Unknown error';
@@ -2697,6 +2725,7 @@ body {
                             if (data.success) {
                                 console.log('YouTube upload success:', data);
                                 showNotification('Uploaded to YouTube successfully', 'success');
+                                try { markVideoAsUploaded(filename); } catch (_) {}
                             } else {
                                 console.warn('YouTube upload failed:', data);
                                 const msg2 = data.error || data.message || 'Unknown error';
@@ -2871,6 +2900,8 @@ body {
             console.error('Scheduling modal not found!');
             return;
         }
+        // Store filename on modal for submit
+        modal.setAttribute('data-filename', filename);
         
         // Set minimum date to today
         const today = new Date().toISOString().split('T')[0];
@@ -2941,6 +2972,83 @@ body {
         if (modal) {
             modal.style.display = 'none';
             document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+    }
+
+    // Simple inline scheduler UI injected into the card
+    function openInlineScheduler(filename) {
+        const card = document.querySelector(`[data-video-path*="/${filename}"]`) || document.querySelector(`[data-video-path*="${filename}"]`);
+        if (!card) {
+            showNotification('Video card not found', 'error');
+            return;
+        }
+        // Remove existing inline scheduler if any
+        const existing = card.querySelector('.inline-scheduler');
+        if (existing) existing.remove();
+
+        const container = document.createElement('div');
+        container.className = 'inline-scheduler';
+        container.style.marginTop = '0.75rem';
+        container.style.padding = '0.75rem';
+        container.style.border = '1px solid #e5e7eb';
+        container.style.borderRadius = '8px';
+        container.style.background = '#f9fafb';
+
+        container.innerHTML = `
+            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <label style="font-weight:600; color:#374151;">Date:</label>
+                <input type="date" class="inline-date" style="padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px;">
+                <label style="font-weight:600; color:#374151;">Time:</label>
+                <input type="time" class="inline-time" style="padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px;">
+                <button type="button" class="btn-primary" style="padding:6px 10px; border:none; background:#1d4ed8; color:#fff; border-radius:6px; cursor:pointer;">Schedule</button>
+                <button type="button" class="btn-secondary" style="padding:6px 10px; border:1px solid #e5e7eb; background:#fff; color:#374151; border-radius:6px; cursor:pointer;">Cancel</button>
+            </div>
+        `;
+
+        const dateInput = container.querySelector('.inline-date');
+        const timeInput = container.querySelector('.inline-time');
+        // Defaults
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        timeInput.value = now.toTimeString().slice(0,5);
+
+        container.querySelector('.btn-primary').addEventListener('click', async () => {
+            const date = dateInput.value;
+            const time = timeInput.value;
+            if (!date || !time) {
+                showNotification('Please select both date and time', 'error');
+                return;
+            }
+            const res = await fetch('/api/schedule-post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    platform: 'youtube',
+                    date,
+                    time,
+                    filename,
+                    video_path: `trimmed/${filename}`
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showNotification('Post scheduled successfully!', 'success');
+                container.remove();
+            } else {
+                showNotification('Failed to schedule post: ' + (data.message || 'Unknown error'), 'error');
+            }
+        });
+
+        container.querySelector('.btn-secondary').addEventListener('click', () => container.remove());
+
+        // Insert after social logos
+        const logos = card.querySelector('.social-logos');
+        if (logos) {
+            logos.insertAdjacentElement('afterend', container);
+        } else {
+            card.appendChild(container);
         }
     }
     
@@ -3040,6 +3148,23 @@ body {
             console.error('Error checking credentials:', error);
             alert('Error checking credentials. Please try again.');
         });
+    }
+
+    function markVideoAsUploaded(filename) {
+        const videoCard = document.querySelector(`[data-video-path*="/${filename}"]`) || document.querySelector(`[data-video-path*="${filename}"]`);
+        if (videoCard) {
+            videoCard.classList.add('uploaded');
+            videoCard.classList.remove('not-uploaded');
+            // Add badge if missing
+            const logos = videoCard.querySelector('.social-logos');
+            if (logos && !logos.querySelector('.upload-badge')) {
+                const badge = document.createElement('div');
+                badge.className = 'upload-badge';
+                badge.title = 'Uploaded to YouTube';
+                badge.innerHTML = '<i class="fas fa-check-circle"></i> Uploaded';
+                logos.prepend(badge);
+            }
+        }
     }
     
     // Upload video to YouTube
@@ -3629,11 +3754,13 @@ body {
                 
                 const formData = new FormData(schedulingForm);
                 const data = {
-                    platform: formData.get('platform'),
+                    platform: formData.get('platform') || 'youtube',
                     date: formData.get('date'),
                     time: formData.get('time'),
                     caption: formData.get('caption'),
-                    hashtags: formData.get('hashtags')
+                    hashtags: formData.get('hashtags'),
+                    filename: schedulingModal.getAttribute('data-filename') || '',
+                    video_path: `trimmed/${schedulingModal.getAttribute('data-filename') || ''}`
                 };
                 
                 console.log('Form data:', data);
@@ -4744,7 +4871,8 @@ body {
     
                     function createVideoCard(video) {
                     const videoCard = document.createElement('div');
-                    videoCard.className = 'video-card';
+                    const stateClass = video.uploaded ? ' uploaded' : ' not-uploaded';
+                    videoCard.className = 'video-card' + stateClass;
                     videoCard.setAttribute('data-video-path', video.path);
                     videoCard.setAttribute('data-video-type', 'trimmed');
                     
@@ -4765,7 +4893,8 @@ body {
                         
                         <!-- Social Media Logos -->
                         <div class="social-logos">
-                            <div class="timer-btn" onclick="openSchedulingModal('${video.filename}', 'trimmed')" title="Schedule Post">
+                            ${video.uploaded ? `<div class="upload-badge" title="Uploaded to YouTube"><i class="fas fa-check-circle"></i> Uploaded</div>` : ''}
+                            <div class="timer-btn" onclick="openInlineScheduler('${video.filename}')" title="Schedule Post">
                                 ⏰
                             </div>
                             <div class="social-buttons-group">

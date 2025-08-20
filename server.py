@@ -25,6 +25,8 @@ import time
 import concurrent.futures
 from flask_cors import CORS
 import csv
+from threading import Thread
+import time as _time
 
 # YouTube API imports
 import google_auth_httplib2
@@ -261,6 +263,99 @@ if database_url:
     except Exception as e:
         logger.warning(f"Failed to parse DATABASE_URL, falling back to config: {e}")
 logger.info(f"Database config: {db_config}")
+# In-memory scheduler storage (simple file-backed persistence)
+SCHEDULE_FILE = 'scheduled_posts.json'
+
+def _load_schedules():
+    try:
+        if os.path.exists(SCHEDULE_FILE):
+            with open(SCHEDULE_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        logging.warning(f"Failed to load schedules: {e}")
+    return []
+
+def _save_schedules(schedules):
+    try:
+        with open(SCHEDULE_FILE, 'w') as f:
+            json.dump(schedules, f, indent=2)
+    except Exception as e:
+        logging.error(f"Failed to save schedules: {e}")
+
+def _current_local_ts():
+    # Use local time consistently with naive fromisoformat parsing
+    return datetime.now().timestamp()
+
+def _parse_iso(dt_str: str) -> float:
+    try:
+        return datetime.fromisoformat(dt_str).timestamp()
+    except Exception:
+        return 0.0
+
+def _scheduler_loop(app):
+    with app.app_context():
+        while True:
+            try:
+                schedules = _load_schedules()
+                now_ts = _current_local_ts()
+                pending = []
+                for job in schedules:
+                    if job.get('status') == 'pending' and _parse_iso(job.get('run_at_iso', '')) <= now_ts:
+                        # Execute upload for the user
+                        try:
+                            user_id = job['user_id']
+                            video_path = job['video_path']
+                            title = job.get('title') or os.path.basename(video_path)
+                            description = job.get('description', '')
+                            tags = job.get('tags', [])
+                            privacy = job.get('privacy', 'public')
+
+                            # Resolve per-user path
+                            user_trimmed = get_user_subdir(user_id, 'trimmed')
+                            candidate = os.path.join(user_trimmed, os.path.basename(video_path))
+                            resolved = candidate if os.path.exists(candidate) else video_path
+
+                            result = upload_video_simple(resolved, title, description, tags, privacy)
+                            if result.get('success'):
+                                job['status'] = 'uploaded'
+                                save_upload_record(user_id, video_path, result)
+                                # Also mark uploaded in uploads file for dashboard
+                                try:
+                                    uploads = []
+                                    if os.path.exists('youtube_uploads.json'):
+                                        with open('youtube_uploads.json', 'r') as f:
+                                            uploads = json.load(f)
+                                    uploads.append({
+                                        'user_id': user_id,
+                                        'video_path': video_path,
+                                        'filename': os.path.basename(video_path),
+                                        'youtube_id': result.get('video_id'),
+                                        'youtube_url': result.get('video_url'),
+                                        'title': result.get('title'),
+                                        'upload_time': result.get('upload_time'),
+                                        'status': 'uploaded'
+                                    })
+                                    with open('youtube_uploads.json', 'w') as f:
+                                        json.dump(uploads, f, indent=2)
+                                except Exception:
+                                    pass
+                            else:
+                                job['status'] = 'failed'
+                                job['error'] = result.get('error')
+                        except Exception as e:
+                            job['status'] = 'failed'
+                            job['error'] = str(e)
+                        pending.append(job)
+                    else:
+                        pending.append(job)
+                _save_schedules(pending)
+            except Exception as e:
+                logging.error(f"Scheduler loop error: {e}")
+            _time.sleep(15)
+
+def start_scheduler():
+    t = Thread(target=_scheduler_loop, args=(app,), daemon=True)
+    t.start()
 
 # Check database connection
 def check_db_connection():
@@ -1184,6 +1279,18 @@ def get_trimmed_videos_dashboard():
         videos = []
         seen_filenames = set()
         
+        # Load uploaded records for this user to mark cards
+        uploaded_filenames = set()
+        try:
+            if os.path.exists('youtube_uploads.json'):
+                with open('youtube_uploads.json', 'r') as f:
+                    uploads = json.load(f)
+                    for u in uploads:
+                        if u.get('user_id') == user['id'] and u.get('status') == 'uploaded':
+                            uploaded_filenames.add(u.get('filename'))
+        except Exception:
+            pass
+
         if os.path.exists(trimmed_folder):
             for file in os.listdir(trimmed_folder):
                 if file.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
@@ -1201,7 +1308,8 @@ def get_trimmed_videos_dashboard():
                         'size_mb': size_mb,
                         'full_path': file_path,
                         'type': 'trimmed',
-                        'folder': 'trimmed'
+                        'folder': 'trimmed',
+                        'uploaded': file in uploaded_filenames
                     })
                     seen_filenames.add(file)
 
@@ -3111,8 +3219,18 @@ def youtube_upload():
         
         if result['success']:
             logging.info(f"YouTube upload successful: {result.get('video_url', 'No URL')}")
-            # Save upload record to database or file
-            save_upload_record(video_path, result)
+            # Save upload record scoped to user
+            if user:
+                save_upload_record(user['id'], video_path, result)
+            try:
+                # Set uploaded flag in scheduled posts if present
+                schedules = _load_schedules()
+                for job in schedules:
+                    if job.get('user_id') == (user['id'] if user else None) and os.path.basename(job.get('video_path','')) == os.path.basename(video_path):
+                        job['status'] = 'uploaded'
+                _save_schedules(schedules)
+            except Exception:
+                pass
         else:
             logging.error(f"YouTube upload failed: {result.get('error', 'Unknown error')}")
             
@@ -3173,8 +3291,8 @@ def youtube_status():
         logging.error(f"YouTube status error: {e}")
         return jsonify({'available': False, 'error': str(e)})
 
-def save_upload_record(video_path: str, upload_result: dict):
-    """Save YouTube upload record"""
+def save_upload_record(user_id: int, video_path: str, upload_result: dict):
+    """Save YouTube upload record scoped to a user"""
     try:
         uploads_file = 'youtube_uploads.json'
         uploads = []
@@ -3186,7 +3304,9 @@ def save_upload_record(video_path: str, upload_result: dict):
         
         # Add new upload record
         upload_record = {
+            'user_id': user_id,
             'video_path': video_path,
+            'filename': os.path.basename(video_path),
             'youtube_id': upload_result.get('video_id'),
             'youtube_url': upload_result.get('video_url'),
             'title': upload_result.get('title'),
@@ -3248,6 +3368,90 @@ def load_credentials():
         logging.error(f"Error loading credentials: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/schedule-post', methods=['POST'])
+def api_schedule_post():
+    try:
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        data = request.get_json() or {}
+        platform = (data.get('platform') or 'youtube').lower()
+        if platform != 'youtube':
+            return jsonify({'success': False, 'message': 'Only YouTube scheduling is supported at the moment'}), 400
+        filename = data.get('filename') or data.get('video') or ''
+        video_path = data.get('video_path') or f"trimmed/{filename}"
+        date_str = data.get('date')
+        time_str = data.get('time')
+        caption = data.get('caption') or ''
+        hashtags = data.get('hashtags') or ''
+        title = data.get('title') or ''
+        if not date_str or not time_str or not filename:
+            return jsonify({'success': False, 'message': 'Missing required fields (filename, date, time)'}), 400
+        # Build run time (local date/time -> ISO) and validate it's in the future
+        run_at_iso = f"{date_str}T{time_str}:00"
+        try:
+            run_ts = datetime.fromisoformat(run_at_iso).timestamp()
+            if run_ts <= datetime.now().timestamp():
+                return jsonify({'success': False, 'message': 'Scheduled time must be in the future'}), 400
+        except Exception:
+            return jsonify({'success': False, 'message': 'Invalid date/time format'}), 400
+        # Prepare job
+        tags = [t.lstrip('#') for t in (hashtags or '').split() if t.startswith('#')]
+        job = {
+            'id': str(uuid.uuid4()),
+            'user_id': user['id'],
+            'platform': platform,
+            'video_path': video_path,
+            'filename': filename,
+            'title': title,
+            'description': caption + ("\n\n" + hashtags if hashtags else ''),
+            'tags': tags,
+            'privacy': 'public',
+            'run_at_iso': run_at_iso,
+            'status': 'pending',
+            'created_at': datetime.utcnow().isoformat()
+        }
+        schedules = _load_schedules()
+        schedules.append(job)
+        _save_schedules(schedules)
+        return jsonify({'success': True, 'job': job})
+    except Exception as e:
+        logging.error(f"Schedule post error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/scheduled-posts', methods=['GET'])
+def api_list_scheduled_posts():
+    try:
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        schedules = [j for j in _load_schedules() if j.get('user_id') == user['id']]
+        return jsonify({'success': True, 'jobs': schedules})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/cancel-scheduled', methods=['POST'])
+def api_cancel_scheduled():
+    try:
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        data = request.get_json() or {}
+        job_id = data.get('id')
+        if not job_id:
+            return jsonify({'success': False, 'message': 'Missing id'}), 400
+        schedules = _load_schedules()
+        updated = False
+        for j in schedules:
+            if j.get('id') == job_id and j.get('user_id') == user['id'] and j.get('status') == 'pending':
+                j['status'] = 'cancelled'
+                updated = True
+                break
+        _save_schedules(schedules)
+        return jsonify({'success': updated})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 # Main execution
 if __name__ == '__main__':
     try:
@@ -3260,6 +3464,9 @@ if __name__ == '__main__':
         # Ensure schema exists
         initialize_database_schema()
         
+        # Start background scheduler
+        start_scheduler()
+
         # Start the Flask application
         port = int(os.environ.get('PORT', PORT))
         logger.info(f"Starting AI Auto-Posting application on port {port}")
