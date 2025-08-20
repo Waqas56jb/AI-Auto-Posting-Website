@@ -1,5 +1,5 @@
 ## AI Auto Posting
-
+Deployed : https://ai-auto-posting.fly.dev/
 Make short-form content creation and publishing fast. This project provides a Flask-based web app that helps you prepare videos (trim, caption, organize) and upload them to YouTube with a clean OAuth flow. It also includes Whisper AI transcription, a simple asset dashboard, basic scheduling scaffolding, and production-ready Docker/Fly.io/Railway deployment.
 
 ### Key Features
