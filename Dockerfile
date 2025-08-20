@@ -27,6 +27,9 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p static/uploads static/trimmed static/videos static/audio downloads output
 
+# Ensure YouTube token is also available in app root even when /app/static is volume-mounted
+RUN if [ -f static/youtube_token.json ]; then cp static/youtube_token.json youtube_token.json; fi
+
 # Set environment variables
 ENV FLASK_APP=server.py
 ENV FLASK_ENV=production

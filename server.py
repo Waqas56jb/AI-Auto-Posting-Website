@@ -32,37 +32,95 @@ import google_auth_oauthlib
 import googleapiclient.discovery
 import googleapiclient.errors
 import googleapiclient.http
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # YouTube Upload Functions (Simplified)
+def _get_youtube_token_file(for_save: bool = False) -> str:
+    """Return the path to the shared YouTube token file, preferring the mounted static volume.
+
+    If for_save is True, returns the preferred save location even if it does not exist yet.
+    """
+    candidates = []
+    env_path = os.environ.get('YOUTUBE_TOKEN_FILE')
+    if env_path:
+        candidates.append(env_path)
+    # Prefer mounted volume path for persistence
+    candidates.append(os.path.join('static', 'youtube_token.json'))
+    # Fallback to project root (not persisted across deploys)
+    candidates.append('youtube_token.json')
+
+    if for_save:
+        # Choose first candidate directory that is writable or can be created
+        for path in candidates:
+            try:
+                directory = os.path.dirname(path) or '.'
+                os.makedirs(directory, exist_ok=True)
+                return path
+            except Exception:
+                continue
+        return candidates[-1]
+    else:
+        for path in candidates:
+            if path and os.path.exists(path):
+                return path
+        # Default save location if none exist
+        return os.path.join('static', 'youtube_token.json')
+
+
 def authenticate_youtube():
-    """Authenticate with YouTube API using OAuth2"""
+    """Authenticate with YouTube API using a shared app credential cached in youtube_token.json."""
     try:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-        
-        # Remove existing token to force fresh authentication
-        token_file = 'youtube_token.json'
-        if os.path.exists(token_file):
-            os.remove(token_file)
-            logger.info("Removed existing token file for fresh authentication")
-        
-        client_secrets_file = "client_secrets.json"
-        
-        if not os.path.exists(client_secrets_file):
-            logger.error(f"Client secrets file not found: {client_secrets_file}")
-            return None
-        
-        flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-            client_secrets_file, ["https://www.googleapis.com/auth/youtube.upload"])
-        credentials = flow.run_local_server(port=8080)
-        
+        scopes = ["https://www.googleapis.com/auth/youtube.upload"]
+        token_file = _get_youtube_token_file(for_save=False)
+        client_secrets_file = 'client_secrets.json'
+
+        credentials = None
+        if token_file and os.path.exists(token_file):
+            try:
+                credentials = Credentials.from_authorized_user_file(token_file, scopes)
+            except Exception:
+                credentials = None
+        # Fallback: if not found in static, check app root (Dockerfile copies it there)
+        if (not credentials) and os.path.exists('youtube_token.json') and token_file != 'youtube_token.json':
+            try:
+                credentials = Credentials.from_authorized_user_file('youtube_token.json', scopes)
+            except Exception:
+                credentials = None
+
+        # Refresh or obtain new token
+        if credentials and credentials.expired and credentials.refresh_token:
+            try:
+                credentials.refresh(Request())
+                save_path = _get_youtube_token_file(for_save=True)
+                with open(save_path, 'w') as token:
+                    token.write(credentials.to_json())
+            except Exception as e:
+                logger.warning(f"Token refresh failed, will re-auth: {e}")
+                credentials = None
+
+        if not credentials or not credentials.valid:
+            if not os.path.exists(client_secrets_file):
+                logger.error(f"Client secrets file not found: {client_secrets_file}")
+                return None
+            # In production, we cannot run a local server flow. Require pre-provisioned token.
+            if os.environ.get('FLY_APP_NAME') or os.environ.get('FLY_MACHINE_ID') or os.environ.get('FLASK_ENV') == 'production':
+                logger.error('YouTube token not found in production. Please pre-provision youtube_token.json in the static volume.')
+                return None
+            flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(client_secrets_file, scopes)
+            credentials = flow.run_local_server(port=8080)
+            save_path = _get_youtube_token_file(for_save=True)
+            with open(save_path, 'w') as token:
+                token.write(credentials.to_json())
+
         youtube = googleapiclient.discovery.build("youtube", "v3", credentials=credentials)
-        logger.info("YouTube API authenticated successfully")
+        logger.info("YouTube API authenticated (shared app token)")
         return youtube
-        
     except Exception as e:
         logger.error(f"YouTube authentication error: {e}")
         return None
@@ -75,7 +133,11 @@ def upload_video_simple(video_path, title, description, tags, privacy="private")
         
         youtube = authenticate_youtube()
         if not youtube:
-            return {"success": False, "error": "Failed to authenticate with YouTube API"}
+            return {
+                "success": False,
+                "error": "Failed to authenticate with YouTube API",
+                "hint": "Ensure client_secrets.json exists and youtube_token.json is provisioned (static/youtube_token.json)."
+            }
         
         request_body = {
             "snippet": {
@@ -121,6 +183,13 @@ def upload_video_simple(video_path, title, description, tags, privacy="private")
             "upload_time": datetime.now().isoformat()
         }
         
+    except googleapiclient.errors.HttpError as http_err:
+        try:
+            err_content = http_err.content.decode('utf-8') if hasattr(http_err, 'content') else str(http_err)
+        except Exception:
+            err_content = str(http_err)
+        logger.error(f"YouTube HTTP error: {http_err}\nContent: {err_content}")
+        return {"success": False, "error": f"YouTube HTTP error: {http_err}", "details": err_content}
     except Exception as e:
         logger.error(f"Video upload error: {e}")
         return {"success": False, "error": str(e)}
@@ -1252,10 +1321,7 @@ def clip_video_page():
     """Video clipping page"""
     return render_template('clip_video.html')
 
-@app.route('/settings')
-def settings():
-    """Settings page"""
-    return render_template('settings.html')
+# Settings page removed; app uses shared YouTube credentials
 
 @app.route('/test-whisper')
 def test_whisper():
@@ -3021,7 +3087,7 @@ def youtube_upload():
         if not full_path or not os.path.exists(full_path):
             logging.error(f"Video file not found: {video_path}")
             logging.error(f"Tried paths: {possible_paths}")
-            return jsonify({'success': False, 'error': f'Video file not found: {video_path}'}), 404
+            return jsonify({'success': False, 'error': f'Video file not found: {video_path}', 'paths_tried': possible_paths}), 404
         
         # Check file size
         file_size = os.path.getsize(full_path)
@@ -3030,6 +3096,18 @@ def youtube_upload():
         # Use the simplified upload function
         logging.info(f"Starting YouTube upload for: {title}")
         result = upload_video_simple(full_path, title, description, tags, privacy)
+
+        # Enrich unknown errors with hints
+        if not result.get('success'):
+            client_secrets_exists = os.path.exists('client_secrets.json')
+            token_path = _get_youtube_token_file(for_save=False)
+            token_exists = os.path.exists(token_path)
+            result.setdefault('details', {})
+            result['details'].update({
+                'client_secrets_exists': client_secrets_exists,
+                'token_file': token_path,
+                'token_exists': token_exists
+            })
         
         if result['success']:
             logging.info(f"YouTube upload successful: {result.get('video_url', 'No URL')}")
@@ -3042,7 +3120,8 @@ def youtube_upload():
         
     except Exception as e:
         logging.error(f"YouTube upload error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        token_path = _get_youtube_token_file(for_save=False)
+        return jsonify({'success': False, 'error': str(e), 'token_file': token_path, 'client_secrets_exists': os.path.exists('client_secrets.json')}), 500
 
 @app.route('/api/youtube/channel', methods=['GET'])
 def youtube_channel_info():

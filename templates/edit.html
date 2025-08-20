@@ -2158,9 +2158,7 @@ body {
                 <button class="load-video-btn" onclick="loadExistingVideos()" title="Load Existing Videos">
                     <i class="fas fa-folder-open"></i> Load Videos
                 </button>
-                <a href="/settings" class="header-btn settings-btn" title="Social Media Settings">
-                    <i class="fas fa-cog"></i>
-                </a>
+                <!-- Settings removed: shared YouTube credentials used -->
                 <a href="/scheduled-posts" class="header-btn schedule-btn" title="View Scheduled Posts">
                     ⏰
                 </a>
@@ -2664,7 +2662,9 @@ body {
                                 showNotification('Uploaded to YouTube successfully', 'success');
                             } else {
                                 console.warn('YouTube upload failed:', data);
-                                showNotification(`YouTube upload failed: ${data.message || 'Unknown error'}`, 'error');
+                                const msg = data.error || data.message || 'Unknown error';
+                                const hint = data.hint || (data.details ? ' See details in logs.' : '');
+                                showNotification(`YouTube upload failed: ${msg}${hint}`, 'error');
                             }
                         })
                         .catch(err => {
@@ -2699,7 +2699,9 @@ body {
                                 showNotification('Uploaded to YouTube successfully', 'success');
                             } else {
                                 console.warn('YouTube upload failed:', data);
-                                showNotification(`YouTube upload failed: ${data.message || 'Unknown error'}`, 'error');
+                                const msg2 = data.error || data.message || 'Unknown error';
+                                const hint2 = data.hint || (data.details ? ' See details in logs.' : '');
+                                showNotification(`YouTube upload failed: ${msg2}${hint2}`, 'error');
                             }
                         })
                         .catch(err => {
@@ -3031,10 +3033,7 @@ body {
                     postToSocialMedia(platform, filename, caption, hashtags);
                 });
             } else {
-                // No credentials, redirect to settings
-                if (confirm(`${platform.charAt(0).toUpperCase() + platform.slice(1)} credentials not configured. Would you like to go to settings to configure them?`)) {
-                    window.location.href = '/settings';
-                }
+                // Settings removed: shared credentials always used
             }
         })
         .catch(error => {
