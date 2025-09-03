@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Analytics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <style>
+        :root { --primary: #1a56db; --deep: #1e3a8a; --white: #fff; --bg:#f5f7fb; --card:#ffffff; --muted:#6b7280; --good:#10b981; }
+        body { margin:0; font-family: Inter, system-ui, Arial, sans-serif; background: var(--bg); color:#111827; }
+        header { position: sticky; top:0; z-index: 10; background: var(--primary); color: var(--white); padding: 12px 20px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 6px 18px rgba(26,86,219,0.25); }
+        .hdr-left { display:flex; align-items:center; gap:12px; }
+        .hdr-actions { display:flex; align-items:center; gap:10px; }
+        .btn { border:1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.2); color:#fff; padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer; }
+        .btn:hover { background: rgba(255,255,255,0.3); }
+        .container { max-width: 1280px; margin: 20px auto; padding: 0 16px; }
+        .grid { display:grid; grid-template-columns: 280px 1fr; gap:16px; }
+        .panel { background: var(--card); border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.06); }
+        .panel .hd { padding:12px 14px; border-bottom:1px solid #e5e7eb; font-weight:700; color:#1f2937; }
+        .panel .bd { padding:14px; }
+        .filters { display:grid; grid-template-columns: 1fr; gap:10px; }
+        .filters .row { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+        .input, select { padding:8px 10px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; }
+        .stats { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
+        .stat { background: var(--card); border:1px solid #e5e7eb; border-radius:12px; padding:14px; }
+        .stat .num { font-size:22px; font-weight:900; color:var(--deep); }
+        .list { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:12px; }
+        .video { border:1px solid #e5e7eb; border-radius:12px; padding:12px; display:grid; grid-template-columns: 140px 1fr; gap:12px; }
+        .thumb { width:100%; height:90px; object-fit:cover; border-radius:10px; border:1px solid #e5e7eb; }
+        .vtitle { font-weight:800; color:#111827; margin:0 0 6px; }
+        .meta { color:#374151; font-size:13px; display:flex; gap:10px; flex-wrap:wrap; }
+        .chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+        .chip { background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; padding:2px 8px; border-radius:999px; font-size:12px; }
+        .row-actions { display:flex; gap:8px; margin-top:10px; }
+        .btn-sm { padding:6px 10px; border:1px solid #e5e7eb; background:#fff; border-radius:8px; cursor:pointer; }
+        @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } .list{ grid-template-columns: 1fr; } }
+    </style>
+    <script defer src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="hdr-left">
+            <button class="btn" onclick="window.history.back()" title="Back"><i class="fas fa-arrow-left"></i></button>
+            <h2 style="margin:0;">YouTube Analytics</h2>
+        </div>
+        <div class="hdr-actions">
+            <div id="authIndicator" style="display: none; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; font-size: 12px; margin-right: 8px;">
+                <i class="fas fa-circle" id="authIcon"></i> <span id="authText">Unknown</span>
+            </div>
+            <button class="btn" onclick="refreshAnalytics()"><i class="fas fa-rotate"></i> Refresh</button>
+            <button class="btn" onclick="window.location.href='/edit'"><i class="fas fa-scissors"></i> Edit</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="authNotice" style="display: none; background: #eff6ff; border: 1px solid #3b82f6; border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center;">
+            <div style="color: #1e40af; font-weight: 600; margin-bottom: 8px;">
+                <i class="fas fa-info-circle"></i> First Time Setup Required
+            </div>
+            <div style="color: #374151; line-height: 1.5;">
+                To view your YouTube analytics, you need to authenticate with Google. This is a one-time setup that will allow the app to access your channel data.
+            </div>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat"><div class="lbl">Channel Views</div><div class="num" id="chViews">-</div></div>
+            <div class="stat"><div class="lbl">Subscribers</div><div class="num" id="chSubs">-</div></div>
+            <div class="stat"><div class="lbl">Videos</div><div class="num" id="chVideos">-</div></div>
+            <div class="stat"><div class="lbl">Avg Views/Video</div><div class="num" id="avgViews">-</div></div>
+        </div>
+
+        <div class="grid" style="margin-top:16px;">
+            <div class="panel">
+                <div class="hd">Filters & Sorting</div>
+                <div class="bd">
+                    <div class="filters">
+                        <div class="row">
+                            <select id="sortBy">
+                                <option value="viewCount-desc">Highest Views</option>
+                                <option value="likeCount-desc">Highest Likes</option>
+                                <option value="commentCount-desc">Most Comments</option>
+                                <option value="publishedAt-desc">Newest</option>
+                                <option value="publishedAt-asc">Oldest</option>
+                                <option value="title-asc">Title A-Z</option>
+                                <option value="title-desc">Title Z-A</option>
+                            </select>
+                            <select id="definition">
+                                <option value="">Any Definition</option>
+                                <option value="hd">HD</option>
+                                <option value="sd">SD</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <input id="search" class="input" placeholder="Search title/description/tags" />
+                            <input id="tag" class="input" placeholder="Filter by tag" />
+                        </div>
+                        <div class="row">
+                            <input id="minViews" class="input" placeholder="Min views" type="number" />
+                            <input id="maxViews" class="input" placeholder="Max views" type="number" />
+                        </div>
+                        <div class="row">
+                            <input id="minLikes" class="input" placeholder="Min likes" type="number" />
+                            <input id="maxLikes" class="input" placeholder="Max likes" type="number" />
+                        </div>
+                        <div class="row">
+                            <input id="minComments" class="input" placeholder="Min comments" type="number" />
+                            <input id="maxComments" class="input" placeholder="Max comments" type="number" />
+                        </div>
+                        <div class="row">
+                            <input id="after" class="input" placeholder="Published after (YYYY-MM-DD)" />
+                            <input id="before" class="input" placeholder="Published before (YYYY-MM-DD)" />
+                        </div>
+                        <div class="row">
+                            <select id="duration">
+                                <option value="">Any Duration</option>
+                                <option value="short">Short (< 4m)</option>
+                                <option value="medium">Medium (4m-20m)</option>
+                                <option value="long">Long (> 20m)</option>
+                            </select>
+                            <select id="hasTags">
+                                <option value="">Any Tags</option>
+                                <option value="yes">Has Tags</option>
+                                <option value="no">No Tags</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <select id="titleHasQuestion">
+                                <option value="">Any Title Style</option>
+                                <option value="yes">Title contains ?</option>
+                                <option value="no">Title no ?</option>
+                            </select>
+                            <select id="descHasLink">
+                                <option value="">Description: Links</option>
+                                <option value="yes">Has URL</option>
+                                <option value="no">No URL</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <select id="engagement">
+                                <option value="">Engagement</option>
+                                <option value="high">High (likes/views > 5%)</option>
+                                <option value="mid">Medium (1%-5%)</option>
+                                <option value="low">Low (<1%)</option>
+                            </select>
+                            <select id="commentsActive">
+                                <option value="">Comments</option>
+                                <option value="gt0">Has comments</option>
+                                <option value="eq0">No comments</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <button class="btn" style="background:#1a56db; border-color:#1a56db;" onclick="applyFilters()"><i class="fas fa-filter"></i> Apply</button>
+                            <button class="btn" onclick="resetFilters()"><i class="fas fa-broom"></i> Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="hd">Videos</div>
+                <div class="bd">
+                    <div id="videoList" class="list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let RAW = [];
+        let authStatus = 'unknown';
+        
+        function refreshAnalytics(){ fetchVideos(); }
+        
+        function showAuthStatus(status, message) {
+            const statsDiv = document.getElementById('stats');
+            const authNotice = document.getElementById('authNotice');
+            const authIndicator = document.getElementById('authIndicator');
+            const authIcon = document.getElementById('authIcon');
+            const authText = document.getElementById('authText');
+            
+            // Update header indicator
+            authIndicator.style.display = 'block';
+            
+            if (status === 'needs_auth') {
+                authIcon.style.color = '#dc2626';
+                authText.textContent = 'Not Authenticated';
+                authNotice.style.display = 'block';
+                statsDiv.innerHTML = `
+                    <div class="stat" style="grid-column: 1 / -1; text-align: center; padding: 40px 20px;">
+                        <div style="font-size: 24px; color: #dc2626; margin-bottom: 16px;">
+                            <i class="fas fa-lock"></i> Authentication Required
+                        </div>
+                        <div style="color: #6b7280; margin-bottom: 24px; line-height: 1.5;">
+                            ${message || 'YouTube analytics requires authentication to access your channel data.'}
+                        </div>
+                        <button class="btn" style="background: #1a56db; border-color: #1a56db; padding: 12px 24px; font-size: 16px;" onclick="startDeviceAuth()">
+                            <i class="fas fa-key"></i> Start Authentication
+                        </button>
+                    </div>
+                `;
+            } else if (status === 'auth_in_progress') {
+                authIcon.style.color = '#f59e0b';
+                authText.textContent = 'Authenticating...';
+                authNotice.style.display = 'none';
+                statsDiv.innerHTML = `
+                    <div class="stat" style="grid-column: 1 / -1; text-align: center; padding: 40px 20px;">
+                        <div style="font-size: 24px; color: #f59e0b; margin-bottom: 16px;">
+                            <i class="fas fa-clock"></i> Authentication in Progress
+                        </div>
+                        <div style="color: #6b7280; margin-bottom: 24px; line-height: 1.5;">
+                            Please complete the authentication in your browser, then click "Check Status" below.
+                        </div>
+                        <button class="btn" style="background: #f59e0b; border-color: #f59e0b; padding: 12px 24px; font-size: 16px;" onclick="checkAuthStatus()">
+                            <i class="fas fa-sync"></i> Check Status
+                        </button>
+                    </div>
+                `;
+            } else if (status === 'authenticated') {
+                authIcon.style.color = '#10b981';
+                authText.textContent = 'Authenticated';
+                authNotice.style.display = 'none';
+            }
+        }
+        
+        function startDeviceAuth() {
+            fetch('/api/analytics/device/start', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Open verification URL in new tab
+                    window.open(data.verification_url, '_blank');
+                    
+                    // Show instructions
+                    const statsDiv = document.getElementById('stats');
+                    statsDiv.innerHTML = `
+                        <div class="stat" style="grid-column: 1 / -1; text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 24px; color: #f59e0b; margin-bottom: 16px;">
+                                <i class="fas fa-external-link-alt"></i> Complete Authentication
+                            </div>
+                            <div style="color: #6b7280; margin-bottom: 16px; line-height: 1.5;">
+                                A new tab has opened. Please:
+                            </div>
+                            <div style="color: #6b7280; margin-bottom: 24px; line-height: 1.5; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
+                                1. Enter this code: <strong style="color: #1a56db; font-size: 18px;">${data.user_code}</strong><br>
+                                2. Approve access to your YouTube data<br>
+                                3. Return here and click "Check Status"
+                            </div>
+                            <button class="btn" style="background: #f59e0b; border-color: #f59e0b; padding: 12px 24px; font-size: 16px;" onclick="checkAuthStatus()">
+                                <i class="fas fa-sync"></i> Check Status
+                            </button>
+                        </div>
+                    `;
+                    authStatus = 'auth_in_progress';
+                    showAuthStatus('auth_in_progress', 'Authentication in progress. Please complete the steps in the new tab.');
+                } else {
+                    alert('Failed to start authentication: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                alert('Failed to start authentication: ' + err.message);
+            });
+        }
+        
+        function checkAuthStatus() {
+            fetch('/api/analytics/device/status')
+            .then(r => r.json())
+            .then(data => {
+                if (data.ready) {
+                    // Authentication complete, refresh analytics
+                    authStatus = 'authenticated';
+                    showAuthStatus('authenticated', 'Authentication successful! Loading your analytics data...');
+                    refreshAnalytics();
+                } else if (data.expired) {
+                    showAuthStatus('needs_auth', 'Authentication expired. Please start again.');
+                    authStatus = 'needs_auth';
+                } else {
+                    // Still pending, show current status
+                    showAuthStatus('auth_in_progress', 'Authentication still pending. Please complete it in your browser.');
+                }
+            })
+            .catch(err => {
+                alert('Failed to check status: ' + err.message);
+            });
+        }
+        
+        function fetchVideos(){
+            fetch('/api/analytics/videos')
+            .then(r=>r.json())
+            .then(d=>{
+                if(!d.success){
+                    if (d.status === 'needs_auth') {
+                        showAuthStatus('needs_auth', d.message);
+                        authStatus = 'needs_auth';
+                    } else {
+                        alert(d.message || 'Failed to load analytics');
+                    }
+                    return;
+                }
+                authStatus = 'authenticated';
+                showAuthStatus('authenticated', '');
+                RAW = d.videos||[];
+                document.getElementById('chViews').textContent = (d.channel.viewCount||0).toLocaleString();
+                document.getElementById('chSubs').textContent = (d.channel.subscriberCount||0).toLocaleString();
+                document.getElementById('chVideos').textContent = (d.channel.videoCount||RAW.length).toLocaleString();
+                const avg = RAW.length? Math.round(RAW.reduce((a,b)=>a+(b.viewCount||0),0)/RAW.length):0;
+                document.getElementById('avgViews').textContent = avg.toLocaleString();
+                render(RAW);
+            }).catch(()=>alert('Failed to load analytics'));
+        }
+        function parseISO(s){ try{ return luxon.DateTime.fromISO(s);}catch{return null;} }
+        function isoDate(s){ const d=parseISO(s); return d? d.toFormat('yyyy-LL-dd') : ''; }
+        function durToSec(iso){ // PT#M#S
+            try{ const m=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/); const h=parseInt(m[1]||0),mi=parseInt(m[2]||0),se=parseInt(m[3]||0); return h*3600+mi*60+se;}catch{return 0;}
+        }
+        function engagement(v){ const vi=v.viewCount||0, li=v.likeCount||0; return vi? (li/vi) : 0; }
+        function applyFilters(){
+            const q = document.getElementById('search').value.trim().toLowerCase();
+            const tag = document.getElementById('tag').value.trim().toLowerCase();
+            const minV = parseInt(document.getElementById('minViews').value||0);
+            const maxV = parseInt(document.getElementById('maxViews').value||0);
+            const minL = parseInt(document.getElementById('minLikes').value||0);
+            const maxL = parseInt(document.getElementById('maxLikes').value||0);
+            const minC = parseInt(document.getElementById('minComments').value||0);
+            const maxC = parseInt(document.getElementById('maxComments').value||0);
+            const after = document.getElementById('after').value;
+            const before = document.getElementById('before').value;
+            const defn = document.getElementById('definition').value;
+            const hasTags = document.getElementById('hasTags').value;
+            const titleQ = document.getElementById('titleHasQuestion').value;
+            const descLink = document.getElementById('descHasLink').value;
+            const dur = document.getElementById('duration').value;
+            const eng = document.getElementById('engagement').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let out = RAW.slice();
+            out = out.filter(v=>{
+                if(q){ const hay=(v.title+' '+v.description+' '+(v.tags||[]).join(' ')).toLowerCase(); if(!hay.includes(q)) return false; }
+                if(tag){ if(!(v.tags||[]).some(t=>String(t).toLowerCase().includes(tag))) return false; }
+                if(minV && v.viewCount<minV) return false; if(maxV && v.viewCount>maxV) return false;
+                if(minL && v.likeCount<minL) return false; if(maxL && v.likeCount>maxL) return false;
+                if(minC && v.commentCount<minC) return false; if(maxC && v.commentCount>maxC) return false;
+                if(defn && v.definition!==defn) return false;
+                if(after){ if(parseISO(v.publishedAt) < parseISO(after)) return false; }
+                if(before){ if(parseISO(v.publishedAt) > parseISO(before)) return false; }
+                if(hasTags==='yes' && (!v.tags || v.tags.length===0)) return false;
+                if(hasTags==='no' && (v.tags && v.tags.length>0)) return false;
+                if(titleQ==='yes' && !String(v.title).includes('?')) return false;
+                if(titleQ==='no' && String(v.title).includes('?')) return false;
+                if(descLink==='yes' && !/https?:\/\//i.test(v.description||'')) return false;
+                if(descLink==='no' && /https?:\/\//i.test(v.description||'')) return false;
+                if(dur){ const s=durToSec(v.duration||''); if(dur==='short' && s>=240) return false; if(dur==='medium' && (s<240||s>1200)) return false; if(dur==='long' && s<=1200) return false; }
+                if(eng){ const e=engagement(v); if(eng==='high' && e<=0.05) return false; if(eng==='mid' && (e<=0.01||e>=0.05)) return false; if(eng==='low' && e>=0.01) return false; }
+                return true;
+            });
+
+            const [field,dir] = sortBy.split('-');
+            out.sort((a,b)=>{
+                const av=(a[field]||0), bv=(b[field]||0);
+                if(av<bv) return dir==='asc'?-1:1; if(av>bv) return dir==='asc'?1:-1; return 0;
+            });
+
+            render(out);
+        }
+        function resetFilters(){ document.querySelectorAll('.filters input, .filters select').forEach(el=>el.value=''); applyFilters(); }
+        function render(arr){
+            const root=document.getElementById('videoList');
+            root.innerHTML='';
+            arr.forEach(v=>{
+                const el=document.createElement('div'); el.className='video';
+                el.innerHTML=`
+                    <img class="thumb" src="${v.thumbnail||''}" alt="thumb" />
+                    <div>
+                        <h3 class="vtitle">${v.title}</h3>
+                        <div class="meta">
+                            <span><i class="fas fa-eye"></i> ${v.viewCount.toLocaleString()}</span>
+                            <span><i class="fas fa-thumbs-up"></i> ${v.likeCount.toLocaleString()}</span>
+                            <span><i class="fas fa-comments"></i> ${v.commentCount.toLocaleString()}</span>
+                            <span><i class="fas fa-clock"></i> ${isoDate(v.publishedAt)}</span>
+                            <span><i class="fas fa-high-definition"></i> ${v.definition}</span>
+                        </div>
+                        <div class="chips">${(v.tags||[]).slice(0,6).map(t=>`<span class='chip'>${t}</span>`).join('')}</div>
+                        <div class="row-actions">
+                            <a class="btn-sm" href="${v.url}" target="_blank"><i class="fas fa-external-link"></i> Open</a>
+                            <button class="btn-sm" onclick="loadComments('${v.id}', this)"><i class="fas fa-comment-dots"></i> Comments</button>
+                        </div>
+                        <div class="comments" id="c-${v.id}" style="margin-top:8px; display:none;"></div>
+                    </div>`;
+                root.appendChild(el);
+            });
+        }
+        function loadComments(videoId, btn){
+            const box=document.getElementById('c-'+videoId);
+            if(box.style.display==='block'){ box.style.display='none'; box.innerHTML=''; return; }
+            btn.disabled=true; btn.textContent='Loading...';
+            fetch('/api/analytics/comments?video_id='+encodeURIComponent(videoId))
+            .then(r=>r.json()).then(d=>{
+                btn.disabled=false; btn.textContent='Comments';
+                if(!d.success){
+                    if (d.status === 'needs_auth') {
+                        box.style.display='block';
+                        box.innerHTML = `
+                            <div style='padding:12px; border:1px solid #fca5a5; border-radius:8px; background:#fef2f2; color:#dc2626;'>
+                                <i class="fas fa-lock"></i> Authentication required to load comments.
+                                <button class="btn-sm" style="margin-left:8px; background:#dc2626; border-color:#dc2626; color:white;" onclick="startDeviceAuth()">
+                                    Authenticate
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        box.style.display='block'; 
+                        box.textContent='No comments or not available';
+                    }
+                    return; 
+                }
+                box.style.display='block';
+                box.innerHTML = (d.comments||[]).slice(0,50).map(c=>`<div style='padding:8px; border:1px solid #e5e7eb; border-radius:8px; margin-bottom:6px;'>
+                    <div style='font-weight:700;'>${c.author}</div>
+                    <div style='color:#374151; font-size:13px;'>${c.text}</div>
+                    <div style='color:#6b7280; font-size:12px; margin-top:4px;'>👍 ${c.likeCount} • ${c.publishedAt.substring(0,10)}</div>
+                </div>`).join('') || 'No comments';
+            }).catch(()=>{ btn.disabled=false; btn.textContent='Comments'; box.style.display='block'; box.textContent='Failed to load comments'; });
+        }
+
+        // Initial load
+        refreshAnalytics();
+    </script>
+</body>
+</html>
+

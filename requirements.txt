@@ -50,6 +50,10 @@ pyasn1_modules==0.4.0
 rsa==4.9
 urllib3==2.2.2
 
+# Text File Processing
+PyPDF2==3.0.1
+python-docx==1.1.0
+
 # Scheduling
 schedule==1.2.0
 

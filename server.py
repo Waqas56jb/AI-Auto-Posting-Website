@@ -41,6 +41,136 @@ from google.auth.transport.requests import Request
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# --- YouTube credentials hydration for container environments ---
+def _maybe_write_file(path: str, content: str) -> None:
+    try:
+        directory = os.path.dirname(path) or '.'
+        os.makedirs(directory, exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(content)
+    except Exception as e:
+        logger.warning(f"Failed to write file {path}: {e}")
+
+def _from_env_json(var_plain: str, var_b64: str) -> str | None:
+    value = os.environ.get(var_plain)
+    if value:
+        return value
+    b64 = os.environ.get(var_b64)
+    if b64:
+        try:
+            import base64
+            return base64.b64decode(b64).decode('utf-8')
+        except Exception:
+            logger.warning(f"Invalid base64 provided in {var_b64}")
+            return None
+    return None
+
+def hydrate_youtube_credentials_from_env() -> None:
+    """Hydrate YouTube credentials from env vars if present.
+
+    Supported:
+    - CLIENT_SECRETS_JSON or CLIENT_SECRETS_JSON_B64 -> writes ./client_secrets.json
+    - YOUTUBE_TOKEN_JSON or YOUTUBE_TOKEN_JSON_B64 -> writes ./static/youtube_token.json
+    - YOUTUBE_TOKEN_FILE can override destination path for the token
+    """
+    try:
+        # client_secrets.json
+        client_json = _from_env_json('CLIENT_SECRETS_JSON', 'CLIENT_SECRETS_JSON_B64')
+        if client_json and not os.path.exists('client_secrets.json'):
+            _maybe_write_file('client_secrets.json', client_json)
+            logger.info('Wrote client_secrets.json from environment')
+
+        # youtube_token.json
+        token_json = _from_env_json('YOUTUBE_TOKEN_JSON', 'YOUTUBE_TOKEN_JSON_B64')
+        if token_json:
+            token_dest = os.environ.get('YOUTUBE_TOKEN_FILE') or os.path.join('static', 'youtube_token.json')
+            if not os.path.exists(token_dest):
+                _maybe_write_file(token_dest, token_json)
+                logger.info(f'Wrote YouTube token to {token_dest} from environment')
+    except Exception as e:
+        logger.warning(f"Failed hydrating YouTube credentials from env: {e}")
+
+# Run hydration early on import
+hydrate_youtube_credentials_from_env()
+
+# Sync baked token into mounted static volume if present and missing
+try:
+    baked_token_path = 'youtube_token.json'
+    static_token_path = os.path.join('static', 'youtube_token.json')
+    if os.path.exists(baked_token_path) and not os.path.exists(static_token_path):
+        os.makedirs('static', exist_ok=True)
+        with open(baked_token_path, 'r', encoding='utf-8') as _src, open(static_token_path, 'w', encoding='utf-8') as _dst:
+            _dst.write(_src.read())
+        logger.info('Seeded static/youtube_token.json from baked youtube_token.json')
+except Exception as _e:
+    logger.warning(f'Failed to seed static youtube token: {_e}')
+
+# --- YouTube OAuth Web Flow (for production authorization) ---
+def _get_youtube_scopes():
+    return ["https://www.googleapis.com/auth/youtube.upload"]
+
+def _get_redirect_uri(path: str = '/api/youtube/auth/callback') -> str:
+    try:
+        # Build absolute redirect URI based on current request host
+        base = request.host_url.rstrip('/') if request else os.environ.get('PUBLIC_BASE_URL', '')
+        # Force https scheme to match OAuth console configuration
+        if base.startswith('http://'):
+            base = 'https://' + base[len('http://'):]
+        if not base:
+            # Fallback to Fly app URL if provided
+            app_name = os.environ.get('FLY_APP_NAME') or 'ai-auto-posting'
+            base = f"https://{app_name}.fly.dev"
+        return f"{base}{path}"
+    except Exception:
+        app_name = os.environ.get('FLY_APP_NAME') or 'ai-auto-posting'
+        return f"https://{app_name}.fly.dev{path}"
+
+def _build_oauth_flow(redirect_uri: str, state: str | None = None):
+    scopes = _get_youtube_scopes()
+    import google_auth_oauthlib.flow as _flow
+    if state:
+        return _flow.Flow.from_client_secrets_file(
+            'client_secrets.json', scopes=scopes, state=state, redirect_uri=redirect_uri
+        )
+    return _flow.Flow.from_client_secrets_file(
+        'client_secrets.json', scopes=scopes, redirect_uri=redirect_uri
+    )
+
+def youtube_auth_start():
+    try:
+        if not os.path.exists('client_secrets.json'):
+            return jsonify({
+                'success': False,
+                'error': 'client_secrets.json missing on server'
+            }), 500
+        redirect_uri = _get_redirect_uri()
+        flow = _build_oauth_flow(redirect_uri)
+        auth_url, state = flow.authorization_url(
+            access_type='offline', include_granted_scopes='true', prompt='consent'
+        )
+        session['yt_oauth_state'] = state
+        return jsonify({'success': True, 'auth_url': auth_url})
+    except Exception as e:
+        logger.error(f"YouTube OAuth start error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+def youtube_auth_callback():
+    try:
+        state = session.get('yt_oauth_state')
+        redirect_uri = _get_redirect_uri()
+        flow = _build_oauth_flow(redirect_uri, state=state)
+        flow.fetch_token(authorization_response=request.url)
+        creds = flow.credentials
+        save_path = _get_youtube_token_file(for_save=True)
+        with open(save_path, 'w') as f:
+            f.write(creds.to_json())
+        # Clear state
+        session.pop('yt_oauth_state', None)
+        return jsonify({'success': True, 'message': 'YouTube authorized', 'token_file': save_path})
+    except Exception as e:
+        logger.error(f"YouTube OAuth callback error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 # YouTube Upload Functions (Simplified)
 def _get_youtube_token_file(for_save: bool = False) -> str:
     """Return the path to the shared YouTube token file, preferring the mounted static volume.
@@ -69,6 +199,17 @@ def _get_youtube_token_file(for_save: bool = False) -> str:
     else:
         for path in candidates:
             if path and os.path.exists(path):
+                # If we find a baked token at root but not in static volume, copy it for persistence
+                try:
+                    if path == 'youtube_token.json':
+                        static_path = os.path.join('static', 'youtube_token.json')
+                        if not os.path.exists(static_path):
+                            os.makedirs('static', exist_ok=True)
+                            with open(path, 'r', encoding='utf-8') as _src, open(static_path, 'w', encoding='utf-8') as _dst:
+                                _dst.write(_src.read())
+                            logger.info('Copied root youtube_token.json into static volume for persistence')
+                except Exception:
+                    pass
                 return path
         # Default save location if none exist
         return os.path.join('static', 'youtube_token.json')
@@ -200,6 +341,40 @@ def upload_video_simple(video_path, title, description, tags, privacy="private")
 
 # Import configuration
 from config import *
+from google.auth.transport.requests import Request as _GoogleRequest
+try:
+    from google.oauth2.credentials import Credentials as _OAuthCreds
+except Exception:
+    _OAuthCreds = None
+import threading
+import time
+
+# Auto-provision credentials from environment (base64)
+try:
+    import base64
+    def _write_if_env_base64(env_key: str, dest_path: str) -> bool:
+        try:
+            b64 = os.environ.get(env_key)
+            if not b64:
+                return False
+            # Ensure destination directory exists
+            dest_dir = os.path.dirname(dest_path) or '.'
+            os.makedirs(dest_dir, exist_ok=True)
+            # Decode and write
+            with open(dest_path, 'wb') as f:
+                f.write(base64.b64decode(b64))
+            logger.info(f"Wrote credential from {env_key} to {dest_path}")
+            return True
+        except Exception as e:
+            logger.warning(f"Failed writing {dest_path} from {env_key}: {e}")
+            return False
+
+    # Write client secrets if provided
+    _write_if_env_base64('CLIENT_SECRETS_JSON_BASE64', os.path.join(os.getcwd(), 'client_secrets.json'))
+    # Write token into static so it persists on volume
+    _write_if_env_base64('YOUTUBE_TOKEN_JSON_BASE64', os.path.join('static', 'youtube_token.json'))
+except Exception:
+    pass
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -240,9 +415,321 @@ def get_user_subdir(user_id: int, subdir: str) -> str:
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['DOWNLOAD_FOLDER'], exist_ok=True)
 
+# Register deferred OAuth routes now that app exists
+try:
+    app.add_url_rule('/api/youtube/auth/start', view_func=youtube_auth_start, methods=['GET'])
+    app.add_url_rule('/api/youtube/auth/callback', view_func=youtube_auth_callback, methods=['GET'])
+except Exception:
+    pass
+
 # Expand allowed file extensions
-ALLOWED_EXTENSIONS = {'mp3', 'wav', 'mp4', 'mov', 'm4a', 'avi', 'mkv', 'webm', 'flac', 'aac', 'ogg'}
+ALLOWED_EXTENSIONS = {'mp3', 'wav', 'mp4', 'mov', 'm4a', 'avi', 'mkv', 'webm', 'flac', 'aac', 'ogg', 'txt', 'doc', 'docx', 'pdf'}
 ALLOWED_EXTENSIONS_EDIT = {'mp4', 'mov'}
+
+# Analytics helpers: YouTube data fetchers
+def _yt_service():
+    """Return an authenticated YouTube client for analytics.
+    Uses analytics.json (root) with long-lived refresh token; auto-refresh & persist.
+    Never falls back to upload token as it has insufficient permissions for analytics.
+    """
+    # analytics.json path - this is the only valid path for analytics
+    analytics_path = os.path.join(os.getcwd(), 'analytics.json')
+    if not os.path.exists(analytics_path):
+        logger.warning("analytics.json not found. Use /api/analytics/device/start to begin authentication.")
+        return None
+    
+    try:
+        with open(analytics_path, 'r') as f:
+            data = json.load(f)
+        
+        # Check if this is still the initial installed client config
+        if 'installed' in data:
+            logger.info("analytics.json contains installed client. Use /api/analytics/device/start to complete authentication.")
+            return None
+        
+        # Check for proper analytics token structure
+        token = data.get('token') or data.get('access_token')
+        refresh_token = data.get('refresh_token')
+        client_id = data.get('client_id')
+        client_secret = data.get('client_secret')
+        
+        if not all([token, refresh_token, client_id, client_secret]):
+            logger.warning("analytics.json missing required fields. Use /api/analytics/device/start to complete authentication.")
+            return None
+        
+        token_uri = data.get('token_uri') or 'https://oauth2.googleapis.com/token'
+        scopes = data.get('scopes') or ['https://www.googleapis.com/auth/youtube.readonly']
+        
+        creds = _OAuthCreds(
+            token=token,
+            refresh_token=refresh_token,
+            token_uri=token_uri,
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=scopes
+        )
+        
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(_GoogleRequest())
+                # persist refresh result back to file for lifetime use
+                persist = {
+                    'token': creds.token,
+                    'refresh_token': creds.refresh_token,
+                    'token_uri': token_uri,
+                    'client_id': client_id,
+                    'client_secret': client_secret,
+                    'scopes': scopes,
+                    'expiry': getattr(creds, 'expiry', None).isoformat() if getattr(creds, 'expiry', None) else ''
+                }
+                with open(analytics_path, 'w') as f:
+                    json.dump(persist, f)
+                logger.info("Analytics token refreshed successfully")
+            except Exception as e:
+                logger.warning(f"Analytics token refresh failed: {e}")
+                return None
+        
+        if creds and (creds.valid or creds.refresh_token):
+            import googleapiclient.discovery
+            youtube = googleapiclient.discovery.build('youtube', 'v3', credentials=creds)
+            logger.info("YouTube analytics API authenticated successfully")
+            return youtube
+        else:
+            logger.warning("Analytics credentials are invalid and cannot be refreshed")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Failed analytics.json auth: {e}")
+        return None
+
+# -------- Analytics Device Flow (for installed client in analytics.json) --------
+_DEVICE_STATE_PATH = os.path.join(os.getcwd(), 'analytics_device.json')
+
+def _read_json_safe(path: str):
+    try:
+        with open(path, 'r') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+def _write_json_safe(path: str, payload: dict):
+    try:
+        with open(path, 'w') as f:
+            json.dump(payload, f)
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to write {path}: {e}")
+        return False
+
+def _analytics_client_from_installed():
+    cfg = _read_json_safe(os.path.join(os.getcwd(), 'analytics.json'))
+    if not cfg or 'installed' not in cfg:
+        return None
+    return cfg['installed']
+
+@app.route('/api/analytics/device/start', methods=['POST'])
+def api_analytics_device_start():
+    try:
+        installed = _analytics_client_from_installed()
+        if not installed:
+            return jsonify({'success': False, 'message': 'analytics.json (installed client) not found'}), 400
+        client_id = installed.get('client_id')
+        client_secret = installed.get('client_secret')
+        if not client_id or not client_secret:
+            return jsonify({'success': False, 'message': 'client_id/client_secret missing in analytics.json'}), 400
+        scope = 'https://www.googleapis.com/auth/youtube.readonly'
+        import requests
+        r = requests.post('https://oauth2.googleapis.com/device/code', data={
+            'client_id': client_id,
+            'scope': scope
+        })
+        if r.status_code != 200:
+            return jsonify({'success': False, 'message': 'Device code request failed'}), 500
+        data = r.json()
+        state = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'device_code': data['device_code'],
+            'user_code': data['user_code'],
+            'verification_url': data.get('verification_url') or data.get('verification_uri'),
+            'interval': data.get('interval', 5),
+            'expires_at': time.time() + int(data.get('expires_in', 1800))
+        }
+        _write_json_safe(_DEVICE_STATE_PATH, state)
+        return jsonify({'success': True, 'verification_url': state['verification_url'], 'user_code': state['user_code']})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+def _device_poll_exchange():
+    state = _read_json_safe(_DEVICE_STATE_PATH)
+    if not state:
+        return {'success': False, 'ready': False, 'message': 'No device flow in progress'}
+    if time.time() > state.get('expires_at', 0):
+        return {'success': False, 'ready': False, 'expired': True, 'message': 'Device code expired'}
+    import requests
+    r = requests.post('https://oauth2.googleapis.com/token', data={
+        'client_id': state['client_id'],
+        'client_secret': state['client_secret'],
+        'device_code': state['device_code'],
+        'grant_type': 'urn:ietf:params:oauth:grant-type:device_code'
+    })
+    if r.status_code == 200:
+        tok = r.json()
+        # Persist to normalized analytics.json format
+        persist = {
+            'token': tok.get('access_token', ''),
+            'refresh_token': tok.get('refresh_token', ''),
+            'token_uri': 'https://oauth2.googleapis.com/token',
+            'client_id': state['client_id'],
+            'client_secret': state['client_secret'],
+            'scopes': ['https://www.googleapis.com/auth/youtube.readonly'],
+            'expiry': ''
+        }
+        _write_json_safe(os.path.join(os.getcwd(), 'analytics.json'), persist)
+        try:
+            os.remove(_DEVICE_STATE_PATH)
+        except Exception:
+            pass
+        return {'success': True, 'ready': True}
+    else:
+        try:
+            err = r.json().get('error')
+        except Exception:
+            err = None
+        # authorization_pending or slow_down are expected while user authorizes
+        return {'success': True, 'ready': False, 'error': err}
+
+@app.route('/api/analytics/device/status', methods=['GET'])
+def api_analytics_device_status():
+    try:
+        res = _device_poll_exchange()
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({'success': False, 'ready': False, 'message': str(e)}), 500
+
+def _list_channel_uploads(youtube, max_items: int | None = None):
+    # Get uploads playlist and list recent videos with statistics
+    try:
+        ch_resp = youtube.channels().list(part="contentDetails,snippet,statistics", mine=True).execute()
+        if not ch_resp.get('items'):
+            return [], {}
+        channel = ch_resp['items'][0]
+        uploads_playlist_id = channel['contentDetails']['relatedPlaylists']['uploads']
+        channel_meta = {
+            'title': channel['snippet']['title'],
+            'description': channel['snippet'].get('description',''),
+            'country': channel['snippet'].get('country',''),
+            'publishedAt': channel['snippet'].get('publishedAt',''),
+            'viewCount': int(channel['statistics'].get('viewCount','0')),
+            'subscriberCount': int(channel['statistics'].get('subscriberCount','0')),
+            'videoCount': int(channel['statistics'].get('videoCount','0')),
+        }
+        videos = []
+        next_page = None
+        # Fetch until no next page or until max_items reached (if provided)
+        fetched = 0
+        hard_cap = max_items if (isinstance(max_items, int) and max_items > 0) else 1000
+        while True and fetched < hard_cap:
+            pl_items = youtube.playlistItems().list(part="contentDetails,snippet", playlistId=uploads_playlist_id, maxResults=50, pageToken=next_page).execute()
+            vid_ids = [it['contentDetails']['videoId'] for it in pl_items.get('items', [])]
+            if vid_ids:
+                stats_resp = youtube.videos().list(part="snippet,statistics,contentDetails", id=','.join(vid_ids)).execute()
+                for v in stats_resp.get('items', []):
+                    sn = v.get('snippet', {})
+                    st = v.get('statistics', {})
+                    cd = v.get('contentDetails', {})
+                    videos.append({
+                        'id': v['id'],
+                        'title': sn.get('title',''),
+                        'description': sn.get('description',''),
+                        'publishedAt': sn.get('publishedAt',''),
+                        'channelTitle': sn.get('channelTitle',''),
+                        'tags': sn.get('tags', []),
+                        'categoryId': sn.get('categoryId',''),
+                        'duration': cd.get('duration',''),
+                        'dimension': cd.get('dimension',''),
+                        'definition': cd.get('definition',''),
+                        'viewCount': int(st.get('viewCount','0') or 0),
+                        'likeCount': int(st.get('likeCount','0') or 0),
+                        'commentCount': int(st.get('commentCount','0') or 0),
+                        'favoriteCount': int(st.get('favoriteCount','0') or 0),
+                        'thumbnail': (sn.get('thumbnails',{}).get('medium') or sn.get('thumbnails',{}).get('default') or {}).get('url',''),
+                        'url': f"https://www.youtube.com/watch?v={v['id']}",
+                    })
+            fetched += len(vid_ids)
+            next_page = pl_items.get('nextPageToken')
+            if not next_page:
+                break
+        return videos, channel_meta
+    except Exception as e:
+        logger.error(f"YouTube analytics fetch error: {e}")
+        return [], {}
+
+@app.route('/api/analytics/videos')
+def api_analytics_videos():
+    try:
+        yt = _yt_service()
+        if not yt:
+            return jsonify({
+                'success': False, 
+                'message': 'YouTube analytics not authenticated',
+                'action_required': 'Use /api/analytics/device/start to begin authentication',
+                'status': 'needs_auth'
+            }), 401
+        try:
+            max_items = request.args.get('max', type=int)
+        except Exception:
+            max_items = None
+        videos, channel = _list_channel_uploads(yt, max_items=max_items)
+        return jsonify({'success': True, 'channel': channel, 'videos': videos})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/analytics/comments')
+def api_analytics_comments():
+    try:
+        video_id = request.args.get('video_id')
+        if not video_id:
+            return jsonify({'success': False, 'message': 'video_id required'}), 400
+        yt = _yt_service()
+        if not yt:
+            return jsonify({
+                'success': False, 
+                'message': 'YouTube analytics not authenticated',
+                'action_required': 'Use /api/analytics/device/start to begin authentication',
+                'status': 'needs_auth'
+            }), 401
+        comments = []
+        page = None
+        total = 0
+        while True and total < 1000:  # cap for responsiveness
+            resp = yt.commentThreads().list(part="snippet", videoId=video_id, maxResults=100, pageToken=page, order='relevance').execute()
+            for it in resp.get('items', []):
+                sn = it['snippet']
+                top = sn['topLevelComment']['snippet']
+                comments.append({
+                    'author': top.get('authorDisplayName',''),
+                    'text': top.get('textDisplay',''),
+                    'likeCount': int(top.get('likeCount','0')),
+                    'publishedAt': top.get('publishedAt',''),
+                    'updatedAt': top.get('updatedAt','')
+                })
+            total += len(resp.get('items', []))
+            page = resp.get('nextPageToken')
+            if not page:
+                break
+        return jsonify({'success': True, 'comments': comments})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/analytics')
+def analytics_page():
+    try:
+        user = get_session_user()
+        # Allow viewing even if not logged in, but encourage login for user-scoped features
+        return render_template('analytics.html')
+    except Exception:
+        return render_template('analytics.html')
 
 # Database configuration for PostgreSQL (prefer DATABASE_URL if provided)
 db_config = DB_CONFIG
@@ -603,6 +1090,73 @@ def generate_transcript_from_audio(audio_path):
             'method': 'error'
         }
 
+def process_text_file(file_path):
+    """Process text files and extract content"""
+    try:
+        file_extension = os.path.splitext(file_path)[1].lower()
+        
+        if file_extension == '.txt':
+            # Simple text file
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        elif file_extension == '.pdf':
+            # PDF file - would need PyPDF2 or similar
+            try:
+                import PyPDF2
+                with open(file_path, 'rb') as f:
+                    pdf_reader = PyPDF2.PdfReader(f)
+                    content = ""
+                    for page in pdf_reader.pages:
+                        content += page.extract_text() + "\n"
+            except ImportError:
+                return {
+                    'success': False,
+                    'error': 'PDF processing requires PyPDF2. Please install it or convert to text file.'
+                }
+        elif file_extension in ['.doc', '.docx']:
+            # Word documents - would need python-docx
+            try:
+                from docx import Document
+                doc = Document(file_path)
+                content = ""
+                for paragraph in doc.paragraphs:
+                    content += paragraph.text + "\n"
+            except ImportError:
+                return {
+                    'success': False,
+                    'error': 'Word document processing requires python-docx. Please install it or convert to text file.'
+                }
+        else:
+            return {
+                'success': False,
+                'error': f'Unsupported file type: {file_extension}'
+            }
+        
+        # Clean the content
+        content = content.strip()
+        if not content:
+            return {
+                'success': False,
+                'error': 'File appears to be empty or contains no readable text.'
+            }
+        
+        return {
+            'success': True,
+            'transcript': content,
+            'language': 'en',
+            'word_count': len(content.split()),
+            'filename': os.path.basename(file_path),
+            'method': 'text_file'
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing text file: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e),
+            'method': 'text_file_error'
+        }
+
 # Supported languages
 LANGUAGES = {
     'en': {'name': 'English', 'flag': '🇬🇧'},
@@ -762,48 +1316,141 @@ def extract_framing_and_story(transcript):
         return "Personal growth and reflection", transcript
 
 def clean_lucy_story(story):
-    """Clean and format Lucy's story content by removing markdown symbols for clean output"""
+    """Clean and format Lucy's story content by removing markdown symbols and HeyGen-speaking symbols for clean output"""
     try:
-        # Preserve line breaks but remove markdown formatting symbols
         cleaned = story.strip()
         
         # Remove markdown symbols while preserving content
-        cleaned = re.sub(r'#+\s*\*\*(.*?)\*\*', r'\1', cleaned)  # Remove # and ** from titles
-        cleaned = re.sub(r'\*\*(.*?)\*\*', r'\1', cleaned)  # Remove ** from bold text
-        cleaned = re.sub(r'>\s*"(.*?)"', r'"\1"', cleaned)  # Remove > and keep quotes
-        cleaned = re.sub(r'>\s*(.*?)(?=\n|$)', r'\1', cleaned)  # Remove > from other lines
+        cleaned = re.sub(r'#+\s*\*\*(.*?)\*\*', r'\1', cleaned)
+        cleaned = re.sub(r'\*\*(.*?)\*\*', r'\1', cleaned)
+        cleaned = re.sub(r'>\s*"(.*?)"', r'"\1"', cleaned)
+        cleaned = re.sub(r'>\s*(.*?)(?=\n|$)', r'\1', cleaned)
         
         # Remove "🎯 Final CTA:" label but keep the content
         cleaned = re.sub(r'🎯 Final CTA:\s*', '', cleaned)
         
-        # Ensure proper line breaks between sections
-        # Add line breaks after titles
-        cleaned = re.sub(r'([^\\n]+)\n\n', r'\1\n\n\n', cleaned)
-        
-        # Add line breaks after Core Lessons section
-        cleaned = re.sub(r'(Core Lessons:.*?)(\n🎬)', r'\1\n\n\n\2', cleaned, flags=re.DOTALL)
-        
-        # Add line breaks before and after segment titles
-        cleaned = re.sub(r'(\n🎬.*?)\n', r'\n\n\n\1\n\n\n', cleaned)
-        
-        # Remove CUT markers completely but preserve content
-        cleaned = re.sub(r'CUT \d+\s*\n', '', cleaned)
-        
-        # Normalize line breaks but preserve intentional spacing
-        cleaned = re.sub(r'\n{5,}', '\n\n\n\n', cleaned)  # Max 4 consecutive line breaks
-        
-        # Ensure proper sentence endings
+        # Strip emojis and pictographs entirely
+        emoji_pattern = re.compile(
+            r"[\U0001F600-\U0001F64F]|[\U0001F300-\U0001F5FF]|[\U0001F680-\U0001F6FF]|[\U0001F700-\U0001F77F]|[\U0001F780-\U0001F7FF]|[\U0001F800-\U0001F8FF]|[\U0001F900-\U0001F9FF]|[\U0001FA00-\U0001FA6F]|[\U0001FA70-\U0001FAFF]|[\u2600-\u26FF]|[\u2700-\u27BF]",
+            flags=re.UNICODE
+        )
+        cleaned = emoji_pattern.sub('', cleaned)
+
+        # Remove bracketed placeholders like [website]
+        cleaned = re.sub(r"\[[^\]]*\]", '', cleaned)
+
+        # Symbols normalization
+        cleaned = re.sub(r'#\s*', '', cleaned)
+        cleaned = re.sub(r'@\s*', '', cleaned)
+        cleaned = re.sub(r'&\s*', ' and ', cleaned)
+        cleaned = re.sub(r'%\s*', ' percent ', cleaned)
+        cleaned = re.sub(r'\$\s*', ' dollars ', cleaned)
+        cleaned = re.sub(r'\+', ' plus ', cleaned)
+        cleaned = re.sub(r'=', ' equals ', cleaned)
+        cleaned = re.sub(r'/', ' slash ', cleaned)
+        cleaned = re.sub(r'\\', ' backslash ', cleaned)
+        cleaned = re.sub(r'\*', '', cleaned)
+        cleaned = re.sub(r'_', ' ', cleaned)
+        cleaned = re.sub(r'\|', ' or ', cleaned)
+        cleaned = re.sub(r'~', ' approximately ', cleaned)
+        cleaned = re.sub(r'\^', ' to the power of ', cleaned)
+
+        # Common misreads
+        cleaned = re.sub(r'cut\s*board', 'clipboard', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'hash\s*tag', 'hashtag', cleaned, flags=re.IGNORECASE)
+
+        # Remove CUT markers completely
+        cleaned = re.sub(r'\bCUT\s*\d+\s*\n', '', cleaned)
+
+        # Normalize excessive line breaks (keep meaningful newlines)
+        cleaned = re.sub(r'\n{4,}', '\n\n\n', cleaned)
+        # Reduce multiple spaces but do NOT touch newlines
+        cleaned = re.sub(r'[ \t]{2,}', ' ', cleaned)
+
+        # Sentence spacing
         cleaned = re.sub(r'([.!?])\s*([A-Z])', r'\1 \2', cleaned)
         
-        # Clean up any remaining markdown artifacts
-        cleaned = re.sub(r'^\s*[-*]\s*', '', cleaned, flags=re.MULTILINE)  # Remove bullet points
-        cleaned = re.sub(r'^\s*>\s*', '', cleaned, flags=re.MULTILINE)  # Remove any remaining >
-        cleaned = re.sub(r'^\s*#+\s*', '', cleaned, flags=re.MULTILINE)  # Remove any remaining #
-        
-        return cleaned
+        # Clean up leftover markdown on line starts
+        cleaned = re.sub(r'^\s*[-*]\s*', '', cleaned, flags=re.MULTILINE)
+        cleaned = re.sub(r'^\s*>\s*', '', cleaned, flags=re.MULTILINE)
+        cleaned = re.sub(r'^\s*#+\s*', '', cleaned, flags=re.MULTILINE)
+
+        # Normalize repeated punctuation
+        cleaned = re.sub(r'\.{2,}', '.', cleaned)
+        cleaned = re.sub(r',{2,}', ',', cleaned)
+        cleaned = re.sub(r'!{2,}', '!', cleaned)
+        cleaned = re.sub(r'\?{2,}', '?', cleaned)
+
+        return cleaned.strip()
     except Exception as e:
         logger.error(f"Error cleaning story: {e}")
         return story
+
+def format_story_universal(text: str) -> str:
+    """Enforce universal line-breaking format: blank line after title, between sections, and paragraphs.
+    Assumes input is already cleaned of emojis/symbols. Also adds dashed underlines to clear section headings."""
+    try:
+        # Normalize line endings
+        t = text.replace('\r\n', '\n').replace('\r', '\n').strip()
+        lines = [l.strip() for l in t.split('\n')]
+        # Remove consecutive empty lines
+        compact = []
+        for l in lines:
+            if l == '' and (len(compact) == 0 or compact[-1] == ''):
+                continue
+            compact.append(l)
+        # Ensure a blank line after the first non-empty line (title)
+        out = []
+        title_done = False
+        for l in compact:
+            out.append(l)
+            if not title_done and l != '':
+                out.append('')
+                title_done = True
+        # Insert blank lines before likely section headers and underline them
+        result = []
+        prev_blank = True
+        def is_heading(s: str) -> bool:
+            if not s:
+                return False
+            if s.startswith(('-', '*', '"', "'", '[')):
+                return False
+            if s.endswith(('.', '!', '?', '"', "'", ':')) and not s.endswith('Summary:'):
+                # Lines ending with terminal punctuation are likely sentences
+                return False
+            # Treat short, capitalized or title-like lines as headings
+            return (3 <= len(s) <= 90) and any(ch.isalpha() for ch in s) and (s[0].isupper())
+        for l in out:
+            if is_heading(l):
+                if not prev_blank and len(result) > 0:
+                    result.append('')
+                # Heading line
+                result.append(l)
+                # Dashed underline matching length (min 8, max 100)
+                underline = '-' * max(8, min(len(l), 100))
+                result.append(underline)
+                result.append('')
+                prev_blank = True
+                continue
+            # Normal line handling
+            result.append(l)
+            prev_blank = (l == '')
+        # Collapse excessive blank lines to max 2
+        final_lines = []
+        blank_count = 0
+        for l in result:
+            if l == '':
+                blank_count += 1
+                if blank_count <= 2:
+                    final_lines.append('')
+            else:
+                blank_count = 0
+                final_lines.append(l)
+        formatted = '\n'.join(final_lines).strip() + '\n'
+        return formatted
+    except Exception as e:
+        logger.warning(f"format_story_universal failed: {e}")
+        return text
 
 def parse_story_to_json(story_text):
     """Parse story text into structured JSON format with markdown formatting"""
@@ -935,8 +1582,13 @@ def delete_trimmed():
         return jsonify({'success': False, 'message': 'Delete failed'}), 500
 
 @app.route('/')
-def indexakkal():
-    """Main landing page"""
+def main_landing():
+    """Main landing page - StoryVerse AI"""
+    return render_template('LandingPage.html', languages=LANGUAGES)
+
+@app.route('/landing')
+def landing_page():
+    """Alternative landing page route"""
     return render_template('LandingPage.html', languages=LANGUAGES)
 
 @app.route('/api/existing-videos')
@@ -997,7 +1649,11 @@ def create_video_clip():
     try:
         user = get_session_user()
         if not user:
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+            return jsonify({
+                'success': False, 
+                'message': 'Please log in to create video clips. You will be redirected to the login page.',
+                'redirect': '/login'
+            }), 401
         if 'file' not in request.files:
             return jsonify({'success': False, 'message': 'No file uploaded'}), 400
         
@@ -1120,7 +1776,11 @@ def trim_video():
         
         user = get_session_user()
         if not user:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+            return jsonify({
+                'success': False, 
+                'error': 'Please log in to trim videos. You will be redirected to the login page.',
+                'redirect': '/login'
+            }), 401
 
         # Determine the source folder based on file path (user-scoped)
         if file_path.startswith('videos/'):
@@ -1537,26 +2197,62 @@ def test_story_simple():
         logger.error(f"Error in simple story test: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# Clean, logical routes for better user experience
+@app.route('/login')
+def login_page():
+    """Login page"""
+    return render_template('login.html')
+
+@app.route('/signup')
+def signup_page():
+    """Signup page"""
+    return render_template('signup.html')
+
+@app.route('/story-generator')
+def story_generator():
+    """AI Story Generator - main workflow entry point"""
+    return render_template('index.html')
+
+@app.route('/dashboard')
+def dashboard():
+    """Redirect to editor (legacy behavior)"""
+    return redirect('/edit')
+
+@app.route('/forgot-password')
+def forgot_password_page():
+    """Forgot password page"""
+    return render_template('forget.html')
+
+@app.route('/reset-password')
+def reset_password_page():
+    """Reset password page"""
+    token = request.args.get('token')
+    return render_template('reset.html', token=token)
+
+# Keep legacy routes for backward compatibility but redirect to clean URLs
 @app.route('/api/navigate/<page>')
+def legacy_navigate(page):
+    """Legacy navigation endpoint - redirects to clean URLs"""
+    redirects = {
+        'login': '/login',
+        'signup': '/signup',
+        'index': '/story-generator',
+        'forgot': '/forgot-password',
+        'reset': '/reset-password'
+    }
+    return redirect(redirects.get(page, '/'))
+
+@app.route('/navigate/<page>')
 def navigate(page):
-    """Navigation endpoint"""
-    try:
-        if page == 'login':
-            return render_template('login.html')
-        elif page == 'signup':
-            return render_template('signup.html')
-        elif page == 'index':
-            return render_template('index.html')
-        elif page == 'forgot':
-            return render_template('forget.html')
-        elif page == 'reset':
-            token = request.args.get('token')
-            return render_template('reset.html', token=token)
-        else:
-            return render_template('LandingPage.html', languages=LANGUAGES)
-    except Exception as e:
-        logging.error(f"Navigation error: {e}")
-        return render_template('LandingPage.html', languages=LANGUAGES)
+    """Main navigation endpoint - redirects to clean URLs"""
+    redirects = {
+        'login': '/login',
+        'signup': '/signup',
+        'index': '/story-generator',
+        'forgot': '/forgot-password',
+        'reset': '/reset-password'
+    }
+    return redirect(redirects.get(page, '/'))
 
 @app.route('/forgot')
 def forgot_page():
@@ -1715,13 +2411,13 @@ def signup():
         if username != base_username:
             logger.info(f"Successful signup for email: {email} with generated username: {username}")
             return jsonify({
-                'message': f'Signup successful! Username "{base_username}" was taken, so we created "{username}" for you. Redirecting to login...',
+                'message': f'Signup successful! Username "{base_username}" was taken, so we created "{username}" for you. Redirecting...',
                 'redirect': url_for('navigate', page='login')
             }), 200
         else:
             logger.info(f"Successful signup for email: {email} with username: {username}")
             return jsonify({
-                'message': 'Signup successful! Redirecting to login...',
+                'message': 'Signup successful! Redirecting...',
                 'redirect': url_for('navigate', page='login')
             }), 200
             
@@ -1877,7 +2573,7 @@ def forgot_password():
         return jsonify({'message': 'An error occurred during password reset. Please try again.'}), 500
 
 @app.route('/api/reset-password', methods=['POST'])
-def reset_password():
+def api_reset_password():
     data = request.get_json()
     if not data:
         logger.warning("Reset password attempt with missing JSON data")
@@ -1954,6 +2650,9 @@ def transcribe_audio():
             # Generate transcript
             if file.filename.lower().endswith(('.mp4', '.mov', '.avi', '.mkv', '.webm')):
                 result = generate_transcript_from_video(file_path)
+            elif file.filename.lower().endswith(('.txt', '.doc', '.docx', '.pdf')):
+                # Handle text files
+                result = process_text_file(file_path)
             else:
                 result = generate_transcript_from_audio(file_path)
             
@@ -2490,16 +3189,17 @@ Ready to master video hooks? Let's build your system together. Visit [website] t
                 logger.info(f"Generated content length: {len(response.text)} characters")
                 story_text = response.text.strip()
                 clean_story = clean_lucy_story(story_text)
+                universal_story = format_story_universal(clean_story)
                 
                 # Parse the story into structured format for frontend compatibility
-                parsed_story = parse_story_to_json(clean_story)
+                parsed_story = parse_story_to_json(universal_story)
                 
                 logger.info(f"Story parsed successfully. Title: {parsed_story.get('title', 'No title')}, Word count: {parsed_story.get('word_count', 'Unknown')}")
                 
                 return jsonify({
                     'success': True,
                     'story': parsed_story,
-                    'raw_response': clean_story
+                    'raw_response': universal_story
                 })
             else:
                 logger.warning("Gemini response is empty or invalid")
@@ -3276,20 +3976,90 @@ def youtube_channel_info():
 def youtube_status():
     """Get YouTube service status"""
     try:
-
-        
-        # Check if client secrets file exists
+        # Check if files exist
         client_secrets_exists = os.path.exists('client_secrets.json')
-        
-        return jsonify({
+        token_path = _get_youtube_token_file(for_save=False)
+        token_exists = os.path.exists(token_path)
+
+        # Optionally try a lightweight auth build without network
+        can_auth = False
+        token_metadata = {
+            'expired': None,
+            'has_refresh_token': None
+        }
+        try:
+            # Parse token to inspect meta
+            if token_exists:
+                try:
+                    from google.oauth2.credentials import Credentials as _Cred
+                    creds = _Cred.from_authorized_user_file(token_path)
+                    token_metadata['expired'] = getattr(creds, 'expired', None)
+                    token_metadata['has_refresh_token'] = bool(getattr(creds, 'refresh_token', None))
+                    # Attempt auto-refresh if expired and refresh token is present
+                    if getattr(creds, 'expired', False) and getattr(creds, 'refresh_token', None):
+                        try:
+                            creds.refresh(Request())
+                            save_path = _get_youtube_token_file(for_save=True)
+                            with open(save_path, 'w') as f:
+                                f.write(creds.to_json())
+                            token_metadata['expired'] = getattr(creds, 'expired', None)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            yt = authenticate_youtube()
+            can_auth = yt is not None
+        except Exception:
+            can_auth = False
+
+        payload = {
             'available': True,
             'client_secrets_exists': client_secrets_exists,
-            'message': 'YouTube service is available' if client_secrets_exists else 'YouTube service available but client_secrets.json not found'
-        })
+            'token_file': token_path,
+            'token_exists': token_exists,
+            'token_metadata': token_metadata,
+            'can_authenticate': can_auth,
+            'message': 'YouTube service ready' if (client_secrets_exists and token_exists and can_auth) else 'Missing credentials or token'
+        }
+        if not token_exists:
+            try:
+                # Provide an auth URL to complete OAuth on deployed site
+                redirect_uri = _get_redirect_uri()
+                import google_auth_oauthlib.flow as _flow
+                if client_secrets_exists:
+                    flow = _flow.Flow.from_client_secrets_file('client_secrets.json', scopes=_get_youtube_scopes(), redirect_uri=redirect_uri)
+                    auth_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true', prompt='consent')
+                    payload['auth_url'] = auth_url
+            except Exception:
+                pass
+        return jsonify(payload)
         
     except Exception as e:
         logging.error(f"YouTube status error: {e}")
         return jsonify({'available': False, 'error': str(e)})
+
+@app.route('/api/youtube/refresh', methods=['POST'])
+def youtube_refresh():
+    """Force a refresh of the YouTube OAuth token if possible."""
+    try:
+        token_path = _get_youtube_token_file(for_save=False)
+        if not os.path.exists(token_path):
+            return jsonify({'success': False, 'error': 'Token file not found'}), 404
+        try:
+            from google.oauth2.credentials import Credentials as _Cred
+            creds = _Cred.from_authorized_user_file(token_path)
+            if not getattr(creds, 'refresh_token', None):
+                return jsonify({'success': False, 'error': 'No refresh token available'}), 400
+            creds.refresh(Request())
+            save_path = _get_youtube_token_file(for_save=True)
+            with open(save_path, 'w') as f:
+                f.write(creds.to_json())
+            return jsonify({'success': True, 'token_file': save_path})
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Failed to refresh token: {e}'}), 400
+    except Exception as e:
+        logging.error(f"YouTube refresh error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 def save_upload_record(user_id: int, video_path: str, upload_result: dict):
     """Save YouTube upload record scoped to a user"""
@@ -3430,6 +4200,40 @@ def api_list_scheduled_posts():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/scheduled-posts')
+def scheduled_posts_page():
+    """Scheduled posts page"""
+    try:
+        user = get_session_user()
+        if not user:
+            return redirect(url_for('navigate', page='login'))
+        
+        # Load scheduled posts for the user
+        schedules = _load_schedules()
+        user_schedules = [j for j in schedules if j.get('user_id') == user['id']]
+        
+        # Convert to template-friendly format
+        posts = []
+        for job in user_schedules:
+            post = {
+                'timestamp': job.get('id'),
+                'video_name': job.get('filename', 'Unknown'),
+                'platform': job.get('platform', 'youtube'),
+                'scheduled_time': job.get('run_at_iso', ''),
+                'status': job.get('status', 'pending'),
+                'caption': job.get('description', ''),
+                'hashtags': ' '.join([f'#{tag}' for tag in job.get('tags', [])]),
+                'title': job.get('title', ''),
+                'executed_time': job.get('executed_at', ''),
+                'error': job.get('error', '')
+            }
+            posts.append(post)
+        
+        return render_template('scheduled_posts.html', posts=posts)
+    except Exception as e:
+        logger.error(f"Error loading scheduled posts page: {e}")
+        return render_template('scheduled_posts.html', posts=[])
+
 @app.route('/api/cancel-scheduled', methods=['POST'])
 def api_cancel_scheduled():
     try:
@@ -3449,6 +4253,103 @@ def api_cancel_scheduled():
                 break
         _save_schedules(schedules)
         return jsonify({'success': updated})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/execute-post', methods=['POST'])
+def api_execute_post():
+    """Execute a scheduled post immediately"""
+    try:
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        data = request.get_json() or {}
+        job_id = data.get('timestamp') or data.get('id')
+        
+        if not job_id:
+            return jsonify({'success': False, 'message': 'Missing job ID'}), 400
+        
+        schedules = _load_schedules()
+        job = None
+        
+        for j in schedules:
+            if j.get('id') == job_id and j.get('user_id') == user['id']:
+                job = j
+                break
+        
+        if not job:
+            return jsonify({'success': False, 'message': 'Job not found'}), 404
+        
+        if job.get('status') != 'pending':
+            return jsonify({'success': False, 'message': 'Job is not pending'}), 400
+        
+        # Execute the job
+        try:
+            video_path = job.get('video_path', '')
+            title = job.get('title', '')
+            description = job.get('description', '')
+            tags = job.get('tags', [])
+            privacy = job.get('privacy', 'public')
+            
+            # Resolve per-user path
+            user_trimmed = get_user_subdir(user['id'], 'trimmed')
+            candidate = os.path.join(user_trimmed, os.path.basename(video_path))
+            resolved = candidate if os.path.exists(candidate) else video_path
+            
+            result = upload_video_simple(resolved, title, description, tags, privacy)
+            
+            if result.get('success'):
+                job['status'] = 'posted'
+                job['executed_at'] = datetime.utcnow().isoformat()
+                job['youtube_url'] = result.get('url', '')
+            else:
+                job['status'] = 'failed'
+                job['executed_at'] = datetime.utcnow().isoformat()
+                job['error'] = result.get('error', 'Unknown error')
+            
+            _save_schedules(schedules)
+            return jsonify({'success': True, 'result': result})
+            
+        except Exception as e:
+            job['status'] = 'failed'
+            job['executed_at'] = datetime.utcnow().isoformat()
+            job['error'] = str(e)
+            _save_schedules(schedules)
+            return jsonify({'success': False, 'message': str(e)}), 500
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/delete-scheduled-post', methods=['POST'])
+def api_delete_scheduled_post():
+    """Delete a scheduled post"""
+    try:
+        user = get_session_user()
+        if not user:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+        
+        data = request.get_json() or {}
+        job_id = data.get('timestamp') or data.get('id')
+        
+        if not job_id:
+            return jsonify({'success': False, 'message': 'Missing job ID'}), 400
+        
+        schedules = _load_schedules()
+        updated = False
+        
+        for i, j in enumerate(schedules):
+            if j.get('id') == job_id and j.get('user_id') == user['id']:
+                schedules.pop(i)
+                updated = True
+                break
+        
+        if updated:
+            _save_schedules(schedules)
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'message': 'Job not found'}), 404
+            
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 

@@ -57,8 +57,8 @@ if %errorlevel% neq 0 (
 )
 
 REM Deploy the application
-echo 🚀 Deploying to Fly.io...
-fly deploy
+echo 🚀 Deploying to Fly.io with remote builder...
+fly deploy --remote-only --yes -a ai-auto-posting
 
 echo.
 echo 🎉 Deployment complete!

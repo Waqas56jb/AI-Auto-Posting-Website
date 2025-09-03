@@ -5,12 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scheduled Posts - AI Auto Posting</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            background: #f5f7fb;
+        }
         .scheduled-posts-container {
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 1rem;
+            flex: 1 1 auto;
         }
         
         .page-header {
@@ -31,13 +42,13 @@
         }
         
         .back-btn {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 10px 14px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
@@ -47,6 +58,7 @@
             align-items: center;
             gap: 8px;
             transition: all 0.3s ease;
+            z-index: 1000;
         }
         
         .back-btn:hover {
@@ -58,7 +70,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 1.5rem;
-            margin-top: 2rem;
+            margin-top: 3.5rem;
         }
         
         .post-card {
@@ -119,6 +131,8 @@
         
         .post-details {
             margin-bottom: 1rem;
+            max-height: 220px;
+            overflow-y: auto;
         }
         
         .detail-row {
@@ -238,16 +252,30 @@
             font-weight: 600;
         }
         
+        footer {
+            background: #ffffff;
+            border-top: 1px solid #e8ecf3;
+            padding: 1rem;
+            text-align: center;
+        }
+        footer .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
         @media (max-width: 768px) {
             .back-btn {
-                position: relative;
-                top: auto;
-                left: auto;
-                margin-bottom: 1rem;
+                position: fixed;
+                top: 0.75rem;
+                left: 0.75rem;
+                margin-bottom: 0;
             }
             
             .posts-grid {
                 grid-template-columns: 1fr;
+                margin-top: 3.25rem;
             }
             
             .post-card {
@@ -257,10 +285,10 @@
     </style>
 </head>
 <body>
-    <a href="/edit" class="back-btn">
+    <button class="back-btn" onclick="window.history.back()">
         <i class="fas fa-arrow-left"></i>
-        Back to Edit
-    </a>
+        Back
+    </button>
     
     <div class="scheduled-posts-container">
         <div class="page-header">
@@ -296,11 +324,24 @@
                 {% for post in posts %}
                 <div class="post-card">
                     <div class="post-header">
-                        <h3 class="post-title">{{ post.video_name[:30] }}{% if post.video_name|length > 30 %}...{% endif %}</h3>
+                        <div>
+                            {% if post.title %}
+                                <h3 class="post-title">{{ post.title[:60] }}{% if post.title|length > 60 %}...{% endif %}</h3>
+                                <div style="color:#6b7280; font-size:0.9rem; margin-top:2px;">{{ post.video_name[:40] }}{% if post.video_name|length > 40 %}...{% endif %}</div>
+                            {% else %}
+                                <h3 class="post-title">{{ post.video_name[:60] }}{% if post.video_name|length > 60 %}...{% endif %}</h3>
+                            {% endif %}
+                        </div>
                         <span class="status-badge status-{{ post.status }}">{{ post.status }}</span>
                     </div>
                     
                     <div class="post-details">
+                        {% if post.title %}
+                        <div class="detail-row">
+                            <span class="detail-label">📝 Title:</span>
+                            <span class="detail-value" style="text-align:left; max-width:none;">{{ post.title }}</span>
+                        </div>
+                        {% endif %}
                         <div class="detail-row">
                             <span class="detail-label">📱 Platform:</span>
                             <span class="detail-value">{{ post.platform|title }}</span>
@@ -357,6 +398,12 @@
             </div>
         {% endif %}
     </div>
+
+    <footer>
+        <div class="footer-inner">
+            © 2025 AI Auto Posting — All rights reserved
+        </div>
+    </footer>
 
     <script>
         function executePost(timestamp) {

@@ -57,8 +57,8 @@ if ! fly volumes list | grep -q "ai_auto_posting_data"; then
 fi
 
 # Deploy the application
-echo "🚀 Deploying to Fly.io..."
-fly deploy
+echo "🚀 Deploying to Fly.io with remote builder..."
+fly deploy --remote-only --yes -a ai-auto-posting
 
 echo ""
 echo "🎉 Deployment complete!"

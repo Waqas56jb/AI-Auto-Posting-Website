@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Assistant - StoryVerse</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Comic+Sans+MS&display=swap" rel="stylesheet">
     <style>
@@ -553,14 +555,17 @@
                     Online
                 </p>
             </div>
-            <div class="header-actions">
-                <button class="header-btn" title="Clear Chat" onclick="clearChat()">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="header-btn" title="Settings" onclick="openSettings()">
-                    <i class="fas fa-cog"></i>
-                </button>
-            </div>
+                    <div class="header-actions">
+            <a href="/dashboard" class="header-btn" title="Back to Dashboard" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-home"></i>
+            </a>
+            <button class="header-btn" title="Clear Chat" onclick="clearChat()">
+                <i class="fas fa-trash"></i>
+            </button>
+            <button class="header-btn" title="Settings" onclick="openSettings()">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
         </div>
 
         <!-- Chat Messages -->
@@ -572,29 +577,19 @@
                 </div>
                 <div class="welcome-title">Welcome to StoryVerse AI!</div>
                 <div class="welcome-text">
-                    I'm here to help you with video uploads, caption generation, post scheduling, and more. 
-                    How can I assist you today?
+                    I'm here to help with uploads, captions, scheduling, and more.
+                    Ask a question or pick a quick action below to begin.
                 </div>
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <button class="quick-action-btn" onclick="sendQuickMessage('How do I upload a video?')">
-                📹 Upload Video
-            </button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How do I generate captions?')">
-                ✍️ Generate Captions
-            </button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How do I schedule posts?')">
-                ⏰ Schedule Posts
-            </button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('What features are available?')">
-                🚀 Features
-            </button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How do I use the transcript feature?')">
-                🎤 Transcripts
-            </button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How do I upload a video?')">📹 Upload Video</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How do I generate captions?')">✍️ Generate Captions</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How do I schedule posts?')">⏰ Schedule Posts</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('What features are available?')">🚀 Features</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How do I use the transcript feature?')">🎤 Transcripts</button>
         </div>
 
         <!-- Input Area -->

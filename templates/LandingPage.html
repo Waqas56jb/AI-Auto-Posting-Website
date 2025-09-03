@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Social Media Automation | Smart Content Creation & Scheduling</title>
-  <meta name="description" content="AI-powered social media automation platform that creates, edits, and schedules content across TikTok, Facebook, LinkedIn, and YouTube with intelligent optimization.">
+  <title>StoryVerse AI | AI-Powered Social Media Automation Platform</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+  <meta name="description" content="StoryVerse AI - Revolutionary AI-powered social media automation platform that creates, edits, and schedules content across TikTok, Facebook, LinkedIn, and YouTube with intelligent optimization.">
   <!-- Particles.js -->
   <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
   <!-- Font Awesome -->
@@ -1348,18 +1349,18 @@
   <!-- Navigation -->
   <nav class="navbar">
     <a href="/" class="logo">
-      <i class="fas fa-robot"></i> AI Social Media Automation
+      <i class="fas fa-magic"></i> StoryVerse AI
     </a>
     <div class="nav-links">
       <a href="#features">Features</a>
       <a href="#how-it-works">How It Works</a>
       <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
-      <a href="#" class="nav-dashboard" style="display: none;">Dashboard</a>
+      <a href="/edit" class="nav-dashboard" style="display: none;">Dashboard</a>
     </div>
     <div class="auth-buttons">
-      <a href="#" class="btn btn-outline animate__animated animate__fadeIn nav-login">Login</a>
-      <a href="#" class="btn btn-primary animate__animated animate__fadeIn nav-signup">Register</a>
+      <a href="/login" class="btn btn-outline animate__animated animate__fadeIn nav-login">Login</a>
+      <a href="/signup" class="btn btn-primary animate__animated animate__fadeIn nav-signup">Register</a>
       <a href="#" class="btn btn-outline animate__animated animate__fadeIn nav-logout" style="display: none;">Logout</a>
     </div>
   </nav>
@@ -1388,8 +1389,15 @@
       </div>
       
       <div class="cta-buttons">
-        <a href="#features" class="btn btn-primary btn-lg animate__animated animate__fadeInLeft animate__delay-2s">Explore Features</a>
-        <a href="#" class="btn btn-secondary btn-lg animate__animated animate__fadeInRight animate__delay-2s nav-signup">Get Started Free</a>
+        <a href="/story-generator" class="btn btn-primary btn-lg animate__animated animate__fadeInLeft animate__delay-2s">
+          <i class="fas fa-magic"></i> Start Creating Stories
+        </a>
+        <a href="/edit" class="btn btn-secondary btn-lg animate__animated animate__fadeInRight animate__delay-2s">
+          <i class="fas fa-video"></i> Video Dashboard
+        </a>
+        <a href="#features" class="btn btn-outline btn-lg animate__animated animate__fadeInUp animate__delay-3s">
+          <i class="fas fa-info-circle"></i> Learn More
+        </a>
       </div>
     </div>
   </section>
@@ -1484,7 +1492,7 @@
 
   <!-- Features Section -->
   <section class="section" id="features">
-    <h2 class="section-title animate-up">Why Choose AI Social Media Automation</h2>
+    <h2 class="section-title animate-up">Why Choose StoryVerse AI</h2>
     <p class="section-subtitle animate-up delay-1">
       Our platform combines cutting-edge AI technology with deep social media expertise to deliver results that matter.
     </p>
@@ -1724,7 +1732,7 @@
           <li><i class="fas fa-check"></i> Basic analytics</li>
           <li><i class="fas fa-check"></i> Watermarked videos</li>
         </ul>
-        <a href="#" class="btn btn-outline nav-signup">Get Started</a>
+        <a href="/signup" class="btn btn-outline">Get Started</a>
       </div>
       <div class="pricing-card popular animate-up delay-1">
         <div class="popular-badge">Most Popular</div>
@@ -1740,7 +1748,7 @@
           <li><i class="fas fa-check"></i> Brand kit (3 brands)</li>
           <li><i class="fas fa-check"></i> Watermark-free exports</li>
         </ul>
-        <a href="#" class="btn btn-primary nav-signup">Choose Plan</a>
+        <a href="/signup" class="btn btn-primary">Choose Plan</a>
       </div>
       <div class="pricing-card animate-up delay-2">
         <h3 class="pricing-title">Enterprise</h3>
@@ -1756,7 +1764,7 @@
           <li><i class="fas fa-check"></i> White-label reports</li>
           <li><i class="fas fa-check"></i> 24/7 priority support</li>
         </ul>
-        <a href="#" class="btn btn-outline nav-signup">Choose Plan</a>
+        <a href="/signup" class="btn btn-outline">Choose Plan</a>
       </div>
     </div>
     
@@ -1765,11 +1773,29 @@
     </div>
   </section>
 
+  <!-- Call to Action Section -->
+  <section class="section" style="background: var(--gradient-blue); color: var(--white); text-align: center; padding: 4rem 2rem;">
+    <div class="container">
+      <h2 class="section-title animate-up" style="color: var(--white);">Ready to Transform Your Social Media?</h2>
+      <p class="section-subtitle animate-up delay-1" style="color: var(--white); opacity: 0.9; max-width: 600px; margin: 0 auto 2rem;">
+        Join thousands of creators and businesses who are already using StoryVerse AI to automate their content creation and boost engagement.
+      </p>
+      <div class="cta-buttons" style="justify-content: center; gap: 1rem;">
+        <a href="/story-generator" class="btn btn-primary btn-lg animate__animated animate__fadeInLeft animate__delay-2s" style="background: var(--white); color: var(--primary-blue); border-color: var(--white);">
+          <i class="fas fa-magic"></i> Start Creating Now
+        </a>
+        <a href="/edit" class="btn btn-outline btn-lg animate__animated animate__fadeInRight animate__delay-2s" style="border-color: var(--white); color: var(--white);">
+          <i class="fas fa-video"></i> Video Dashboard
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- FAQ Section -->
   <section class="section" id="faq">
     <h2 class="section-title animate-up">Frequently Asked Questions</h2>
     <p class="section-subtitle animate-up delay-1">
-      Everything you need to know about our AI social media automation platform
+      Everything you need to know about StoryVerse AI - our revolutionary AI social media automation platform
     </p>
     
     <div class="faq-container">
@@ -1915,7 +1941,7 @@
         Join thousands of businesses saving time and increasing engagement with our AI-powered platform.
       </p>
       <div class="cta-buttons animate-up delay-2">
-        <a href="#" class="btn btn-primary btn-lg nav-signup">Get Started Free</a>
+        <a href="/signup" class="btn btn-primary btn-lg">Get Started Free</a>
         <a href="#features" class="btn btn-secondary btn-lg">See All Features</a>
       </div>
       <p class="animate-up delay-3" style="margin-top: 1.5rem; opacity: 0.8; font-size: 0.9rem;">
@@ -1959,7 +1985,7 @@
     <div class="footer-content">
       <div class="footer-about">
         <div class="footer-logo">
-          <i class="fas fa-robot"></i> AI Social Media Automation
+          <i class="fas fa-magic"></i> StoryVerse AI
         </div>
         <p class="footer-about">
           Empowering businesses to streamline social media management with AI-driven content creation and automation. Our platform helps you create, edit, and publish content faster while maintaining quality and brand consistency.
@@ -2008,7 +2034,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      © 2025 AI Social Media Automation. All rights reserved. | Made with <i class="fas fa-heart" style="color: var(--danger-red);"></i> for social media managers
+      © 2025 StoryVerse AI. All rights reserved. | Made with <i class="fas fa-heart" style="color: var(--danger-red);"></i> for social media managers
     </div>
   </footer>
 
@@ -2106,28 +2132,29 @@
       });
     });
 
-    // Navigation function with error handling
+    // Navigation function with clean routes
     function navigate(page) {
-      const pages = ['chatbot', 'login', 'signup', 'dashboard'];
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'error-message';
-      errorMessage.style.color = 'var(--danger-red)';
-      errorMessage.style.textAlign = 'center';
-      errorMessage.style.marginTop = '1rem';
-      errorMessage.style.fontWeight = '600';
-      errorMessage.textContent = `The ${page} page is not available yet. Please contact support.`;
+      const routes = {
+        'chatbot': '/chatbot',
+        'login': '/login',
+        'signup': '/signup',
+        'dashboard': '/edit',
+        'story-generator': '/story-generator'
+      };
       
-      if (!pages.includes(page)) {
+      if (routes[page]) {
+        window.location.href = routes[page];
+      } else {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.style.color = 'var(--danger-red)';
+        errorMessage.style.textAlign = 'center';
+        errorMessage.style.marginTop = '1rem';
+        errorMessage.style.fontWeight = '600';
+        errorMessage.textContent = `The ${page} page is not available yet. Please contact support.`;
         document.querySelector('.hero-content').appendChild(errorMessage);
         setTimeout(() => errorMessage.remove(), 3000);
-        return;
       }
-
-      // Simulate navigation
-      setTimeout(() => {
-        document.querySelector('.hero-content').appendChild(errorMessage);
-        setTimeout(() => errorMessage.remove(), 3000);
-      }, 1000);
     }
 
     // Logout function

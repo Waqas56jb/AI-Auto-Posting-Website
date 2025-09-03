@@ -47,6 +47,7 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .nox/
+analytics.json
 .coverage
 .coverage.*
 .cache
@@ -228,7 +229,7 @@ __marimo__/
 *.flac
 *.aac
 *.ogg
-
+static/youtube_uploads.json
 # Credentials and sensitive files
 credentials/
 *.pkl

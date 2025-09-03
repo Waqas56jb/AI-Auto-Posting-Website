@@ -1,0 +1,62 @@
+/* Global responsive enhancements (non-destructive) */
+
+/* 1) Media elements scale within containers */
+img, video, canvas, svg, iframe { max-width: 100%; height: auto; }
+
+/* 2) Prevent horizontal scroll on narrow screens */
+html { -webkit-text-size-adjust: 100%; }
+body { overflow-x: hidden; }
+
+/* 3) Containers and utility layout helpers */
+.container-responsive { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+.stack-on-mobile { display: flex; gap: 1rem; }
+@media (max-width: 768px) { .stack-on-mobile { flex-direction: column; } }
+
+.grid-auto-fill { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.grid-auto-fit { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+
+/* 4) Forms scale correctly */
+input, select, textarea, button { max-width: 100%; }
+.form-row { display: flex; flex-wrap: wrap; gap: 1rem; }
+.form-col { flex: 1 1 280px; }
+
+/* 5) Tables do not overflow */
+.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-responsive > table { width: 100%; border-collapse: collapse; }
+
+/* 6) Code and pre blocks wrap lines on small screens */
+pre { white-space: pre-wrap; word-wrap: break-word; }
+code { white-space: pre-wrap; }
+
+/* 7) Generic typography scaling for very small screens */
+@media (max-width: 480px) {
+  h1 { font-size: clamp(1.5rem, 7vw, 2.25rem); }
+  h2 { font-size: clamp(1.25rem, 6vw, 1.75rem); }
+  h3 { font-size: clamp(1.1rem, 5.5vw, 1.5rem); }
+  p, li, label, input, button, textarea { font-size: clamp(0.95rem, 4.5vw, 1.05rem); }
+}
+
+/* 8) Fixed header safe area helper (opt-in) */
+.with-fixed-header { padding-top: var(--fixed-header-height, 64px); }
+
+/* 9) Media wrappers for responsive iframes/videos (opt-in) */
+.responsive-media { position: relative; width: 100%; padding-top: 56.25%; }
+.responsive-media > iframe,
+.responsive-media > video { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* 10) Utility visibility classes */
+@media (max-width: 768px) { .hide-on-mobile { display: none !important; } }
+@media (min-width: 769px) { .show-only-mobile { display: none !important; } }
+
+/* 11) Buttons wrap nicely */
+.button-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.button-row > * { flex: 1 1 220px; }
+
+/* 12) Cards grid helper (opt-in) */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+
+/* 13) Image/object fit helpers */
+.object-cover { object-fit: cover; }
+.object-contain { object-fit: contain; }
+
+
